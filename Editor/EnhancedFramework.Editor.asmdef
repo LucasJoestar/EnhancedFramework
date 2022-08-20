@@ -1,0 +1,22 @@
+{
+    "name": "EnhancedFramework.Editor",
+    "rootNamespace": "EnhancedFramework.Editor",
+    "references": [
+        "EnhancedEditor",
+        "EnhancedEditor.Editor",
+        "EnhancedFramework.Core",
+        "EnhancedFramework.Input",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

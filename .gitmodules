@@ -1,0 +1,3 @@
+[submodule "EnhancedFramework-Physics3D"]
+	path = EnhancedFramework-Physics3D
+	url = https://github.com/LucasJoestar/EnhancedFramework-Physics3D

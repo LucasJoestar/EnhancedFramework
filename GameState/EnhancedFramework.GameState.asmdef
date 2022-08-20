@@ -1,0 +1,17 @@
+{
+    "name": "EnhancedFramework.GameState",
+    "rootNamespace": "EnhancedFramework.GameState",
+    "references": [
+        "EnhancedEditor",
+        "EnhancedFramework.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
