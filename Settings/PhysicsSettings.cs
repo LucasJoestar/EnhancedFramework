@@ -12,16 +12,11 @@ using Range = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Settings {
     /// <summary>
-    /// 
+    /// Physics-related ruling settings.
     /// </summary>
-    [CreateAssetMenu(fileName = "STT_PhysicsSettings", menuName = GameSettings.MenuPath + "Physics", order = GameSettings.MenuOrder)]
-	public class PhysicsSettings : ScriptableObject {
-        /// <summary>
-        /// Game used global Physics settings.
-        /// </summary>
-        public static PhysicsSettings I;
-
-        #region Settings
+    [CreateAssetMenu(fileName = MenuPrefix + "PhysicsSettings", menuName = MenuPath + "Physics", order = MenuOrder)]
+	public class PhysicsSettings : BaseSettings<PhysicsSettings> {
+        #region Global Members
         [Section("Physics Settings")]
 
         [Enhanced] public float Gravity = -9.81f;
@@ -38,7 +33,7 @@ namespace EnhancedFramework.Settings {
         [Enhanced, Min(0f)] public float SteepSlopeRequiredMovement = 20f;
         [Enhanced, Min(0f)] public float SteepSlopeRequiredForce    = 10f;
 
-        [HorizontalLine(SuperColor.Sapphire)]
+        [Space(5f), HorizontalLine(SuperColor.Green), Space(5f)]
 
         [Enhanced, Range(0f, 1f)] public float OnGroundedForceMultiplier = .55f;
 

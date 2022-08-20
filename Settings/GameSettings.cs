@@ -9,34 +9,32 @@ using UnityEngine;
 
 namespace EnhancedFramework.Settings {
     /// <summary>
-    /// 
+    /// Global game settings, referencing each and every <see cref="BaseSettings{T}"/> shared across the game.
     /// </summary>
-    [CreateAssetMenu(fileName = "GAM_GameSettings", menuName = MenuPath + "GameSettings", order = MainMenuOrder)]
-    public class GameSettings : ScriptableObject {
+    [CreateAssetMenu(fileName = "GGS_GameSettings", menuName = MenuPath + "GameSettings", order = MenuOrder - 25)]
+    public class GameSettings : BaseSettings<GameSettings> {
         #region Global Members
-        // Menu constants.
-        private const int MainMenuOrder     = 150;
-
-        public const string MenuPath    = "Enhanced Framework/Datas/Settings/";
-        public const int MenuOrder      = MainMenuOrder + 10;
-
         [Section("Game Settings")]
 
-        [SerializeField, Enhanced, Required] private CollisionSettings collisionSettings = null;
-        [SerializeField, Enhanced, Required] private PhysicsSettings physicsSettings     = null;
+        [SerializeField] protected BaseSettings[] settings = new BaseSettings[] { };
 
-        [SerializeField, Enhanced, Required] private TagDatabase tagDatabase = null;
-        [SerializeField, Enhanced, Required] private BuildSceneDatabase buildSceneDatabase = null;
+        [Space(10f)]
+
+        [SerializeField, Enhanced, Required] protected TagDatabase tagDatabase = null;
+        [SerializeField, Enhanced, Required] protected BuildSceneDatabase buildSceneDatabase = null;
         #endregion
 
         #region Initialization
-        public void Initialize() {
-            // Settings static assignement.
-            //CollisionSettings.I = CollisionSettings;
-            //PhysicsSettings.I = PhysicsSettings;
+        internal override void Init() {
+            base.Init();
 
-            BuildSceneDatabase.Database = buildSceneDatabase;
+            // Settings and databases assignement.
+            foreach (BaseSettings _settings in settings) {
+                _settings.Init();
+            }
+
             MultiTags.Database = tagDatabase;
+            BuildSceneDatabase.Database = buildSceneDatabase;
         }
         #endregion
     }
