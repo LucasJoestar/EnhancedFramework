@@ -37,12 +37,16 @@ namespace EnhancedFramework.Core {
 
             // Settings initialization.
             settings.Init();
+
+            Application.wantsToQuit += OnWantsToQuit;
         }
 
-        protected virtual void OnApplicationQuit() {
+        protected virtual bool OnWantsToQuit() {
             // Register that the application is currently being closed.
             // Using script execution order, this information can then be used from any other class.
             IsQuittingApplication = true;
+
+            return true;
         }
         #endregion
     }
