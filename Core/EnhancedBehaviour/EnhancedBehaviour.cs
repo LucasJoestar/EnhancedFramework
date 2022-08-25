@@ -14,16 +14,18 @@ namespace EnhancedFramework.Core {
     /// Base class to derive every <see cref="MonoBehaviour"/> of the project from.
     /// <para/>
     /// The <see cref="EnhancedBehaviour"/> uses component activation callbacks to automatically
-    /// register/unregister itself from updates, avoiding using Unity update callbacks
-    /// for a better result at lower cost.
-    /// <br/> You can register to a variety of callbacks using the <see cref="UpdateRegistration"/> flag.
+    /// register/unregister itself from updates, avoiding using Unity update callbacks for a better result at a lower cost.
+    /// <br/> You can register to a variety of callbacks using the <see cref="UpdateRegistration"/> enum flag.
+    /// <para/>
+    /// Can manage the object initialization from the OnInit method when using the <see cref="UpdateRegistration.Init"/> flag,
+    /// which is more efficient and controlled to prevent framedrops when multiple objects initialization occurs.
     /// <para/>
     /// Comes also with basic activation/deactivation callbacks that ensure being called
     /// when its state really changes.
     /// <br/> You can use the OnPaused callback to implement specific behaviours when the object gets paused/unpaused,
-    /// which can happen in a variety of situations like a combo or a slow motion effect.
+    /// which happens when its local time scale factor reach 0.
     /// </summary>
-    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate {
+    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate {
         #region Update Registration
         /// <summary>
         /// Override this to specify this object update registration.
@@ -41,6 +43,11 @@ namespace EnhancedFramework.Core {
                 return this;
             }
         }
+
+        /// <summary>
+        /// Indicates whether this object is initialized or not.
+        /// </summary>
+        bool IInitUpdate.IsInitialized { get; set; } = false;
         #endregion
 
         #region Global Members
@@ -49,11 +56,14 @@ namespace EnhancedFramework.Core {
         [SerializeField, Enhanced, ReadOnly] protected float chronos = 1f;
 
         /// <summary>
-        /// This object-related time scale.
+        /// This object local time scale factor.
+        /// <para/>
+        /// Affects the values of both <see cref="DeltaTime"/> and <see cref="SmoothDeltaTime"/> properties.
         /// </summary>
         public float Chronos {
-            get => chronos;
-            internal set {
+            get {
+                return chronos;
+            } internal set {
                 bool doPause = (chronos == 0f) != (value == 0f);
                 chronos = value;
 
@@ -83,7 +93,7 @@ namespace EnhancedFramework.Core {
 
         /// <summary>
         /// <inheritdoc cref="Component.transform"/>
-        /// Using an overridable property for optimization purpose.
+        /// Uses an overridable property for optimization purpose.
         /// </summary>
         public virtual Transform Transform {
             get {
@@ -93,26 +103,29 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
-        protected virtual void Awake() {
-            // Implement object initialization registration here.
-        }
-
+        /// <summary>
+        /// Base unity message when this behaviour is enabled.
+        /// <br/> Should not be overridden, always prefer using <see cref="OnBehaviourEnabled"/> instead.
+        /// </summary>
         protected virtual void OnEnable() {
             OnBehaviourEnabled();
         }
 
+        /// <summary>
+        /// Base unity message when this behaviour is disabled.
+        /// <br/> Should not be overridden, always prefer using <see cref="OnBehaviourDisabled"/> instead.
+        /// </summary>
         protected virtual void OnDisable() {
             if (!GameManager.IsQuittingApplication) {
                 OnBehaviourDisabled();
             }
         }
-        #endregion
 
-        #region State Callbacks
-        /// <summary>
-        /// Called when this object pause state is changed.
-        /// </summary>
-        protected virtual void OnPaused(bool _isPaused) { }
+        void IInitUpdate.Init() {
+            OnInit();
+        }
+
+        // -----------------------
 
         /// <summary>
         /// Called when this behaviour is being enabled.
@@ -122,6 +135,22 @@ namespace EnhancedFramework.Core {
                 UpdateManager.Instance.Register(this, UpdateRegistration);
             }
         }
+
+        /// <summary>
+        /// Called on object initialization.
+        /// <br/> Requires to set the flag <see cref="UpdateRegistration.Init"/> on this object <see cref="UpdateRegistration"/> property.
+        /// <para/>
+        /// Initialization is only called once after
+        /// <br/> <see cref="OnBehaviourEnabled"/>, but before any local update.
+        /// </summary>
+        protected virtual void OnInit() { }
+
+        /// <summary>
+        /// Called when this object is being paused or unpaused.
+        /// <para/>
+        /// Pause happens when this object local <see cref="chronos"/> value is set to 0.
+        /// </summary>
+        protected virtual void OnPaused(bool _isPaused) { }
 
         /// <summary>
         /// Called when this behaviour is being disabled.
@@ -136,10 +165,10 @@ namespace EnhancedFramework.Core {
         #region Animation
         /// <summary>
         /// Calls an <see cref="EnhancedAnimationEvent"/> on this behaviour.
-        /// <br/> This is an alternative to direct animation events, allowing more controls on calls
-        /// and reference management.
+        /// <br/> This is an alternative to direct method calls from animation events,
+        /// allowing more control and reference management.
         /// <para/>
-        /// This method should only be called from an animation.
+        /// Note that this method should only be called from an animation event.
         /// </summary>
         /// <param name="_event">Event to call.</param>
         public void AnimationEvent(EnhancedAnimationEvent _event) {
@@ -149,7 +178,7 @@ namespace EnhancedFramework.Core {
 
         #region Comparison
         /// <summary>
-        /// Compare two objects by their instance id.
+        /// Compare two objects using their instance id.
         /// </summary>
         /// <returns>True if they are the same, false otherwise.</returns>
         public bool Compare(EnhancedBehaviour _other) {

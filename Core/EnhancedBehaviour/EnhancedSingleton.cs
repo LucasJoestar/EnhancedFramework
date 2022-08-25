@@ -9,11 +9,12 @@ using System;
 
 namespace EnhancedFramework.Core {
     /// <summary>
-    /// Singleton instance class derived from <see cref="DreadfulBehaviour"/>.
-    /// <br/> The object type must be set as this class type.
+    /// Self-managed singleton instance class.
+    /// <br/> The generic object type should be set as the same as this class type.
     /// <para/>
-    /// Note that there should always be no more than one instance of this class at the same time.
-    /// Every other instances will be automatically destroyed.
+    /// Note that there should always be exactly one instance of this class at a time.
+    /// <br/> Every other instance will automatically be destroyed,
+    /// unless another behaviour is specified using <see cref="OnNonSingletonInstance"/>.
     /// <para/>
     /// </summary>
     /// <typeparam name="T">This object type.</typeparam>
@@ -31,8 +32,8 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
-        protected override void OnEnable() {
-            base.OnEnable();
+        protected override void OnBehaviourEnabled() {
+            base.OnBehaviourEnabled();
 
             if (Instance.IsValid()) {
                 OnNonSingletonInstance();   // When a singleton instance already exist, call this method.
@@ -42,10 +43,10 @@ namespace EnhancedFramework.Core {
             }
         }
 
-        protected override void OnDisable() {
-            base.OnDisable();
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
 
-            if ((Instance == this) && !GameManager.IsQuittingApplication) {
+            if (Instance == this) {
                 Instance = null;
             }
         }

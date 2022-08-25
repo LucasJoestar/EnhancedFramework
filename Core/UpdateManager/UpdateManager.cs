@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using System.Diagnostics;
 
 using Object = UnityEngine.Object;
 
@@ -23,6 +24,8 @@ namespace EnhancedFramework.Core {
         Dynamic = 1 << 3,
         Movable = 1 << 4,
         Late    = 1 << 5,
+
+        Init    = 1 << 31
     }
 
     public interface IBaseUpdate    { Object GetLogObject { get; } }
@@ -33,6 +36,11 @@ namespace EnhancedFramework.Core {
     public interface IDynamicUpdate : IBaseUpdate { void Update(); }
     public interface IMovableUpdate : IBaseUpdate { void Update(); }
     public interface ILateUpdate    : IBaseUpdate { void Update(); }
+
+    public interface IInitUpdate    : IBaseUpdate {
+        bool IsInitialized { get; internal set; }
+        void Init();
+    }
     #endregion
 
     /// <summary>
@@ -40,12 +48,18 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public class UpdateManager : EnhancedSingleton<UpdateManager> {
         #region Global Members
-        private Stamp<IEarlyUpdate> earlyUpdates       = new Stamp<IEarlyUpdate>();
-        private Stamp<IInputUpdate> inputUpdates       = new Stamp<IInputUpdate>(1);
-        private Stamp<IDynamicUpdate> dynamicUpdates   = new Stamp<IDynamicUpdate>(5);
-        private Stamp<IUpdate> updates                 = new Stamp<IUpdate>(10);
-        private Stamp<IMovableUpdate> movableUpdates   = new Stamp<IMovableUpdate>(10);
-        private Stamp<ILateUpdate> lateUpdates         = new Stamp<ILateUpdate>();
+        public bool IsSuspended { get; private set; } = false;
+
+        // -----------------------
+
+        private Stamp<IEarlyUpdate> earlyUpdates        = new Stamp<IEarlyUpdate>();
+        private Stamp<IInputUpdate> inputUpdates        = new Stamp<IInputUpdate>(1);
+        private Stamp<IDynamicUpdate> dynamicUpdates    = new Stamp<IDynamicUpdate>(5);
+        private Stamp<IUpdate> updates                  = new Stamp<IUpdate>(10);
+        private Stamp<IMovableUpdate> movableUpdates    = new Stamp<IMovableUpdate>(10);
+        private Stamp<ILateUpdate> lateUpdates          = new Stamp<ILateUpdate>();
+
+        private Stamp<Pair<IInitUpdate, UpdateRegistration>> initUpdates          = new Stamp<Pair<IInitUpdate, UpdateRegistration>>(10);
         #endregion
 
         #region Global Registration
@@ -56,6 +70,16 @@ namespace EnhancedFramework.Core {
         /// <param name="_object">Object to be registered on update(s).</param>
         /// <param name="_registration">Defined update registration (can use multiple).</param>
         public void Register<T>(T _object, UpdateRegistration _registration) {
+            // Prevent registering on update before init.
+            if ((_registration & UpdateRegistration.Init) != 0) {
+                IInitUpdate _init = _object as IInitUpdate;
+
+                if (!_init.IsInitialized) {
+                    initUpdates.Add(new Pair<IInitUpdate, UpdateRegistration>(_init, _registration));
+                    return;
+                }
+            }
+
             if ((_registration & UpdateRegistration.Early) != 0) {
                 earlyUpdates.Add((IEarlyUpdate)_object);
             }
@@ -88,6 +112,18 @@ namespace EnhancedFramework.Core {
         /// <param name="_object">Object to be unregistered from update(s).</param>
         /// <param name="_registration">Defined update unregistration (can use multiple).</param>
         public void Unregister<T>(T _object, UpdateRegistration _registration) {
+            // Non-init object unregistration.
+            if ((_registration & UpdateRegistration.Init) != 0) {
+                IInitUpdate _init = _object as IInitUpdate;
+
+                if (!_init.IsInitialized) {
+                    int _index = Array.FindIndex(initUpdates.Array, (p) => p.First == _init);
+                    initUpdates.RemoveAt(_index);
+
+                    return;
+                }
+            }
+
             if ((_registration & UpdateRegistration.Early) != 0) {
                 earlyUpdates.Remove((IEarlyUpdate)_object);
             }
@@ -115,37 +151,63 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
+        private const long InitWatcherMaxDuration = 100; // 0,1 second.
+        private readonly Stopwatch initWatcher = new Stopwatch();
+
+        // -----------------------
+
         private void Update() {
+            // Initializations.
+            initWatcher.Restart();
+
+            while ((initUpdates.Count > 0) && (initWatcher.ElapsedMilliseconds < InitWatcherMaxDuration)) {
+                var _pair = initUpdates.First();
+                var _init = _pair.First;
+
+                CallUpdate(_init.Init, _init);
+                _init.IsInitialized = true;
+
+                // Once the object is initialized, register its other updates.
+                initUpdates.RemoveAt(0);
+
+                Register<IBaseUpdate>(_init, _pair.Second);
+            }
+
+            // Only perform initialization while suspended (useful when loading a scene).
+            if (IsSuspended) {
+                return;
+            }
+
             int i;
 
             for (i = earlyUpdates.Count; i-- > 0;) {
-                var update = earlyUpdates[i];
-                CallUpdate(update.Update, update);
+                var _update = earlyUpdates[i];
+                CallUpdate(_update.Update, _update);
             }
 
             for (i = inputUpdates.Count; i-- > 0;) {
-                var update = inputUpdates[i];
-                CallUpdate(update.Update, update);
+                var _update = inputUpdates[i];
+                CallUpdate(_update.Update, _update);
             }
 
             for (i = dynamicUpdates.Count; i-- > 0;) {
-                var update = dynamicUpdates[i];
-                CallUpdate(update.Update, update);
+                var _update = dynamicUpdates[i];
+                CallUpdate(_update.Update, _update);
             }
 
             for (i = updates.Count; i-- > 0;) {
-                var update = updates[i];
-                CallUpdate(update.Update, update);
+                var _update = updates[i];
+                CallUpdate(_update.Update, _update);
             }
 
             for (i = movableUpdates.Count; i-- > 0;) {
-                var update = movableUpdates[i];
-                CallUpdate(update.Update, update);
+                var _update = movableUpdates[i];
+                CallUpdate(_update.Update, _update);
             }
 
             for (i = lateUpdates.Count; i-- > 0;) {
-                var update = lateUpdates[i];
-                CallUpdate(update.Update, update);
+                var _update = lateUpdates[i];
+                CallUpdate(_update.Update, _update);
             }
 
             // ----- Local Method ----- \\

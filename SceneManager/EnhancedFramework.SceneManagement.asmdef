@@ -1,17 +1,12 @@
 {
-    "name": "EnhancedFramework.Editor",
-    "rootNamespace": "EnhancedFramework.Editor",
+    "name": "EnhancedFramework.SceneManagement",
+    "rootNamespace": "EnhancedFramework.SceneManagement",
     "references": [
         "EnhancedEditor",
-        "EnhancedEditor.Editor",
         "EnhancedFramework.Core",
-        "EnhancedFramework.GameStates",
-        "EnhancedFramework.Input",
-        "Unity.InputSystem"
+        "EnhancedFramework.GameStates"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

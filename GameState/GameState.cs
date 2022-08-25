@@ -6,7 +6,7 @@
 
 using System;
 
-namespace EnhancedFramework.GameState {
+namespace EnhancedFramework.GameStates {
     /// <summary>
     /// Base class to inherit your own game states from.
     /// <para/>
@@ -14,13 +14,27 @@ namespace EnhancedFramework.GameState {
     /// <br/> For getting access to a specific override type, please use <see cref="GameState{T}"/> instead.
     /// </summary>
     [Serializable]
-    public abstract class GameState {
+    public abstract class GameState : IComparable<GameState> {
         #region Global Members
         /// <summary>
         /// Priority of this state. The state with the higher priority in the list is the one enabled.
         /// <br/> Note that the priority value must (absolutely) be unique for each different class type.
         /// </summary>
         public abstract int Priority { get; }
+        #endregion
+
+        #region Creation
+        /// <summary>
+        /// Creates and push a new game state on the stack.
+        /// </summary>
+        /// <typeparam name="T">The type of game state to create.</typeparam>
+        /// <returns>The newly created state.</returns>
+        public static T CreateState<T>() where T : GameState {
+            T _state = Activator.CreateInstance<T>();
+            GameStateManager.Instance.PushState(_state);
+
+            return _state;
+        }
         #endregion
 
         #region State Override
@@ -57,6 +71,12 @@ namespace EnhancedFramework.GameState {
         /// </summary>
         protected internal virtual void OnDestroyed() { }
         #endregion
+
+        #region Comparer
+        int IComparable<GameState>.CompareTo(GameState _other) {
+            return Priority.CompareTo(_other.Priority);
+        }
+        #endregion
     }
 
     /// <summary>
@@ -65,12 +85,13 @@ namespace EnhancedFramework.GameState {
     /// Inherit from this class instead of <see cref="GameState"/> to get access to a specific override type.
     /// </summary>
     /// <typeparam name="T">Override type to be associated with this state.</typeparam>
+    [Serializable]
     public abstract class GameState<T> : GameState where T : GameStateOverride {
         #region State Override
-        public override sealed void OnStateOverride(GameStateOverride _override) {
-            base.OnStateOverride(_override);
+        public override sealed void OnStateOverride(GameStateOverride _state) {
+            base.OnStateOverride(_state);
 
-            OnStateOverride(_override as T);
+            OnStateOverride(_state as T);
         }
 
         /// <inheritdoc cref="OnStateOverride(GameStateOverride)"/>

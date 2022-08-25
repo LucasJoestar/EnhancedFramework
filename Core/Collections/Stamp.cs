@@ -7,6 +7,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace EnhancedFramework.Core {
     /// <summary>
@@ -33,7 +34,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Array of the stamp. Its size should not be set externally.
         /// </summary>
-        private T[] Array = new T[] { };
+        [SerializeReference] public T[] Array = new T[] { };
         #endregion
 
         #region Constructor
@@ -126,14 +127,19 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Adds a new element in the stamp.
         /// </summary>
-        /// <param name="_element">New array element.</param>
-        public void Add(T _element) {
+        /// <param name="_element">New element.</param>
+        /// <param name="_doSort">Should the stamp content be sorted once the only element added?</param>
+        public void Add(T _element, bool _doSort = false) {
             if (Array.Length == Count) {
                 Expand();
             }
 
             Array[Count] = _element;
             Count++;
+
+            if (_doSort) {
+                Sort();
+            }
         }
 
         /// <summary>
@@ -254,6 +260,13 @@ namespace EnhancedFramework.Core {
             for (int i = 0; i < Count; i++) {
                 Array[i] = _template[i];
             }
+        }
+
+        /// <summary>
+        /// Sorts this stamp content.
+        /// </summary>
+        public void Sort() {
+            System.Array.Sort(Array, 0, Count);
         }
         #endregion
     }

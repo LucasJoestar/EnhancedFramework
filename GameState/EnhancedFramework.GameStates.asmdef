@@ -1,6 +1,6 @@
 {
-    "name": "EnhancedFramework.GameState",
-    "rootNamespace": "EnhancedFramework.GameState",
+    "name": "EnhancedFramework.GameStates",
+    "rootNamespace": "EnhancedFramework.GameStates",
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Core"

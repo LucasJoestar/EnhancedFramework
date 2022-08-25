@@ -9,19 +9,20 @@ using EnhancedFramework.Core;
 using System;
 using UnityEngine;
 
-namespace EnhancedFramework.GameState {
+namespace EnhancedFramework.GameStates {
     /// <summary>
-    /// Original game state, acting as the default one when no override is applied.
+    /// Implement this interface to receive a callback
+    /// when the <see cref="GameStateManager.StateOverride"/> values are overridden by a new state.
+    /// <para/>
+    /// Requires to be registered first using <see cref="GameStateManager.RegisterOverrideCallback(IGameStateOverrideCallback)"/>.
     /// </summary>
-    internal class DefaultState : GameState {
-        #region Global Members
+    public interface IGameStateOverrideCallback {
+        #region State Override
         /// <summary>
-        /// The default state, which is added on game start and never removed,
-        /// <br/> uses the lower priority to make sure there is always an active state in the game, whatever might happen.
+        /// Callback for when the <see cref="GameStateOverride"/> values are changed.
         /// </summary>
-        public const int DefaultStatePriority = -1;
-
-        public override int Priority => DefaultStatePriority;
+        /// <param name="_state">New state override values.</param>
+        void OnGameStateOverride(in GameStateOverride _state);
         #endregion
     }
 
@@ -59,35 +60,37 @@ namespace EnhancedFramework.GameState {
     }
 
     /// <summary>
-    /// All <see cref="GameState"/> manager instance,
-    /// used to dynamically push and pop states to the game.
+    /// Global <see cref="GameState"/> manager instance,
+    /// used to dynamically push and pop states on the stack of the game.
     /// </summary>
     public class GameStateManager : EnhancedSingleton<GameStateManager>, IEarlyUpdate {
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
+
         #region Global Members
-        /// <summary>
-        /// 
-        /// </summary>
-        [field:SerializeField, Section("Game State Manager"), Enhanced, ReadOnly]
-        public GameState CurrentState { get; private set; } = null;
+        [Section("Game State Manager")]
+
+        [SerializeField] private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(GameStateOverride), true);
 
         /// <summary>
-        /// 
+        /// Current global states override shared values.
         /// </summary>
         [field: SerializeField, Enhanced, ReadOnly]
         public GameStateOverride StateOverride { get; private set; } = null;
 
         /// <summary>
-        /// 
+        /// The game state being currently active and enabled.
         /// </summary>
-        [SerializeField] private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(GameStateOverride), true);
+        [field: SerializeReference, Space(15f)]
+        public GameState CurrentState { get; private set; } = new DefaultState();
 
-        [SerializeField, Enhanced, ReadOnly] private Buffer<GameState> states = new Buffer<GameState>() { };
+        [SerializeField, Enhanced, ReadOnly] private Stamp<GameState> states = new Stamp<GameState>() { };
 
+        private Stamp<IGameStateOverrideCallback> overrideCallbacks = new Stamp<IGameStateOverrideCallback>();
         #endregion
 
         #region Enhanced Behaviour
-        protected override void Awake() {
-            base.Awake();
+        protected override void OnInit() {
+            base.OnInit();
 
             StateOverride = Activator.CreateInstance(overrideType) as GameStateOverride;
 
@@ -96,13 +99,76 @@ namespace EnhancedFramework.GameState {
         }
         #endregion
 
-        #region State Management
-        public void PushState(GameState _state) {
-            CurrentState = states.Push(_state, _state.Priority);
+        #region Override Callbacks
+        /// <summary>
+        /// Registers an object to receive callback on state overrides.
+        /// </summary>
+        /// <param name="_callback">Callback receiver to register.</param>
+        public void RegisterOverrideCallback(IGameStateOverrideCallback _callback) {
+            overrideCallbacks.Add(_callback);
         }
 
+        /// <summary>
+        /// Unregisters an object from receiving callback on state overrides.
+        /// </summary>
+        /// <param name="_callback">Callback receiver to unregister.</param>
+        public void UnregisterOverrideCallback(IGameStateOverrideCallback _callback) {
+            overrideCallbacks.Remove(_callback);
+        }
+        #endregion
+
+        #region State Management
+        /// <summary>
+        /// Pushes a new state on the game state stack.
+        /// </summary>
+        /// <param name="_state">New state to add to the stack.</param>
+        public void PushState(GameState _state) {
+            states.Add(_state, true);
+
+            this.Log($"GameState => Push '{_state}'");
+
+            _state.OnCreated();
+            RefreshCurrentState();
+        }
+
+        /// <summary>
+        /// Pops an already push-in stack buffer.
+        /// </summary>
+        /// <param name="_state">Existing stack to remove.</param>
         public void PopState(GameState _state) {
-            CurrentState = states.Pop(_state.Priority);
+            states.Remove(_state);
+
+            this.Log($"GameState => Pop '{_state}'");
+
+            RefreshCurrentState();
+            _state.OnDestroyed();
+        }
+
+        // -----------------------
+
+        private void RefreshCurrentState() {
+            // State override.
+            GameStateOverride _override = StateOverride;
+
+            for (int i = 0; i < states.Count; i++) {
+                states[i].OnStateOverride(_override);
+            }
+
+            foreach (IGameStateOverrideCallback _callback in overrideCallbacks) {
+                _callback.OnGameStateOverride(_override);
+            }
+
+            // Update current state.
+            GameState _current = states.Last();
+
+            if (_current != CurrentState) {
+                CurrentState.OnDisabled();
+                _current.OnEnabled();
+
+                CurrentState = _current;
+
+                this.Log($"GameState => Set new state '{_current}'");
+            }
         }
         #endregion
 
