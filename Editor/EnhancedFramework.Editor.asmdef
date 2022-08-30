@@ -5,6 +5,7 @@
         "EnhancedEditor",
         "EnhancedEditor.Editor",
         "EnhancedFramework.Core",
+        "EnhancedFramework.Flags",
         "EnhancedFramework.GameStates",
         "EnhancedFramework.Input",
         "Unity.InputSystem"

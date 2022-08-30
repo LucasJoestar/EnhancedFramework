@@ -8,13 +8,13 @@ using System;
 
 namespace EnhancedFramework.GameStates {
     /// <summary>
-    /// <see cref="GameState"/> applied when the game enters a loading state.
+    /// Default <see cref="GameState"/> applied when the game enters a loading state.
     /// </summary>
     [Serializable]
     public class LoadingState : GameState {
         #region Global Members
         /// <summary>
-        /// 
+        /// Uses a high priority to make sure the state is the active one.
         /// </summary>
         public const int LoadingStatePriority = 999;
 
