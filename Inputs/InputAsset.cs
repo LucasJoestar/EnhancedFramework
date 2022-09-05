@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if ENABLE_INPUT_SYSTEM
 using EnhancedEditor;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -64,3 +65,4 @@ namespace EnhancedFramework.Input {
         #endregion
     }
 }
+#endif

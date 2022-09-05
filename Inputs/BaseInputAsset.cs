@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if INPUT_SYSTEM_PACKAGE
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -53,3 +54,4 @@ namespace EnhancedFramework.Input {
         #endregion
     }
 }
+#endif

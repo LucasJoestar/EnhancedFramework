@@ -38,7 +38,12 @@ namespace EnhancedFramework.Core {
     public interface ILateUpdate    : IBaseUpdate { void Update(); }
 
     public interface IInitUpdate    : IBaseUpdate {
-        bool IsInitialized { get; internal set; }
+        bool IsInitialized { get;
+            #if CSHARP_8_0_OR_NEWER
+            internal
+            #endif
+            set; }
+
         void Init();
     }
     #endregion

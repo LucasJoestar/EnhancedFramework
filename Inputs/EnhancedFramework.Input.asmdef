@@ -1,6 +1,5 @@
 {
     "name": "EnhancedFramework.Input",
-    "rootNamespace": "EnhancedFramework.Input",
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Core",
@@ -13,6 +12,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "INPUT_SYSTEM_PACKAGE"
+        }
+    ],
     "noEngineReferences": false
 }

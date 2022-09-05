@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if INPUT_SYSTEM_PACKAGE
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
@@ -89,3 +90,4 @@ namespace EnhancedFramework.Input {
         #endregion
     }
 }
+#endif
