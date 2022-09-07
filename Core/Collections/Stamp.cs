@@ -19,7 +19,7 @@ namespace EnhancedFramework.Core {
     /// <typeparam name="T">Array element type.</typeparam>
     [Serializable]
     public class Stamp<T> : IEnumerable<T> {
-        #region Buffer
+        #region Stamp
         public const int DefaultExpandSize = 3;
 
         // -----------------------
@@ -134,8 +134,7 @@ namespace EnhancedFramework.Core {
                 Expand();
             }
 
-            Array[Count] = _element;
-            Count++;
+            Array[Count++] = _element;
 
             if (_doSort) {
                 Sort();
@@ -170,16 +169,12 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// Removes the element at specified index from the stamp.
+        /// Removes the element at a specific index from the stamp.
         /// </summary>
         /// <param name="_element">Index of the element to remove.</param>
         public void RemoveAt(int _index) {
-            int _last = Count - 1;
-            if (_index != _last) {
-                T _removed = Array[_index];
-
-                Array[_index] = Array[_last];
-                Array[_last] = _removed;
+            for (int i = _index; i < Count - 1; i++) {
+                Array[i] = Array[i + 1];
             }
 
             Count--;

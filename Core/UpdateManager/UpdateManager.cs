@@ -168,12 +168,12 @@ namespace EnhancedFramework.Core {
             while ((initUpdates.Count > 0) && (initWatcher.ElapsedMilliseconds < InitWatcherMaxDuration)) {
                 var _pair = initUpdates.First();
                 var _init = _pair.First;
-
+                
                 CallUpdate(_init.Init, _init);
                 _init.IsInitialized = true;
 
                 // Once the object is initialized, register its other updates.
-                initUpdates.RemoveAt(0);
+                initUpdates.RemoveFirst();
 
                 Register<IBaseUpdate>(_init, _pair.Second);
             }

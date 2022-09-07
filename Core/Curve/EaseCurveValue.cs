@@ -20,13 +20,6 @@ namespace EnhancedFramework.Core {
     public abstract class EaseCurveValue {
         #region Content
         /// <summary>
-        /// Current evaluation time of this value.
-        /// </summary>
-        [Enhanced, ReadOnly] public float CurrentTime = 0f;
-
-        [Space(5f)]
-
-        /// <summary>
         /// Range of the curve (minimum and maximum values).
         /// </summary>
         public Vector2 Range = new Vector2(0f, 1f);
@@ -35,15 +28,6 @@ namespace EnhancedFramework.Core {
         /// Duration of the curve.
         /// </summary>
         [Enhanced, Min(.001f)] public float Duration = 1f;
-
-        /// <summary>
-        /// Current evaluation time ratio (between 0 and 1) of this value.
-        /// </summary>
-        public float CurrentTimeRatio {
-            get {
-                return CurrentTime / Duration;
-            }
-        }
 
         // -----------------------
 
@@ -61,9 +45,9 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_timeIncrease">Current curve value time increase (in seconds).</param>
         /// <returns>The curve value at the current evaluation time.</returns>
-        public float EvaluateContinue(float _timeIncrease) {
-            float _time = Mathf.Clamp(CurrentTime + _timeIncrease, 0f, Duration);
-            return Evaluate(_time);
+        public float EvaluateContinue(ref float _currentTime, float _timeIncrease) {
+            _currentTime = Mathf.Clamp(_currentTime + _timeIncrease, 0f, Duration);
+            return Evaluate(ref _currentTime);
         }
 
         /// <summary>
@@ -71,8 +55,8 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_time">Time to evaluate the curve at.</param>
         /// <returns>The curve value at the given time.</returns>
-        public float Evaluate(float _time) {
-            return EvaluatePercent(_time / Duration);
+        public float Evaluate(ref float _currentTime) {
+            return EvaluatePercent(ref _currentTime, _currentTime / Duration);
         }
 
         /// <summary>
@@ -80,14 +64,22 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_percent">Lifetime percentage to evaluate the curve at.</param>
         /// <returns>The curve value at the given percentage.</returns>
-        public abstract float EvaluatePercent(float _percent);
+        public abstract float EvaluatePercent(ref float _currentTime, float _percent);
 
         /// <summary>
         /// Resets this curve back to its first value.
         /// </summary>
         /// <returns>First curve value.</returns>
-        public float Reset() {
-            return Evaluate(0f);
+        public float Reset(ref float _currentTime) {
+            _currentTime = 0f;
+            return Evaluate(ref _currentTime);
+        }
+
+        /// <summary>
+        /// Get the current evaluation time ratio (between 0 and 1) of this value.
+        /// </summary>
+        public float GetCurrentTimeRatio(float _currentTime) {
+            return _currentTime / Duration;
         }
         #endregion
     }
@@ -113,8 +105,8 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        public override float EvaluatePercent(float _percent) {
-            CurrentTime = Duration * _percent;
+        public override float EvaluatePercent(ref float _currentTime, float _percent) {
+            _currentTime = Duration * _percent;
             return DOVirtual.EasedValue(Range.x, Range.y, _percent, Ease);
         }
         #endregion
@@ -141,8 +133,8 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        public override float EvaluatePercent(float _percent) {
-            CurrentTime = Duration * _percent;
+        public override float EvaluatePercent(ref float _currentTime, float _percent) {
+            _currentTime = Duration * _percent;
             return DOVirtual.EasedValue(Range.x, Range.y, _percent, Curve);
         }
         #endregion
@@ -178,12 +170,12 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        public override float EvaluatePercent(float _percent) {
-            float _time = CurrentTime;
-            float _value = base.EvaluatePercent(_percent);
+        public override float EvaluatePercent(ref float _currentTime, float _percent) {
+            float _time = _currentTime;
+            float _value = base.EvaluatePercent(ref _currentTime, _percent);
 
             // Reset decrease value timer on time increase.
-            if (CurrentTime > _time) {
+            if (_currentTime > _time) {
                 decreaseCurrentTime = 0f;
             }
 
@@ -196,16 +188,16 @@ namespace EnhancedFramework.Core {
         /// <param name="_timeDecrease">Time used to decrease value (in seconds).
         /// <br/> Must be positive.</param>
         /// <returns>The curve value with applied time decrease.</returns>
-        public float Decrease(float _timeDecrease) {
+        public float Decrease(ref float _currentTime, float _timeDecrease) {
             if (decreaseCurrentTime == 0f) {
-                decreaseDurationValue = (DecreaseDuration * CurrentTimeRatio) + .01f;
-                decreaseTimeFrom = CurrentTime;
+                decreaseDurationValue = (DecreaseDuration * GetCurrentTimeRatio(_currentTime)) + .01f;
+                decreaseTimeFrom = _currentTime;
             }
 
             decreaseCurrentTime = Mathf.Clamp(decreaseCurrentTime + _timeDecrease, 0f, decreaseDurationValue);
-            CurrentTime = DOVirtual.EasedValue(0f, decreaseTimeFrom, decreaseCurrentTime / decreaseDurationValue, DecreaseCurve);
+            _currentTime = DOVirtual.EasedValue(0f, decreaseTimeFrom, decreaseCurrentTime / decreaseDurationValue, DecreaseCurve);
 
-            return Evaluate(CurrentTime);
+            return Evaluate(ref _currentTime);
         }
         #endregion
     }

@@ -1,0 +1,17 @@
+{
+    "name": "EnhancedFramework.Feedback",
+    "references": [
+        "DOTween.Modules",
+        "EnhancedEditor",
+        "EnhancedFramework.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

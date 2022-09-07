@@ -75,6 +75,32 @@ namespace EnhancedFramework.Core {
 		}
 		#endregion
 
+		#region Maths
+		/// <summary>
+		/// Get the sum of all this vector components.
+		/// </summary>
+		public static float Sum(this Vector3 _vector) {
+			return _vector.x + _vector.y + _vector.z;
+		}
+
+		/// <inheritdoc cref="Sum(Vector3)"/>
+		public static float Sum(this Vector2 _vector) {
+			return _vector.x + _vector.y;
+		}
+
+		/// <summary>
+		/// Get the absolute sum of all this vector components.
+		/// </summary>
+		public static float AbsSum(this Vector3 _vector) {
+			return Mathf.Abs(_vector.x) + Mathf.Abs(_vector.y) + Mathf.Abs(_vector.z);
+		}
+
+		/// <inheritdoc cref="AbsSum(Vector3)"/>
+		public static float AbsSum(this Vector2 _vector) {
+			return Mathf.Abs(_vector.x) + Mathf.Abs(_vector.y);
+		}
+		#endregion
+
 		#region Quaternion
 		/// <summary>
 		/// Converts this vector to a quaternion.
@@ -104,11 +130,11 @@ namespace EnhancedFramework.Core {
 		public static Vector3 RotateInverse(this Vector3 _vector, Quaternion _quaternion) {
 			return Quaternion.Inverse(_quaternion) * _vector;
 		}
-		#endregion
+        #endregion
 
-		#region ToString
-		/// <inheritdoc cref="ToStringX(Vector3, int)"/>
-		public static string ToStringX(this Vector2 _value, int _decimals) {
+        #region ToString
+        /// <inheritdoc cref="ToStringX(Vector3, int)"/>
+        public static string ToStringX(this Vector2 _value, int _decimals) {
 			StringBuilder _builder = new StringBuilder("0.");
 			for (int i = 0; i < _decimals; i++) {
 				_builder.Append('#');
