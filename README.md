@@ -35,16 +35,11 @@ If Git is not yet installed on your machine, you can download it for Windows fro
 
 1. Open the *Package Manager* in your Unity project from *Window > Package Manager*.
 2. Click on the icon *+* to add packages, and select *Add package from git URL...*
-
-![Add a package from Git in Unity](./Documentation~/Images/package-manager-add.png)
-
 3. In the text field, enter the URL of this Git repository, and click on *Add*
 
 ```txt
 https://github.com/LucasJoestar/EnhancedFramework.git
 ```
-
-![Enter the Git URL](./Documentation~/Images/package-manager-url.png)
 
 Unity will download the module and add it as a dependency.
 
