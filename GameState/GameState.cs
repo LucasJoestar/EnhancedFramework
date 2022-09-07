@@ -23,7 +23,7 @@ namespace EnhancedFramework.GameStates {
         public abstract int Priority { get; }
         #endregion
 
-        #region Creation
+        #region Creation / Destruction
         /// <summary>
         /// Creates and push a new game state on the stack.
         /// </summary>
@@ -34,6 +34,13 @@ namespace EnhancedFramework.GameStates {
             GameStateManager.Instance.PushState(_state);
 
             return _state;
+        }
+
+        /// <summary>
+        /// Destroys this state and remove it from the game stack.
+        /// </summary>
+        public void DestroyState() {
+            GameStateManager.Instance.PopState(this);
         }
         #endregion
 

@@ -45,6 +45,8 @@ namespace EnhancedFramework.SceneManagement {
 
         // -----------------------
 
+        protected U loadingState = null;
+
         // Operations are sorted in their respective priority order (execute from first to last).
         // Also useful for displaying the current operations progress.
 
@@ -67,6 +69,8 @@ namespace EnhancedFramework.SceneManagement {
                 // Sort operations so that the first element is the currently active one.
                 // If the priority is not modified outside this class, the stamp order should not be modified (first in, first out).
                 unloadingBundleOperations.Add(_op, true);
+
+                CreateLoadingState();
 
                 _op.Priority = operationPriority--;
                 _op.OnCompleted += OnSceneBundleUnloaded;
@@ -119,6 +123,8 @@ namespace EnhancedFramework.SceneManagement {
                 // Sort operations so that the first element is the currently active one.
                 // If the priority is not modified outside this class, the stamp order should not be modified (first in, first out).
                 loadingBundleOperations.Add(_op, true);
+
+                CreateLoadingState();
 
                 _op.Priority = operationPriority--;
                 _op.OnCompleted += OnSceneBundleLoaded;
@@ -219,6 +225,8 @@ namespace EnhancedFramework.SceneManagement {
                 // If the priority is not modified outside this class, the stamp order should not be modified (first in, first out).
                 loadingSceneOperations.Add(_operation, true);
 
+                CreateLoadingState();
+
                 _operation.priority = operationPriority--;
                 _operation.completed += OnSceneAssetLoaded;
             }
@@ -286,11 +294,12 @@ namespace EnhancedFramework.SceneManagement {
         }
 
         protected virtual void ManageUnloadingOperation(AsyncOperation _operation) {
-            if (_operation.isDone) {
+            if ((_operation == null) || _operation.isDone) {
                 return;
             }
 
             unloadingSceneOperations.Add(_operation, true);
+            CreateLoadingState();
 
             _operation.priority = operationPriority--;
             _operation.completed += OnSceneUnloaded;
@@ -321,6 +330,15 @@ namespace EnhancedFramework.SceneManagement {
         protected virtual void OnOperationComplete() {
             if (!IsPerformingOperation) {
                 operationPriority = DefaultOperationPriority;
+
+                loadingState.DestroyState();
+                loadingState = null;
+            }
+        }
+
+        protected virtual void CreateLoadingState() {
+            if (loadingState == null) {
+                loadingState = GameState.CreateState<U>();
             }
         }
         #endregion
