@@ -64,7 +64,7 @@ namespace EnhancedFramework.Core {
         private Stamp<IMovableUpdate> movableUpdates    = new Stamp<IMovableUpdate>(10);
         private Stamp<ILateUpdate> lateUpdates          = new Stamp<ILateUpdate>();
 
-        private Stamp<Pair<IInitUpdate, UpdateRegistration>> initUpdates          = new Stamp<Pair<IInitUpdate, UpdateRegistration>>(10);
+        private Stamp<Pair<IInitUpdate, UpdateRegistration>> initUpdates = new Stamp<Pair<IInitUpdate, UpdateRegistration>>(10);
         #endregion
 
         #region Global Registration

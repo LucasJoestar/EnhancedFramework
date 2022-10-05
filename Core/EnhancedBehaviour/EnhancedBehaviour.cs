@@ -51,8 +51,6 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Global Members
-        [Section("Enhanced Behaviour")]
-
         [SerializeField, Enhanced, ReadOnly] protected float chronos = 1f;
 
         /// <summary>
@@ -99,6 +97,13 @@ namespace EnhancedFramework.Core {
             get {
                 return transform;
             }
+        }
+
+        /// <summary>
+        /// The unique identifier of this object.
+        /// </summary>
+        public int ID {
+            get { return GetInstanceID(); }
         }
         #endregion
 

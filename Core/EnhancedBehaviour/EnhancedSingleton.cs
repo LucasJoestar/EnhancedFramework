@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using UnityEngine;
 
 namespace EnhancedFramework.Core {
     /// <summary>
@@ -17,13 +18,27 @@ namespace EnhancedFramework.Core {
     /// unless another behaviour is specified using <see cref="OnNonSingletonInstance"/>.
     /// <para/>
     /// </summary>
-    /// <typeparam name="T">This object type.</typeparam>
-    public abstract class EnhancedSingleton<T> : EnhancedBehaviour where T : EnhancedBehaviour {
+    /// <typeparam name="T">This object singleton type.</typeparam>
+    public abstract class EnhancedSingleton<T> : EnhancedBehaviour where T : EnhancedSingleton<T> {
         #region Singleton Instance
+        private static T instance = null;
+
         /// <summary>
         /// Singleton instance.
         /// </summary>
-        public static T Instance { get; private set; } = null;
+        public static T Instance {
+            get {
+                #if UNITY_EDITOR
+                if (!Application.isPlaying && (instance == null)) {
+                    instance = FindObjectOfType<T>();
+                }
+                #endif
+
+                return instance;
+            } protected set {
+                instance = value;
+            }
+        }
 
         /// <summary>
         /// Called whenever a new singleton instance of this class is assigned.

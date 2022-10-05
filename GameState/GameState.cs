@@ -5,6 +5,7 @@
 // ================================================================================== //
 
 using System;
+using UnityEngine;
 
 namespace EnhancedFramework.GameStates {
     /// <summary>
@@ -12,6 +13,8 @@ namespace EnhancedFramework.GameStates {
     /// <para/>
     /// Note that inheriting from this class will only give you access to the base <see cref="GameStateOverride"/> value.
     /// <br/> For getting access to a specific override type, please use <see cref="GameState{T}"/> instead.
+    /// <para/>
+    /// Newly created <see cref="GameState"/> are automatically pushed on the stack.
     /// </summary>
     [Serializable]
     public abstract class GameState : IComparable<GameState> {
@@ -21,25 +24,58 @@ namespace EnhancedFramework.GameStates {
         /// <br/> Note that the priority value must (absolutely) be unique for each different class type.
         /// </summary>
         public abstract int Priority { get; }
+
+        /// <summary>
+        /// Indicates if this <see cref="GameState"/> is currently on the stack or not.
+        /// </summary>
+        public bool IsOnStack { get; private set; } = false;
+
+        // -----------------------
+
+        /// <summary>
+        /// Creates a new state and automatically push it on the stack.
+        /// </summary>
+        public GameState() {
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                return;
+            }
+            #endif
+
+            GameStateManager.Instance.PushState(this);
+        }
         #endregion
 
         #region Creation / Destruction
         /// <summary>
-        /// Creates and push a new game state on the stack.
+        /// Creates a new game state, that is automatically added on the stack.
         /// </summary>
         /// <typeparam name="T">The type of game state to create.</typeparam>
         /// <returns>The newly created state.</returns>
-        public static T CreateState<T>() where T : GameState {
-            T _state = Activator.CreateInstance<T>();
-            GameStateManager.Instance.PushState(_state);
-
-            return _state;
+        public static T CreateState<T>() where T : GameState, new() {
+            return Activator.CreateInstance<T>();
         }
 
         /// <summary>
-        /// Destroys this state and remove it from the game stack.
+        /// Removes the first state of a specific type found on the stack.
         /// </summary>
-        public void DestroyState() {
+        /// <typeparam name="T">The type of game state to remove.</typeparam>
+        /// <returns>True if a game state of that type was found and removed, false otherwise.</returns>
+        public static bool RemoveState<T>() where T : GameState {
+            foreach (GameState _state in GameStateManager.Instance.states) {
+                if (_state is T) {
+                    _state.RemoveState();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes this state from the game stack.
+        /// </summary>
+        public void RemoveState() {
             GameStateManager.Instance.PopState(this);
         }
         #endregion
@@ -53,10 +89,22 @@ namespace EnhancedFramework.GameStates {
         #endregion
 
         #region Behaviour
+        internal void OnPushedOnStack() {
+            IsOnStack = true;
+            OnInit();
+        }
+
+        internal void OnRemovedFromStack() {
+            IsOnStack = false;
+            OnTerminate();
+        }
+
+        // -----------------------
+
         /// <summary>
-        /// Called when this state is being created.
+        /// Called when this state has been pushed on stack.
         /// </summary>
-        protected internal virtual void OnCreated() { }
+        protected virtual void OnInit() { }
 
         /// <summary>
         /// Called when this state is being enabled and set as the currently active one.
@@ -74,9 +122,9 @@ namespace EnhancedFramework.GameStates {
         protected internal virtual void OnDisabled() { }
 
         /// <summary>
-        /// Called when this state is being destroyed.
+        /// Called when this state has been removed from the stack.
         /// </summary>
-        protected internal virtual void OnDestroyed() { }
+        protected virtual void OnTerminate() { }
         #endregion
 
         #region Comparer
@@ -103,6 +151,22 @@ namespace EnhancedFramework.GameStates {
 
         /// <inheritdoc cref="OnStateOverride(GameStateOverride)"/>
         public virtual void OnStateOverride(T _state) { }
+        #endregion
+    }
+
+    /// <summary>
+    /// Contains <see cref="GameState"/>-related extension utility method(s).
+    /// </summary>
+    public static class GameStateExtensions {
+        #region Content
+        /// <summary>
+        /// Get if this state is currently active (not null and on the stack) or not.
+        /// </summary>
+        /// <param name="_state">The <see cref="GameState"/> to check.</param>
+        /// <returns>True if this state is not null and currently on the stack, false otherwise.</returns>
+        public static bool IsActive(this GameState _state) {
+            return (_state != null) && _state.IsOnStack;
+        }
         #endregion
     }
 }

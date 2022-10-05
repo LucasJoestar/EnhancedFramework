@@ -46,7 +46,7 @@ namespace EnhancedFramework.Core {
         public abstract Tween SetEase(Tween _tween);
         #endregion
 
-        #region Vector/Quaternion Tweens
+        #region Transform
         public Tween Move(Transform _transform, bool snapping = false) {
             if (Value is Vector3 _value) {
                 return SetEase(_transform.DOMove(_value, Duration, snapping).SetDelay(Delay));
@@ -80,7 +80,9 @@ namespace EnhancedFramework.Core {
 
             throw new InvalidTweenException("\"Move\" action can only be performed on Vector3 type tween objects.");
         }
+        #endregion
 
+        #region Vector
         public Tween To(DOGetter<Vector2> _getter, DOSetter<Vector2> _setter) {
             if (Value is Vector2 _value) {
                 return SetEase(DOTween.To(_getter, _setter, _value, Duration).SetDelay(Delay));
@@ -98,7 +100,7 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        #region Float Tweens
+        #region Float
         public Tween To(DOGetter<float> _getter, DOSetter<float> _setter) {
             if (Value is float _value) {
                 return SetEase(DOTween.To(_getter, _setter, _value, Duration).SetDelay(Delay));

@@ -17,7 +17,9 @@ namespace EnhancedFramework.Editor {
     public class GameStatePropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
         protected override float OnEnhancedGUI(Rect _position, SerializedProperty _property, GUIContent _label) {
-            EditorGUI.LabelField(_position, _label, EnhancedEditorGUIUtility.GetLabelGUI(EnhancedEditorUtility.GetSerializedPropertyValueTypeName(_property)));
+            string _name = EnhancedEditorUtility.GetSerializedPropertyValueTypeName(_property);
+
+            EditorGUI.LabelField(_position, _label, EnhancedEditorGUIUtility.GetLabelGUI(string.IsNullOrEmpty(_name) ? "[None]" : _name));
             return _position.height;
         }
         #endregion

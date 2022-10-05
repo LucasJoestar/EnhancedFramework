@@ -7,6 +7,7 @@
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace EnhancedFramework.GameStates {
@@ -57,6 +58,22 @@ namespace EnhancedFramework.GameStates {
         /// </summary>
         public bool IsQuitting = false;
         #endregion
+
+        #region Behaviour
+        /// <summary>
+        /// Resets the values back to default.
+        /// </summary>
+        public virtual GameStateOverride Reset() {
+            HasControl = true;
+
+            CanPause = false;
+            IsPaused = false;
+            IsLoading = false;
+            IsQuitting = false;
+
+            return this;
+        }
+        #endregion
     }
 
     /// <summary>
@@ -81,11 +98,13 @@ namespace EnhancedFramework.GameStates {
         /// The game state being currently active and enabled.
         /// </summary>
         [field: SerializeReference, Space(15f)]
-        public GameState CurrentState { get; private set; } = new DefaultState();
+        public GameState CurrentState { get; private set; } = null;
 
-        [SerializeField, Enhanced, ReadOnly] private Stamp<GameState> states = new Stamp<GameState>() { };
+        [SerializeField, Enhanced, ReadOnly] internal Stamp<GameState> states = new Stamp<GameState>();
 
-        private Stamp<IGameStateOverrideCallback> overrideCallbacks = new Stamp<IGameStateOverrideCallback>();
+        // -----------------------
+
+        private List<IGameStateOverrideCallback> overrideCallbacks = new List<IGameStateOverrideCallback>();
         #endregion
 
         #region Enhanced Behaviour
@@ -95,7 +114,7 @@ namespace EnhancedFramework.GameStates {
             StateOverride = Activator.CreateInstance(overrideType) as GameStateOverride;
 
             // Push initial default state.
-            PushState(new DefaultState());
+            GameState.CreateState<DefaultState>();
         }
         #endregion
 
@@ -106,6 +125,7 @@ namespace EnhancedFramework.GameStates {
         /// <param name="_callback">Callback receiver to register.</param>
         public void RegisterOverrideCallback(IGameStateOverrideCallback _callback) {
             overrideCallbacks.Add(_callback);
+            _callback.OnGameStateOverride(StateOverride);
         }
 
         /// <summary>
@@ -127,7 +147,7 @@ namespace EnhancedFramework.GameStates {
 
             this.Log($"GameState => Push '{_state}'");
 
-            _state.OnCreated();
+            _state.OnPushedOnStack();
             RefreshCurrentState();
         }
 
@@ -141,14 +161,14 @@ namespace EnhancedFramework.GameStates {
             this.Log($"GameState => Pop '{_state}'");
 
             RefreshCurrentState();
-            _state.OnDestroyed();
+            _state.OnRemovedFromStack();
         }
 
         // -----------------------
 
         private void RefreshCurrentState() {
             // State override.
-            GameStateOverride _override = StateOverride;
+            GameStateOverride _override = StateOverride.Reset();
 
             for (int i = 0; i < states.Count; i++) {
                 states[i].OnStateOverride(_override);
@@ -162,7 +182,10 @@ namespace EnhancedFramework.GameStates {
             GameState _current = states.Last();
 
             if (_current != CurrentState) {
-                CurrentState.OnDisabled();
+                if (CurrentState.IsActive()) {
+                    CurrentState.OnDisabled();
+                }
+
                 _current.OnEnabled();
 
                 CurrentState = _current;

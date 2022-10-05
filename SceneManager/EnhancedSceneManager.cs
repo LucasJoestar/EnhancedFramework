@@ -20,7 +20,7 @@ namespace EnhancedFramework.SceneManagement {
     /// </summary>
     /// <typeparam name="T">This class type, to be used as an <see cref="EnhancedSingleton{T}"/>.</typeparam>
     /// <typeparam name="U">The <see cref="GameState"/> to be applied when loading a scene.</typeparam>
-    public abstract class EnhancedSceneManager<T, U> : EnhancedSingleton<T> where T : EnhancedBehaviour where U : GameState {
+    public abstract class EnhancedSceneManager<T, U> : EnhancedSingleton<T> where T : EnhancedSceneManager<T, U> where U : GameState, new() {
         #region Global Members
         public const int DefaultOperationPriority = 0;
 
@@ -331,7 +331,7 @@ namespace EnhancedFramework.SceneManagement {
             if (!IsPerformingOperation) {
                 operationPriority = DefaultOperationPriority;
 
-                loadingState.DestroyState();
+                loadingState.RemoveState();
                 loadingState = null;
             }
         }

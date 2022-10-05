@@ -4,7 +4,8 @@
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Settings",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Localization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -13,6 +14,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.localization",
+            "expression": "",
+            "define": "LOCALIZATION_ENABLED"
+        }
+    ],
     "noEngineReferences": false
 }
