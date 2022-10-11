@@ -1,4 +1,4 @@
-# Enhanced Framwork - Enhanced Engine, Part II
+# Enhanced Frameork - Enhanced Engine, Part II
 
 This repository is part of the "Enhanced Engine", an advanced collection of systems for the [Unity](https://unity.com/) game engine.
 
