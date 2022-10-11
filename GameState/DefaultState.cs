@@ -20,6 +20,11 @@ namespace EnhancedFramework.GameStates {
         public const int DefaultStatePriority = -1;
 
         public override int Priority => DefaultStatePriority;
+
+        // -----------------------
+
+        /// <inheritdoc cref="DefaultState"/>
+        public DefaultState() : base(false) { }
         #endregion
     }
 }

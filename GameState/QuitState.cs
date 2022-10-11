@@ -22,6 +22,11 @@ namespace EnhancedFramework.GameStates {
         public const int QuitStatePriority = 0;
 
         public override int Priority => QuitStatePriority;
+
+        // -----------------------
+
+        /// <inheritdoc cref="QuitState"/>
+        public QuitState() : base(false) { }
         #endregion
 
         #region State Override

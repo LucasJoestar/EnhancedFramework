@@ -81,17 +81,17 @@ namespace EnhancedFramework.GameStates {
     /// used to dynamically push and pop states on the stack of the game.
     /// </summary>
     public class GameStateManager : EnhancedSingleton<GameStateManager>, IEarlyUpdate {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Early;
 
         #region Global Members
         [Section("Game State Manager")]
 
-        [SerializeField] private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(GameStateOverride), true);
+        [SerializeField] private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(GameStateOverride), SerializedTypeConstraint.BaseType);
 
         /// <summary>
         /// Current global states override shared values.
         /// </summary>
-        [field: SerializeField, Enhanced, ReadOnly]
+        [field: SerializeReference, Enhanced, ReadOnly]
         public GameStateOverride StateOverride { get; private set; } = null;
 
         /// <summary>
@@ -105,6 +105,7 @@ namespace EnhancedFramework.GameStates {
         // -----------------------
 
         private List<IGameStateOverrideCallback> overrideCallbacks = new List<IGameStateOverrideCallback>();
+        private List<GameState> pendingStates = new List<GameState>();
         #endregion
 
         #region Enhanced Behaviour
@@ -116,6 +117,14 @@ namespace EnhancedFramework.GameStates {
             // Push initial default state.
             GameState.CreateState<DefaultState>();
         }
+
+        #if UNITY_EDITOR
+        private void OnValidate() {
+            if ((StateOverride == null) || (StateOverride.GetType() != overrideType)) {
+                StateOverride = Activator.CreateInstance(overrideType) as GameStateOverride;
+            }
+        }
+        #endif
         #endregion
 
         #region Override Callbacks
@@ -139,29 +148,43 @@ namespace EnhancedFramework.GameStates {
 
         #region State Management
         /// <summary>
+        /// Tells to push new state on the game stack on the next frame.
+        /// </summary>
+        /// <param name="_state">The new state to add to the stack on the next frame.</param>
+        public void PushStateOnNextFrame(GameState _state) {
+            pendingStates.Add(_state);
+        }
+
+        /// <summary>
         /// Pushes a new state on the game state stack.
         /// </summary>
         /// <param name="_state">New state to add to the stack.</param>
-        public void PushState(GameState _state) {
+        public void PushState(GameState _state, bool _autoRefresh = true) {
             states.Add(_state, true);
 
             this.Log($"GameState => Push '{_state}'");
 
             _state.OnPushedOnStack();
-            RefreshCurrentState();
+
+            if (_autoRefresh) {
+                RefreshCurrentState();
+            }
         }
 
         /// <summary>
         /// Pops an already push-in stack buffer.
         /// </summary>
         /// <param name="_state">Existing stack to remove.</param>
-        public void PopState(GameState _state) {
+        public void PopState(GameState _state, bool _autoRefresh = true) {
             states.Remove(_state);
 
             this.Log($"GameState => Pop '{_state}'");
 
             RefreshCurrentState();
-            _state.OnRemovedFromStack();
+
+            if (_autoRefresh) {
+                _state.OnRemovedFromStack();
+            }
         }
 
         // -----------------------
@@ -197,6 +220,17 @@ namespace EnhancedFramework.GameStates {
 
         #region Update
         void IEarlyUpdate.Update() {
+            // Push pending states.
+            if (pendingStates.Count != 0) {
+                foreach (GameState _state in pendingStates) {
+                    PushState(_state, false);
+                }
+
+                pendingStates.Clear();
+                RefreshCurrentState();
+            }
+
+            // Current state update.
             CurrentState.OnUpdate();
         }
         #endregion

@@ -5,7 +5,6 @@
         "EnhancedEditor",
         "EnhancedEditor.Editor",
         "EnhancedFramework.Core",
-        "EnhancedFramework.Flags",
         "EnhancedFramework.GameStates",
         "EnhancedFramework.Input",
         "Unity.InputSystem"
@@ -19,6 +18,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "INPUT_SYSTEM_PACKAGE"
+        }
+    ],
     "noEngineReferences": false
 }

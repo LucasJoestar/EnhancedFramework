@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if DOTWEEN_ENABLED
 using DG.Tweening;
 using DG.Tweening.Core;
 using EnhancedEditor;
@@ -178,3 +179,4 @@ namespace EnhancedFramework.Core {
     }
     #endregion
 }
+#endif

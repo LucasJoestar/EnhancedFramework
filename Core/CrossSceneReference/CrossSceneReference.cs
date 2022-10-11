@@ -23,7 +23,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// The guid of the referencing <see cref="CrossSceneObject"/>.
         /// </summary>
-        public int GUID = 0;
+        public int GUID = CrossSceneReferenceUtility.NullGUID;
 
         #if UNITY_EDITOR
         /// <summary>
@@ -66,13 +66,25 @@ namespace EnhancedFramework.Core {
         /// <param name="_reference">This class referencing <see cref="Component"/>.</param>
         /// <returns>True if the associated reference <see cref="Component"/> could be found, false otherwise.</returns>
         public bool GetReference(out T _reference) {
-            if (CrossSceneReferenceManager.Instance.GetReference(GUID, out CrossSceneObject _ref) && _ref.TryGetComponent(out _reference)) {
+            if ((GUID != CrossSceneReferenceUtility.NullGUID) && CrossSceneReferenceManager.Instance.GetReference(GUID, out CrossSceneObject _ref) && _ref.TryGetComponent(out _reference)) {
                 return true;
             }
 
             _reference = null;
             return false;
         }
+        #endregion
+    }
+
+    /// <summary>
+    /// <see cref="CrossSceneReference{T}"/>-related utility class.
+    /// </summary>
+    public static class CrossSceneReferenceUtility {
+        #region Global Members
+        /// <summary>
+        /// The guid value used for null reference.
+        /// </summary>
+        public const int NullGUID = 0;
         #endregion
     }
 }

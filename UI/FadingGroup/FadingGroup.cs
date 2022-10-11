@@ -4,11 +4,14 @@
 //
 // ================================================================================== //
 
-using DG.Tweening;
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using UnityEngine;
+
+#if DOTWEEN_ENABLED
+using DG.Tweening;
+#endif
 
 using Range = EnhancedEditor.RangeAttribute;
 
@@ -65,6 +68,7 @@ namespace EnhancedFramework.UI {
         #endregion
     }
 
+    #if DOTWEEN_ENABLED
     /// <summary>
     /// Class wrapper for a fading <see cref="CanvasGroup"/> instance, using tweening.
     /// </summary>
@@ -73,13 +77,13 @@ namespace EnhancedFramework.UI {
         #region Global Members
         [Space(10f)]
 
-        [Enhanced, Range(0f, 10f)] public float fadeOutDuration = .5f;
-        public Ease fadeOutEase = Ease.InSine;
+        [Enhanced, Range(0f, 10f)] public float fadeInDuration = .5f;
+        public Ease fadeInEase = Ease.OutSine;
 
         [Space(5f)]
 
-        [Enhanced, Range(0f, 10f)] public float fadeInDuration = .5f;
-        public Ease fadeInEase = Ease.OutSine;
+        [Enhanced, Range(0f, 10f)] public float fadeOutDuration = .5f;
+        public Ease fadeOutEase = Ease.InSine;
 
         [Space(10f)]
 
@@ -106,13 +110,14 @@ namespace EnhancedFramework.UI {
                 return;
             }
 
-            if (Tween.IsActive()) {
-                Tween.Kill(false);
-            }
-
+            Tween.DoKill(false);
             Tween = Group.DOFade(_alpha, _duration).SetEase(_ease).SetUpdate(UseUnscaledTime);
-            Tween.onComplete = new TweenCallback(_onComplete);
+
+            if (_onComplete != null) {
+                Tween.onComplete = new TweenCallback(_onComplete);
+            }
         }
         #endregion
     }
+    #endif
 }

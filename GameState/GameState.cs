@@ -32,17 +32,25 @@ namespace EnhancedFramework.GameStates {
 
         // -----------------------
 
+        /// <inheritdoc cref="GameState(bool)"/>
+        public GameState() : this(true) { }
+
         /// <summary>
         /// Creates a new state and automatically push it on the stack.
         /// </summary>
-        public GameState() {
+        /// <param name="_pushOnNextFrame">Should the state be pushed on the stack during this frame or the next one?</param>
+        protected GameState(bool _pushOnNextFrame) {
             #if UNITY_EDITOR
             if (!Application.isPlaying) {
                 return;
             }
             #endif
 
-            GameStateManager.Instance.PushState(this);
+            if (_pushOnNextFrame) {
+                GameStateManager.Instance.PushStateOnNextFrame(this);
+            } else {
+                GameStateManager.Instance.PushState(this);
+            }
         }
         #endregion
 
@@ -142,6 +150,14 @@ namespace EnhancedFramework.GameStates {
     /// <typeparam name="T">Override type to be associated with this state.</typeparam>
     [Serializable]
     public abstract class GameState<T> : GameState where T : GameStateOverride {
+        #region Constructors
+        /// <inheritdoc cref="GameState(bool)"/>
+        public GameState() : base() { }
+
+        /// <inheritdoc cref="GameState(bool)"/>
+        protected GameState(bool _addOnStack) : base(_addOnStack) { }
+        #endregion
+
         #region State Override
         public override sealed void OnStateOverride(GameStateOverride _state) {
             base.OnStateOverride(_state);

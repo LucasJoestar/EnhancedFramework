@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if DOTWEEN_ENABLED
 using EnhancedFramework.Core;
 using UnityEngine;
 
@@ -14,3 +15,4 @@ namespace EnhancedFramework.UI {
     /// </summary>
     public class TweeningFadingGroupBehaviour : FadingGroupBehaviour<TweeningFadingGroup> { }
 }
+#endif

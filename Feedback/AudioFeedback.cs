@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if DOTWEEN_ENABLED
 using EnhancedEditor;
 using UnityEngine;
 
@@ -24,3 +25,4 @@ namespace EnhancedFramework.Core {
         #endregion
     }
 }
+#endif

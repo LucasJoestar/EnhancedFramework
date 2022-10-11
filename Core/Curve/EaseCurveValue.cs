@@ -4,11 +4,14 @@
 //
 // ================================================================================== //
 
-using DG.Tweening;
 using EnhancedEditor;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+
+#if DOTWEEN_ENABLED
+using DG.Tweening;
+#endif
 
 using Min = EnhancedEditor.MinAttribute;
 
@@ -129,6 +132,7 @@ namespace EnhancedFramework.Core {
         #endregion
     }
 
+    #if DOTWEEN_ENABLED
     /// <summary>
     /// Wrapper utility class for an ease curve type value.
     /// </summary>
@@ -155,6 +159,7 @@ namespace EnhancedFramework.Core {
         }
         #endregion
     }
+    #endif
 
     /// <summary>
     /// Wrapper utility class for an animation curve type value.
@@ -178,7 +183,11 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         protected override float DoEvaluate(int _id, float _percent) {
+            #if DOTWEEN_ENABLED
             return DOVirtual.EasedValue(Range.x, Range.y, _percent, Curve);
+            #else
+            return Mathf.Lerp(Range.x, Range.y, Curve.Evaluate(_percent));
+            #endif
         }
         #endregion
     }
@@ -201,7 +210,11 @@ namespace EnhancedFramework.Core {
             // -----------------------
 
             public float GetTime(AnimationCurve _curve) {
+                #if DOTWEEN_ENABLED
                 return DOVirtual.EasedValue(0f, From, Time / Duration, _curve);
+                #else
+                return Mathf.Lerp(0f, From, _curve.Evaluate(Time / Duration));
+                #endif
             }
         }
         #endregion

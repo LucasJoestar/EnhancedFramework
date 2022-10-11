@@ -4,6 +4,8 @@
 //
 // ================================================================================== //
 
+
+#if DOTWEEN_ENABLED
 using DG.Tweening;
 using DG.Tweening.Core;
 using EnhancedEditor;
@@ -162,3 +164,4 @@ namespace EnhancedFramework.Chronos {
         #endregion
 	}
 }
+#endif

@@ -4,9 +4,10 @@
 //
 // ================================================================================== //
 
+#if INPUT_SYSTEM_PACKAGE
 using EnhancedEditor.Editor;
-using EnhancedFramework.Core;
 using EnhancedFramework.Input;
+using EnhancedFramework.Core;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -74,3 +75,4 @@ namespace EnhancedFramework.Editor {
         #endregion
     }
 }
+#endif

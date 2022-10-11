@@ -19,7 +19,7 @@ namespace EnhancedFramework.UI {
         #region Global Members
         [Section("Fading Group")]
 
-        [SerializeField, Enhanced, Block(false)] protected U group = default;
+        [SerializeField, Enhanced, Block] protected U group = default;
 
         /// <inheritdoc cref="FadingGroup.Group"/>
         public CanvasGroup Group {
@@ -34,12 +34,10 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Visiblity
-        [Button(SuperColor.Green)]
         public virtual void Show(Action _onComplete = null) {
             group.Show(_onComplete);
         }
 
-        [Button(SuperColor.Crimson)]
         public virtual void Hide(Action _onComplete = null) {
             group.Hide(_onComplete);
         }
@@ -50,6 +48,18 @@ namespace EnhancedFramework.UI {
 
         public virtual void SetVisibility(bool _isVisible, Action _onComplete = null) {
             group.SetVisibility(_isVisible, _onComplete);
+        }
+
+        // -----------------------
+
+        [Button(ActivationMode.Play, SuperColor.Green)]
+        protected void ShowGroup() {
+            Show();
+        }
+
+        [Button(ActivationMode.Play, SuperColor.Crimson)]
+        protected void HideGroup() {
+            Hide();
         }
         #endregion
     }

@@ -102,7 +102,7 @@ namespace EnhancedFramework.Editor {
             }
 
             // Get the editing field generic type as the component reference type.
-            Type _type = fieldInfo.FieldType;
+            Type _type = GetFieldInfo(_property).FieldType;
             while (!_type.IsGenericType) {
                 _type = _type.BaseType;
             }
@@ -115,45 +115,47 @@ namespace EnhancedFramework.Editor {
                 _propertyPosition = EditorGUI.PrefixLabel(_propertyPosition, _label);
                 EditorGUI.LabelField(_propertyPosition, GUIContent.none);
 
-                if (_isLock && !_isReference && (_guid != 0)) {
-                    // When the reference could not be found, display an informative help box.
-                    GUIContent _gui;
+                using (var _indent = EnhancedEditorGUI.ZeroIndentScope()) {
+                    if (_isLock && !_isReference && (_guid != CrossSceneReferenceUtility.NullGUID)) {
+                        // When the reference could not be found, display an informative help box.
+                        GUIContent _gui;
 
-                    if (string.IsNullOrEmpty(_sceneGUID)) {
-                        _gui = missingGUI;
-                        _gui.text = $"Missing Reference ({_type.Name})";
+                        if (string.IsNullOrEmpty(_sceneGUID)) {
+                            _gui = missingGUI;
+                            _gui.text = $"Missing Reference ({_type.Name})";
+                        } else {
+                            _gui = notLoadedGUI;
+                            _gui.text = $"Not Loaded ({_type.Name})";
+                        }
+
+                        EditorGUI.LabelField(_propertyPosition, GUIContent.none, EditorStyles.helpBox);
+
+                        _propertyPosition.xMin += 1f;
+                        _propertyPosition.y += 1f;
+                        _propertyPosition.height -= 2f;
+
+                        EditorGUI.LabelField(_propertyPosition, _gui);
                     } else {
-                        _gui = notLoadedGUI;
-                        _gui.text = $"Not Loaded ({_type.Name})";
-                    }
+                        // Object reference field.
+                        using (var _enabled = EnhancedGUI.GUIEnabled.Scope(!_isLock))
+                        using (var _changeCheck = new EditorGUI.ChangeCheckScope()) {
+                            Component _component = EditorGUI.ObjectField(_propertyPosition, GUIContent.none, _reference, _type, true) as Component;
 
-                    EditorGUI.LabelField(_propertyPosition, GUIContent.none, EditorStyles.helpBox);
+                            if (_changeCheck.changed) {
+                                if (_component == null) {
+                                    // Null reference.
+                                    references[_guid] = null;
+                                    _guidProperty.intValue = CrossSceneReferenceUtility.NullGUID;
+                                    _sceneGUIDProperty.stringValue = string.Empty;
+                                } else {
+                                    // Valid reference.
+                                    GameObject _object = _component.gameObject;
+                                    references[_guid] = _reference = _object.AddComponentIfNone<CrossSceneObject>();
+                                    EditorUtility.SetDirty(_object);
 
-                    _propertyPosition.xMin += 1f;
-                    _propertyPosition.y += 1f;
-                    _propertyPosition.height -= 2f;
-
-                    EditorGUI.LabelField(_propertyPosition, _gui);
-                } else {
-                    // Object reference field.
-                    using (var _enabled = EnhancedGUI.GUIEnabled.Scope(!_isLock))
-                    using (var _changeCheck = new EditorGUI.ChangeCheckScope()) {
-                        Component _component = EditorGUI.ObjectField(_propertyPosition, GUIContent.none, _reference, _type, true) as Component;
-
-                        if (_changeCheck.changed) {
-                            if (_component == null) {
-                                // Null reference.
-                                references[_guid] = null;
-                                _guidProperty.intValue = 0;
-                                _sceneGUIDProperty.stringValue = string.Empty;
-                            } else {
-                                // Valid reference.
-                                GameObject _object = _component.gameObject;
-                                references[_guid] = _reference = _object.AddComponentIfNone<CrossSceneObject>();
-                                EditorUtility.SetDirty(_object);
-
-                                _guidProperty.intValue = _reference.GUID;
-                                _sceneGUIDProperty.stringValue = AssetDatabase.AssetPathToGUID(_object.scene.path);
+                                    _guidProperty.intValue = _reference.GUID;
+                                    _sceneGUIDProperty.stringValue = AssetDatabase.AssetPathToGUID(_object.scene.path);
+                                }
                             }
                         }
                     }
