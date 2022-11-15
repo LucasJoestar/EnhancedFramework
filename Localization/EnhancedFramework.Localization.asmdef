@@ -1,10 +1,11 @@
 {
-    "name": "EnhancedFramework.Input",
-    "rootNamespace": "EnhancedFramework.Input",
+    "name": "EnhancedFramework.Localization",
+    "rootNamespace": "EnhancedFramework.Localization",
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Core",
-        "Unity.InputSystem"
+        "Unity.Localization",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -13,13 +14,13 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "INPUT_SYSTEM_PACKAGE"
+        "LOCALIZATION_ENABLED"
     ],
     "versionDefines": [
         {
-            "name": "com.unity.inputsystem",
+            "name": "com.unity.localization",
             "expression": "",
-            "define": "INPUT_SYSTEM_PACKAGE"
+            "define": "LOCALIZATION_ENABLED"
         }
     ],
     "noEngineReferences": false

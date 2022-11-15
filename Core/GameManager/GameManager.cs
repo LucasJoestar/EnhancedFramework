@@ -5,11 +5,9 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using EnhancedFramework.Settings;
-using System.Runtime.CompilerServices;
+using EnhancedFramework.Core.Settings;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("EnhancedFramework.GameStates")]
 namespace EnhancedFramework.Core {
     /// <summary>
     /// This application global game manager.

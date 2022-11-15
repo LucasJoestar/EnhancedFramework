@@ -1,5 +1,6 @@
 {
     "name": "EnhancedFramework.Feedback",
+    "rootNamespace": "EnhancedFramework.Feedback",
     "references": [
         "DOTween.Modules",
         "EnhancedEditor",

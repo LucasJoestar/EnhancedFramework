@@ -48,14 +48,14 @@ namespace EnhancedFramework.Core {
 
         #region Enhanced Behaviour
         protected override void OnBehaviourEnabled() {
-            base.OnBehaviourEnabled();
-
             if (Instance.IsValid()) {
                 OnNonSingletonInstance();   // When a singleton instance already exist, call this method.
             } else {
                 Instance = this as T;       // Set this object as singleton instance.
                 OnInstanceChanged?.Invoke(this);
             }
+
+            base.OnBehaviourEnabled();
         }
 
         protected override void OnBehaviourDisabled() {

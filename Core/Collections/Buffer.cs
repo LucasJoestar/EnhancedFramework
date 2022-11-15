@@ -6,32 +6,23 @@
 
 using EnhancedEditor;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace EnhancedFramework.Core {
     /// <summary>
     /// Buffer used to push and pop values according to a priority system.
+    /// <para/>
+    /// Automatically sort its content on modification, and use the first one as the active value.
     /// </summary>
     /// <typeparam name="T">Buffer value type.</typeparam>
     /// <typeparam name="U">Buffer key type.</typeparam>
     /// <typeparam name="V">Buffer priority value type.</typeparam>
-    public abstract class Buffer<T, U, V> : IEnumerable<KeyValuePair<U, V>> {
+    [Serializable]
+    public abstract class Buffer<T, U, V> : PairCollection<U, V> where U : IComparable<U> {
         #region Global Members
-        /// <summary>
-        /// Default buffer value.
-        /// </summary>
-        public T DefaultValue = default;
-
-        /// <summary>
-        /// Content of the buffer (elements are not ordered).
-        /// </summary>
-        public Dictionary<U, V> Content = new Dictionary<U, V>();
-
-        /// <summary>
-        /// Current active value.
-        /// </summary>
-        public T Value { get; private set; } = default;
+        [SerializeField, HideInInspector] protected T defaultValue = default;
+        [SerializeField, HideInInspector] protected T value = default;
 
         /// <summary>
         /// Called whenever this buffer active value is changed (new value as first, previous one as second).
@@ -40,125 +31,138 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        /// <inheritdoc cref="Buffer{T}(int)"/>
+        /// <summary>
+        /// The default value of this buffer.
+        /// </summary>
+        public T DefaultValue {
+            get { return defaultValue; }
+        }
+
+        /// <summary>
+        /// The current active value of the buffer.
+        /// </summary>
+        public T Value {
+            get { return value; }
+        }
+
+        // -----------------------
+
+        /// <inheritdoc cref="Buffer{T, U, V}(int, T, Action{T, T})"/>
         public Buffer(T _defaultValue = default, Action<T, T> _onValueChanged = null) {
-            DefaultValue = _defaultValue;
-            Value = _defaultValue;
+            defaultValue = _defaultValue;
+            value = _defaultValue;
 
             OnValueChanged = _onValueChanged;
         }
 
         /// <summary>
-        /// <inheritdoc cref="Buffer{T}"/>
+        /// <inheritdoc cref="Buffer{T, U, V}"/>
         /// </summary>
-        /// <param name="_capacity">Initial capacity of the buffer.</param>
+        /// <param name="_capacity">The initial capacity of this buffer.</param>
+        /// <param name="_defaultValue"><inheritdoc cref="defaultValue" path="/summary"/></param>
+        /// <param name="_onValueChanged"><inheritdoc cref="OnValueChanged" path="/summary"/></param>
         public Buffer(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : this(_defaultValue, _onValueChanged) {
-            Content = new Dictionary<U, V>(_capacity);
-        }
-        #endregion
-
-        #region IEnumerable
-        public IEnumerator<KeyValuePair<U, V>> GetEnumerator() {
-            foreach (var _pair in Content) {
-                yield return _pair;
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return GetEnumerator();
+            collection = new List<Pair<U, V>>(_capacity);
         }
         #endregion
 
         #region Buffer
-        /// <summary>
-        /// Set the active value of the buffer.
-        /// </summary>
-        /// <param name="_value">New active value.</param>
-        /// <returns>The active buffer value.</returns>
-        public T Set(T _value) {
-            OnValueChanged?.Invoke(_value, Value);
-            Value = _value;
-
-            return _value;
-        }
-
-        /// <summary>
-        /// Push a new value into the buffer.
-        /// </summary>
-        /// <param name="_key">Key of the value.</param>
-        /// <param name="_priorityValue">Priority value to be associated with the key.</param>
-        /// <returns><inheritdoc cref="Set(T)" path="/returns"/></returns>
-        public T Push(U _key, V _priorityValue) {
-            if (Content.ContainsKey(_key)) {
-                Content[_key] = _priorityValue;
-            } else {
-                Content.Add(_key, _priorityValue);
-            }
-
-            return UpdateValue();
-        }
-
-        /// <summary>
-        /// Pops and removes a value from the buffer.
-        /// </summary>
-        /// <param name="_key">Key of the value to remove.</param>
-        /// <returns><inheritdoc cref="Set(T)" path="/returns"/></returns>
-        public T Pop(U _key) {
-            Content.Remove(_key);
-            return UpdateValue();
-        }
-
-        /// <summary>
-        /// Resets the buffer and set its default value.
-        /// </summary>
-        /// <returns><inheritdoc cref="Set(T)" path="/returns"/></returns>
-        public T Reset() {
-            Content.Clear();
-            return Set(DefaultValue);
-        }
-
-        // -----------------------
-
-        /// <summary>
-        /// Same as <see cref="Push(T, int, int)"/>.
-        /// <para/> Mainly used for collection initialization.
-        /// </summary>
-        /// <param name="_value">The value to insert into the buffer.</param>
-        public void Add(KeyValuePair<U, V> _pair) {
-            Push(_pair.Key, _pair.Value);
-        }
-        #endregion
-
-        #region Value
-        private T UpdateValue() {
+        private T RefreshBuffer() {
             Pair<U, V> _value = GetDefaultValue();
 
-            if (Content.Count != 0) {
-                // Search for the value with the highest priority.
-                foreach (var _pair in Content) {
-                    if (HasPriority(_pair, _value)) {
-                        _value = new Pair<U, V>(_pair.Key, _pair.Value);
-                    }
-                }
+            if (Count != 0) {
+                // Sort the buffer by priority.
+                Sort(Compare);
+                _value = First();
             }
 
             T _newValue = GetValue(_value);
 
-            if (!EqualityComparer<T>.Default.Equals(Value, _newValue)) {
-                OnValueChanged?.Invoke(_newValue, Value);
-                Value = _newValue;
+            if (!Equals(value, _newValue)) {
+                OnValueChanged?.Invoke(_newValue, value);
+                value = _newValue;
             }
 
-            return Value;
+            return value;
         }
 
         // -----------------------
 
         protected abstract Pair<U, V> GetDefaultValue();
 
-        protected abstract bool HasPriority(Pair<U, V> _new, Pair<U, V> _current);
+        protected abstract int Compare(Pair<U, V> _first, Pair<U, V> _second);
 
         protected abstract T GetValue(Pair<U, V> _pair);
+        #endregion
+
+        #region Collection
+        /// <summary>
+        /// Pushes a key and its associated value in this buffer.
+        /// <br/> Creates a new pair if not matching key could be found, or set its value.
+        /// </summary>
+        /// <param name="_key">The key of the pair to push.</param>
+        /// <param name="_value">The value associated with the key to push.</param>
+        /// <returns>The buffer current active value.</returns>
+        public T Push(U _key, V _value) {
+            Set(_key, _value);
+            return Value;
+        }
+
+        /// <summary>
+        /// Pops a key and its associated value from this buffer.
+        /// </summary>
+        /// <param name="_key">The key of the pair to pop from this buffer.</param>
+        /// <returns>The buffer current active value.</returns>
+        public T Pop(U _key) {
+            Remove(_key);
+            return Value;
+        }
+
+        // -----------------------
+
+        public override int Set(U _key, V _value) {
+            base.Set(_key, _value);
+            RefreshBuffer();
+
+            return IndexOfKey(_key);
+        }
+
+        public override void CopyTo(Pair<U, V>[] _array, int _arrayIndex) {
+            base.CopyTo(_array, _arrayIndex);
+            RefreshBuffer();
+        }
+
+        public override void Shift(int _index, int _shiftIndex) {
+            base.Shift(_index, _shiftIndex);
+            RefreshBuffer();
+        }
+
+        public override void RemoveAt(int _index) {
+            base.RemoveAt(_index);
+            RefreshBuffer();
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Resets this buffer.
+        /// </summary>
+        /// <returns>The buffer current active value.</returns>
+        public T Reset() {
+            Clear();
+            return Value;
+        }
+
+        // -----------------------
+
+        public override void Clear() {
+            base.Clear();
+            RefreshBuffer();
+        }
+
+        public override void Sort() {
+            collection.Sort((a, b) => a.First.CompareTo(b.First));
+        }
         #endregion
     }
 
@@ -168,7 +172,8 @@ namespace EnhancedFramework.Core {
     /// Uses the value as the key.
     /// </summary>
     /// <typeparam name="T">Key / value type.</typeparam>
-    public class BufferR<T> : Buffer<T, T, int> {
+    [Serializable]
+    public class BufferR<T> : Buffer<T, T, int> where T : IComparable<T> {
         #region Constructor
         /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, Action{T, T})"/>
         public BufferR(T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_defaultValue, _onValueChanged) { }
@@ -177,13 +182,13 @@ namespace EnhancedFramework.Core {
         public BufferR(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_capacity, _defaultValue, _onValueChanged) { }
         #endregion
 
-        #region Value
+        #region Buffer
         protected override Pair<T, int> GetDefaultValue() {
-            return new Pair<T, int>(DefaultValue, int.MinValue);
+            return new Pair<T, int>(defaultValue, int.MinValue);
         }
 
-        protected override bool HasPriority(Pair<T, int> _new, Pair<T, int> _current) {
-            return _new.Second > _current.Second;
+        protected override int Compare(Pair<T, int> _first, Pair<T, int> _second) {
+            return -_first.Second.CompareTo(_second.Second);
         }
 
         protected override T GetValue(Pair<T, int> _pair) {
@@ -198,6 +203,7 @@ namespace EnhancedFramework.Core {
     /// Uses the priority as the key.
     /// </summary>
     /// <typeparam name="T">Value type.</typeparam>
+    [Serializable]
     public class BufferI<T> : Buffer<T, int, T> {
         #region Constructor
         /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, Action{T, T})"/>
@@ -207,13 +213,13 @@ namespace EnhancedFramework.Core {
         public BufferI(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_capacity, _defaultValue, _onValueChanged) { }
         #endregion
 
-        #region Value
+        #region Buffer
         protected override Pair<int, T> GetDefaultValue() {
-            return new Pair<int, T>(int.MinValue, DefaultValue);
+            return new Pair<int, T>(int.MinValue, defaultValue);
         }
 
-        protected override bool HasPriority(Pair<int, T> _new, Pair<int, T> _current) {
-            return _new.First > _current.First;
+        protected override int Compare(Pair<int, T> _first, Pair<int, T> _second) {
+            return -_first.First.CompareTo(_second.First);
         }
 
         protected override T GetValue(Pair<int, T> _pair) {
@@ -228,6 +234,7 @@ namespace EnhancedFramework.Core {
     /// Let the user use a different object for the value, the key and the priority.
     /// </summary>
     /// <typeparam name="T">Value type.</typeparam>
+    [Serializable]
     public class BufferV<T> : Buffer<T, int, Pair<T, int>> {
         #region Constructor
         /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, Action{T, T})"/>
@@ -237,13 +244,13 @@ namespace EnhancedFramework.Core {
         public BufferV(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_capacity, _defaultValue, _onValueChanged) { }
         #endregion
 
-        #region Value
+        #region Buffer
         protected override Pair<int, Pair<T, int>> GetDefaultValue() {
-            return new Pair<int, Pair<T, int>>(int.MinValue, new Pair<T, int>(DefaultValue, int.MinValue));
+            return new Pair<int, Pair<T, int>>(int.MinValue, new Pair<T, int>(defaultValue, int.MinValue));
         }
 
-        protected override bool HasPriority(Pair<int, Pair<T, int>> _new, Pair<int, Pair<T, int>> _current) {
-            return _new.Second.Second > _current.Second.Second;
+        protected override int Compare(Pair<int, Pair<T, int>> _first, Pair<int, Pair<T, int>> _second) {
+            return -_first.Second.Second.CompareTo(_second.Second.Second);
         }
 
         protected override T GetValue(Pair<int, Pair<T, int>> _pair) {

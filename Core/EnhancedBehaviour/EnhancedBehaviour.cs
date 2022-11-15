@@ -38,10 +38,8 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Object used for console logging, using <see cref="UpdateManager"/> update system.
         /// </summary>
-        Object IBaseUpdate.GetLogObject {
-            get {
-                return this;
-            }
+         public Object LogObject {
+            get { return this; }
         }
 
         /// <summary>

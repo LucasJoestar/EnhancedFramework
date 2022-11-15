@@ -2,10 +2,7 @@
     "name": "EnhancedFramework.Core",
     "rootNamespace": "EnhancedFramework.Core",
     "references": [
-        "EnhancedEditor",
-        "EnhancedFramework.Settings",
-        "Unity.InputSystem",
-        "Unity.Localization"
+        "EnhancedEditor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -14,12 +11,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.localization",
-            "expression": "",
-            "define": "LOCALIZATION_ENABLED"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

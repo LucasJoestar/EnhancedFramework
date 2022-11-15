@@ -5,7 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor.Editor;
-using EnhancedFramework.GameStates;
+using EnhancedFramework.Core.GameStates;
 using UnityEditor;
 using UnityEngine;
 
