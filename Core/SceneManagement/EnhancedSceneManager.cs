@@ -12,11 +12,40 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
+using Object = UnityEngine.Object;
 
 namespace EnhancedFramework.Core {
+    /// <summary>
+    /// All <see cref="EnhancedSceneManager"/> loading-related possible states.
+    /// </summary>
+    public enum LoadingState {
+        Inactive                = 0,
+        Request,
+        Prepare,
+        Start,
+        Loading                 = 20,
+        Unloading,
+        FreeMemory,
+        WaitForInitialization,
+        Ready,
+        Complete                = 99,
+    }
+
+    /// <summary>
+    /// All <see cref="EnhancedSceneManager"/> unloading-related possible states.
+    /// </summary>
+    public enum UnloadingState {
+        Inactive                = 0,
+        Request,
+        Prepare,
+        Start,
+        Unloading               = 20,
+        FreeMemory,
+        WaitForInitialization,
+        Ready,
+        Complete                = 99
+    }
+
     /// <summary>
     /// Interface used to indicate when an object has been fully initialized during a loading state.
     /// <br/> After loading scenes, the <see cref="EnhancedSceneManager"/>
@@ -29,45 +58,14 @@ namespace EnhancedFramework.Core {
     public interface ILoadingProcessor {
         #region Content
         /// <summary>
+        /// This processor <see cref="Object"/> used for log.
+        /// </summary>
+        Object LogObject { get; }
+
+        /// <summary>
         /// Indicates if the object has been fully initialized or is still processing.
         /// </summary>
         bool IsProcessing { get; }
-        #endregion
-    }
-
-    /// <summary>
-    /// Use this interface to receive callbacks on the <see cref="EnhancedSceneManager"/> loading state.
-    /// </summary>
-    public interface ILoadingCallbackReceiver {
-        #region Content
-        /// <summary>
-        /// Called when starting a loading operation.
-        /// </summary>
-        void OnStartLoading();
-
-        /// <summary>
-        /// Called whenever the current loading state of the <see cref="EnhancedSceneManager"/> change.
-        /// </summary>
-        /// <param name="_state">Current loading step operation.</param>
-        void OnLoadingState(EnhancedSceneManager.LoadingState _state);
-
-        /// <summary>
-        /// Called when completing a loading operation.
-        /// </summary>
-        void OnStopLoading();
-        #endregion
-    }
-
-    /// <summary>
-    /// Use this interface to receive callbacks when the <see cref="EnhancedSceneManager"/> is unloading scenes.
-    /// </summary>
-    public interface IUnloadingCallbackReceiver {
-        #region Content
-        /// <summary>
-        /// Called before a specific <see cref="SceneBundle"/> starts being unloaded.
-        /// </summary>
-        /// <param name="_bundle">The <see cref="SceneBundle"/> that is about to be unloaded.</param>
-        public void OnPreUnloadBundle(SceneBundle _bundle);
         #endregion
     }
 
@@ -96,10 +94,6 @@ namespace EnhancedFramework.Core {
             }
         }
 
-        public override bool CompleteLoading() {
-            return true;
-        }
-
         public override void OnStopLoading() {
             base.OnStopLoading();
 
@@ -107,12 +101,6 @@ namespace EnhancedFramework.Core {
             if (pauseGameOnLoading) {
                 ChronosManager.Instance.RemoveOverride(chronosID);
             }
-        }
-        #endregion
-
-        #region Unloading
-        public override bool CompleteUnloading() {
-            return true;
         }
         #endregion
     }
@@ -127,22 +115,6 @@ namespace EnhancedFramework.Core {
     /// property to call your own functions and receive multiple callbacks.
     /// </summary>
     public class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager> {
-        #region Loading State
-        /// <summary>
-        /// Used to reference the current state of this class when performing a loading operation.
-        /// </summary>
-        public enum LoadingState {
-            Unloading = -1,
-            Inactive = 0,
-            Starting,
-            Loading,
-            FreeingMemory,
-            WaitingForInitialization,
-            WaitingForBehaviour,
-            Complete
-        }
-        #endregion
-
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
@@ -151,47 +123,103 @@ namespace EnhancedFramework.Core {
         [Section("Enhanced Scene Manager")]
 
         [SerializeField]
-        private SerializedType<SceneManagerBehaviour> behaviourType = new SerializedType<SceneManagerBehaviour>(SerializedTypeConstraint.None, typeof(DefaultSceneManagerBehaviour));
-
-        [Space(5f)]
+        private SerializedType<ILoadingState> loadingStateType      = new SerializedType<ILoadingState>(SerializedTypeConstraint.None, typeof(DefaultLoadingGameState));
 
         [SerializeField]
-        private SerializedType<ILoadingState> loadingStateType = new SerializedType<ILoadingState>(SerializedTypeConstraint.None, typeof(DefaultLoadingGameState));
-
-        [SerializeField]
-        private SerializedType<IUnloadingState> unloadingStateType = new SerializedType<IUnloadingState>(SerializedTypeConstraint.None, typeof(DefaultUnloadingGameState));
+        private SerializedType<IUnloadingState> unloadingStateType  = new SerializedType<IUnloadingState>(SerializedTypeConstraint.None, typeof(DefaultUnloadingGameState));
 
         [Space(10f)]
 
         [SerializeField, Enhanced, Required, Tooltip("The first scene to load when starting the game")] private SceneBundle firstScene = null;
-        [SerializeField, Enhanced, ReadOnly] private LoadingState state = LoadingState.Inactive;
+
+        [Space(10f)]
+
+        [SerializeField, Enhanced, ReadOnly] private LoadingState loadingState      = LoadingState.Inactive;
+        [SerializeField, Enhanced, ReadOnly] private UnloadingState unloadingState  = UnloadingState.Inactive;
+
+        [Space(10f)]
+
+        [SerializeField, Enhanced, ReadOnly] private Set<SceneBundle> loadedBundles = new Set<SceneBundle>();
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeReference, Block] private SceneManagerBehaviour behaviour = new DefaultSceneManagerBehaviour();
+        [SerializeField, Enhanced, Block]
+        private PolymorphValue<SceneManagerBehaviour> behaviour = new PolymorphValue<SceneManagerBehaviour>(SerializedTypeConstraint.None,
+                                                                                                            typeof(DefaultSceneManagerBehaviour), "Behaviour");
 
         // -----------------------
 
+        private readonly List<ILoadingProcessor> processors = new List<ILoadingProcessor>();
+
+        // -------------------------------------------
+        // Accessors
+        // -------------------------------------------
+
         /// <summary>
-        /// The current state of this scene manager.
+        /// The current <see cref="Core.LoadingState"/> of this scene manager.
         /// </summary>
-        public LoadingState State {
-            get { return state; }
+        public LoadingState LoadingState {
+            get { return loadingState; }
         }
 
         /// <summary>
-        /// The behaviour class of this scene manager.
+        /// The current <see cref="Core.UnloadingState"/> of this scene manager.
+        /// </summary>
+        public UnloadingState UnloadingState {
+            get { return unloadingState; }
+        }
+
+        /// <summary>
+        /// This scene manager <see cref="SceneManagerBehaviour"/> instance.
         /// <br/> Use this to call your own specific behaviours.
         /// </summary>
         public SceneManagerBehaviour Behaviour {
-            get { return behaviour; }
+            get { return behaviour.Value; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Events
+        // -------------------------------------------
 
-        private readonly List<ILoadingProcessor> processors                     = new List<ILoadingProcessor>();
-        private readonly List<ILoadingCallbackReceiver> loadingCallbacks        = new List<ILoadingCallbackReceiver>();
-        private readonly List<IUnloadingCallbackReceiver> unloadingCallbacks    = new List<IUnloadingCallbackReceiver>();
+        /// <summary>
+        /// Called when starting a new loading operation.
+        /// </summary>
+        public static event Action OnStartLoading   = null;
+
+        /// <summary>
+        /// Called when stoping the current loading operation.
+        /// </summary>
+        public static event Action OnStopLoading    = null;
+
+        /// <summary>
+        /// Called when starting a new unloading operation.
+        /// </summary>
+        public static event Action OnStartUnloading = null;
+
+        /// <summary>
+        /// Called when stoping the current unloading operation.
+        /// </summary>
+        public static event Action OnStopUnloading  = null;
+
+        /// <summary>
+        /// Called when the state for the current loading operation changes.
+        /// </summary>
+        public static event Action<LoadingState> OnLoadingState     = null;
+
+        /// <summary>
+        /// Called when the state for the current unloading operation changes.
+        /// </summary>
+        public static event Action<UnloadingState> OnUnloadingState = null;
+
+        /// <summary>
+        /// Called whenever after a <see cref="SceneBundle"/> has been loaded.
+        /// </summary>
+        public static event Action<SceneBundle> OnPostLoadBundle    = null;
+
+        /// <summary>
+        /// Called whenever before unloading a <see cref="SceneBundle"/>.
+        /// </summary>
+        public static event Action<SceneBundle> OnPreUnloadBundle   = null;
         #endregion
 
         #region Enhanced Behaviour
@@ -205,7 +233,21 @@ namespace EnhancedFramework.Core {
             } else {
                 // If all scenes are already loaded, enters in a loading state as soon as possible.
                 // Used to prepare the scene and wait for all objects to be fully initialized.
-                DoPerformLoading();
+                BuildSceneDatabase _database = BuildSceneDatabase.Database;
+
+                for (int i = 0; i < _database.SceneBundleCount; i++) {
+                    SceneBundle _bundle = _database.GetSceneBundleAt(i);
+
+                    // Simulate scene loading; a scene cannot be loaded twice anyway.
+                    if (_bundle.IsLoaded) {
+                        LoadSceneBundle(_bundle, LoadSceneMode.Additive);
+                    }
+                }
+
+                // Default loading.
+                if (loadingBundles.Count == 0) {
+                    DoPerformLoading();
+                }
             }
             #else
             LoadFirstScene();
@@ -214,39 +256,16 @@ namespace EnhancedFramework.Core {
             // ----- Local Methods ----- \\
 
             void LoadFirstScene() {
+                // Get this object scene bundle.
+                if (SceneBundle.GetSceneBundle(gameObject.scene, out SceneBundle _bundle)) {
+                    loadedBundles.Add(_bundle);
+                }
+
                 if (firstScene.IsValid()) {
                     Instance.LoadSceneBundle(firstScene, LoadSceneMode.Additive);
                 }
             }
         }
-
-        // -----------------------
-
-        #if UNITY_EDITOR
-        private void Awake() {
-            RefreshBehaviour();
-        }
-
-        private void OnValidate() {
-            RefreshBehaviour();
-        }
-
-        // -----------------------
-
-        private void RefreshBehaviour() {
-            if (Application.isPlaying) {
-                return;
-            }
-
-            // Create a new behaviour if its type changed.
-            if (behaviourType.Type != behaviour.GetType()) {
-                var _behaviour = Activator.CreateInstance(behaviourType.Type);
-                behaviour = EnhancedUtility.CopyObjectContent(behaviour, _behaviour) as SceneManagerBehaviour;
-
-                EditorUtility.SetDirty(this);
-            }
-        }
-        #endif
         #endregion
 
         #region Registration
@@ -269,109 +288,21 @@ namespace EnhancedFramework.Core {
         public void UnregisterProcessor(ILoadingProcessor _processor) {
             processors.Remove(_processor);
         }
-
-        // -----------------------
-
-        /// <summary>
-        /// Registers a new <see cref="ILoadingCallbackReceiver"/> instance.
-        /// <para/>
-        /// Should be called on object initialization. Keep in mind to unregister it on deactivation.
-        /// </summary>
-        /// <param name="_callback">The <see cref="ILoadingCallbackReceiver"/> to register.</param>
-        public void RegisterCallbackReceiver(ILoadingCallbackReceiver _callback) {
-            loadingCallbacks.Add(_callback);
-        }
-
-        /// <summary>
-        /// Unregisters a specific <see cref="ILoadingCallbackReceiver"/> instance.
-        /// <para/>
-        /// Should be called when the object is deactivated or destroyed.
-        /// </summary>
-        /// <param name="_callback">The <see cref="ILoadingCallbackReceiver"/> to unregister.</param>
-        public void UnregisterCallbackReceiver(ILoadingCallbackReceiver _callback) {
-            loadingCallbacks.Remove(_callback);
-        }
-
-        // -----------------------
-
-        /// <summary>
-        /// Registers a new <see cref="IUnloadingCallbackReceiver"/> instance.
-        /// <para/>
-        /// Should be called on object initialization. Keep in mind to unregister it on deactivation.
-        /// </summary>
-        /// <param name="_callback">The <see cref="IUnloadingCallbackReceiver"/> to register.</param>
-        public void RegisterUnloadingCallbackReceiver(IUnloadingCallbackReceiver _callback) {
-            unloadingCallbacks.Add(_callback);
-        }
-
-        /// <summary>
-        /// Unregisters a specific <see cref="IUnloadingCallbackReceiver"/> instance.
-        /// <para/>
-        /// Should be called when the object is deactivated or destroyed.
-        /// </summary>
-        /// <param name="_callback">The <see cref="IUnloadingCallbackReceiver"/> to unregister.</param>
-        public void UnregisterUnloadingCallbackReceiver(IUnloadingCallbackReceiver _callback) {
-            unloadingCallbacks.Remove(_callback);
-        }
         #endregion
 
         #region Loading
-        private const float BeforeUnloadingDelay = .2f;
-        private const float AfterLoadingDelay = .25f;
+        private const float StartLoadDelay      = .2f;
+        private const float LoadBundleInterval  = .01f;
+        private const float LoadCompletionDelay = .25f;
 
         private readonly PairCollection<SceneBundle, LoadSceneMode> loadingBundles = new PairCollection<SceneBundle, LoadSceneMode>();
 
         private Coroutine loadingCoroutine = null;
-        private GameState loadingState = null;
+        private GameState loadingGameState = null;
 
-        // -----------------------
-
-        /// <summary>
-        /// /!\ Should only be called from a <see cref="LoadingGameState"/> /!\
-        /// <para/>
-        /// Starts loading all previously requested <see cref="SceneBundle"/>.
-        /// </summary>
-        public void StartLoading() {
-            #if DEVELOPMENT
-            if (loadingCoroutine != null) {
-                this.LogError("SceneManager - Starting a new loading operation while another is still running | Stoping the previous coroutine");
-                StopCoroutine(loadingCoroutine);
-            }
-            #endif
-
-            // Loading.
-            behaviour.OnSetupLoading(loadingBundles);
-            loadingCoroutine = StartCoroutine(PerformLoading());
-
-            // Callbacks.
-            foreach (ILoadingCallbackReceiver _object in loadingCallbacks) {
-                _object.OnStartLoading();
-            }
-        }
-
-        /// <summary>
-        /// /!\ Should only be called from a <see cref="LoadingGameState"/> /!\
-        /// <para/>
-        /// Stops all active loading operation(s).
-        /// </summary>
-        public void StopLoading() {
-            if (state != LoadingState.Complete) {
-                this.LogWarning("Scene Loading prematurely canceled before completion");
-                StopCoroutine(loadingCoroutine);
-            }
-
-            // Callbacks.
-            foreach (ILoadingCallbackReceiver _object in loadingCallbacks) {
-                _object.OnStopLoading();
-            }
-
-            loadingCoroutine = null;
-
-            SetLoadingState(LoadingState.Inactive);
-            behaviour.OnStopLoading();
-        }
-
-        // -----------------------
+        // -------------------------------------------
+        // Requests
+        // -------------------------------------------
 
         /// <summary>
         /// Requests to load a specific <see cref="SceneBundle"/>.
@@ -386,132 +317,190 @@ namespace EnhancedFramework.Core {
         private void DoPerformLoading() {
             // Create a new loading state if none.
             // Loading will only start when the state ask for it.
-            if (!loadingState.IsActive()) {
-                loadingState = GameState.CreateState(loadingStateType);
+            if (!loadingGameState.IsActive()) {
+
+                SetLoadingState(LoadingState.Request);
+                loadingGameState = GameState.CreateState(loadingStateType);
             }
         }
 
+        // -------------------------------------------
+        // Game State Callbacks
+        // -------------------------------------------
+
+        /// <summary>
+        /// /!\ Should only be called from a <see cref="LoadingGameState{T}"/> /!\
+        /// <para/>
+        /// Starts loading all previously requested <see cref="SceneBundle"/>.
+        /// </summary>
+        public void StartLoading() {
+            #if DEVELOPMENT
+            // This case should never happen. If it does, log an error.
+            if (loadingCoroutine != null) {
+                LogMessage("Starting a new loading operation while another is still running\nStoping the previous coroutine", LogType.Error);
+                StopLoading();
+            }
+            #endif
+
+            // Start loading.
+            loadingCoroutine = StartCoroutine(PerformLoading());
+        }
+
+        /// <summary>
+        /// /!\ Should only be called from a <see cref="LoadingGameState{T}"/> /!\
+        /// <para/>
+        /// Stops all active loading operation(s).
+        /// </summary>
+        public void StopLoading() {
+            switch (loadingState) {
+                // Ignore when inactive.
+                case LoadingState.Inactive:
+                    return;
+
+                // Valid.
+                case LoadingState.Complete:
+                    break;
+
+                // Prematurely stopped.
+                default:
+                    LogMessage("Loading prematurely canceled before completion", LogType.Warning);
+                    StopCoroutine(loadingCoroutine);
+
+                    Behaviour.OnCancelLoading();
+                    break;
+            }
+
+            SetLoadingState(LoadingState.Inactive);
+            Behaviour.OnStopLoading();
+
+            OnStopLoading?.Invoke();
+            loadingCoroutine = null;
+        }
+
+        // -------------------------------------------
+        // Loading
+        // -------------------------------------------
+
         private IEnumerator PerformLoading() {
-            // Wait for all unloading operations to be compelete.
-            while (state == LoadingState.Unloading) {
+            // Preparation.
+            Behaviour.PrepareLoading(loadingBundles);
+            SetLoadingState(LoadingState.Prepare);
+            
+            // Wait for all pending operations to be compelete.
+            while ((unloadingState != UnloadingState.Inactive) || !Behaviour.StartLoading) {
                 yield return null;
             }
 
             // Initialization.
-            SetLoadingState(LoadingState.Starting);
-            behaviour.OnStartLoading();
+            Behaviour.OnStartLoading();
+            OnStartLoading?.Invoke();
 
+            SetLoadingState(LoadingState.Start);
             yield return null;
 
             // Terminates all gameplay states.
             GameStateManager.Instance.PopNonPersistentStates();
 
-            yield return new WaitForSecondsRealtime(BeforeUnloadingDelay);
+            yield return new WaitForSecondsRealtime(StartLoadDelay);
 
             SetLoadingState(LoadingState.Loading);
 
-            // Load bundles.
+            // Cache the yield instruction to avoid garbage.
+            var _interval = new WaitForSecondsRealtime(LoadBundleInterval);
+
             for (int i = 0; i < loadingBundles.Count; i++) {
                 var _pair = loadingBundles[i];
-                SceneBundle _bundle = _pair.First;
+                SceneBundle _toLoad = _pair.First;
                 LoadSceneMode _mode = _pair.Second;
 
-                behaviour.OnPreLoadBundle(_bundle, _mode);
+                Behaviour.OnPreLoadBundle(_toLoad, _mode);
 
-                // When wanting to load the bundle all alone,
-                // simply unload all scenes except core, then load it additively.
+                // When wanting to load a bundle all alone,
+                // simply unload all scenes except for core, then load it additively.
                 if (_mode == LoadSceneMode.Single) {
-                    for (int j = SceneManager.sceneCount; j-- > 0;) {
-                        Scene _scene = SceneManager.GetSceneAt(i);
+                    SetLoadingState(LoadingState.Unloading);
 
-                        if (!_scene.IsCoreScene()) {
-                            yield return SceneManager.UnloadSceneAsync(_scene, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
+                    foreach (SceneBundle _toUnload in loadedBundles) {
+                        if (!_toUnload.IsCoreBundle()) {
+                            UnloadSceneBundle(_toUnload, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
                         }
                     }
+
+                    // Wait for unloading completion.
+                    while (unloadingState != UnloadingState.Inactive) {
+                        yield return null;
+                    }
+
+                    SetLoadingState(LoadingState.Loading);
                 }
 
-                var _operation = _bundle.LoadAsync(LoadSceneMode.Additive);
-                behaviour.OnLoadBundle(_operation, i, loadingBundles.Count);
+                // Loading operation.
+                var _operation = _toLoad.LoadAsync(LoadSceneMode.Additive);
+                Behaviour.OnLoadBundle(_operation, i, loadingBundles.Count);
 
                 yield return _operation;
+                yield return _interval;
+
+                loadedBundles.Add(_toLoad);
+                OnPostLoadBundle?.Invoke(_toLoad);
             }
 
             loadingBundles.Clear();
 
             // Free memory.
-            SetLoadingState(LoadingState.FreeingMemory);
+            SetLoadingState(LoadingState.FreeMemory);
             yield return FreeMemory();
 
-            SetLoadingState(LoadingState.WaitingForInitialization);
+            SetLoadingState(LoadingState.WaitForInitialization);
 
             // Once all scenes have been loaded, wait before checking initialized behaviours,
             // as some may not be awaken yet.
-            yield return new WaitForSecondsRealtime(AfterLoadingDelay);
+            yield return new WaitForSecondsRealtime(LoadCompletionDelay);
 
-            // Wait until all behaviours are loaded and initialized.
+            // Wait for all behaviours to be fully loaded and initialized.
             while (IsAnyProcessorActive()) {
                 yield return null;
             }
 
-            SetLoadingState(LoadingState.WaitingForBehaviour);
+            SetLoadingState(LoadingState.Ready);
+            Behaviour.OnLoadingReady();
 
             // Before completion, make sure the loading state is the current active one,
             // and let the behaviour complete its requested operations (like a press for any key).
-            while (!loadingState.IsCurrentState || !behaviour.CompleteLoading()) {
+            while (!loadingGameState.IsCurrentState || !Behaviour.CompleteLoading) {
                 yield return null;
             }
 
             SetLoadingState(LoadingState.Complete);
 
-            // Terminates state.
-            loadingState.RemoveState();
+            // Terminates the state.
+            loadingGameState.RemoveState();
+        }
+
+        /// <summary>
+        /// Sets the loading state of the object, and perform all related operations.
+        /// </summary>
+        private void SetLoadingState(LoadingState _state) {
+            loadingState = _state;
+            Behaviour.OnLoadingState(_state);
+
+            OnLoadingState?.Invoke(_state);
         }
         #endregion
 
         #region Unloading
+        private const float StartUnloadDelay        = .1f;
+        private const float UnloadBundleInterval    = .01f;
+        private const float UnloadCompletionDelay   = .05f;
+
         private readonly PairCollection<SceneBundle, UnloadSceneOptions> unloadingBundles = new PairCollection<SceneBundle, UnloadSceneOptions>();
 
         private Coroutine unloadingCoroutine = null;
-        private GameState unloadingState = null;
+        private GameState unloadingGameState = null;
 
-        // -----------------------
-
-        /// <summary>
-        /// /!\ Should only be called from a <see cref="UnloadingGameState"/> /!\
-        /// <para/>
-        /// Starts unloading all previously requested <see cref="SceneBundle"/>.
-        /// </summary>
-        public void StartUnloading() {
-            #if DEVELOPMENT
-            if (unloadingCoroutine != null) {
-                this.LogError("SceneManager - Starting a new unloading operation while another is still running | Stoping the previous coroutine");
-                StopCoroutine(unloadingCoroutine);
-            }
-            #endif
-
-            // Unloading.
-            behaviour.OnSetupUnloading(unloadingBundles);
-            unloadingCoroutine = StartCoroutine(PerformUnloading());
-        }
-
-        /// <summary>
-        /// /!\ Should only be called from a <see cref="UnloadingGameState"/> /!\
-        /// <para/>
-        /// Stops all active unloading operation(s).
-        /// </summary>
-        public void StopUnloading() {
-            if (state == LoadingState.Unloading) {
-                this.LogWarning("Scene Unloading prematurely canceled before completion");
-                StopCoroutine(unloadingCoroutine);
-            }
-
-            unloadingCoroutine = null;
-
-            SetLoadingState(LoadingState.Inactive);
-            behaviour.OnStopUnloading();
-        }
-
-        // -----------------------
+        // -------------------------------------------
+        // Requests
+        // -------------------------------------------
 
         /// <summary>
         /// Requests to unload a specific <see cref="SceneBundle"/>.
@@ -520,58 +509,155 @@ namespace EnhancedFramework.Core {
         /// <param name="_options">The options used to unload the bundle.</param>
         public void UnloadSceneBundle(SceneBundle _bundle, UnloadSceneOptions _options = UnloadSceneOptions.None) {
             unloadingBundles.Add(new Pair<SceneBundle, UnloadSceneOptions>(_bundle, _options));
+            DoPerformUnloading();
+        }
 
+        private void DoPerformUnloading() {
             // Create a new unloading state if none.
             // Unloading will only start when the state ask for it.
-            if (!unloadingState.IsActive()) {
-                unloadingState = GameState.CreateState(unloadingStateType);
+            if (!unloadingGameState.IsActive()) {
+
+                SetUnloadingState(UnloadingState.Request);
+                unloadingGameState = GameState.CreateState(unloadingStateType);
             }
         }
 
+        // -------------------------------------------
+        // Game State Callbacks
+        // -------------------------------------------
+
+        /// <summary>
+        /// /!\ Should only be called from a <see cref="UnloadingGameState{T}"/> /!\
+        /// <para/>
+        /// Starts unloading all previously requested <see cref="SceneBundle"/>.
+        /// </summary>
+        public void StartUnloading() {
+            #if DEVELOPMENT
+            // This case should never happen. If it does, log an error.
+            if (unloadingCoroutine != null) {
+                LogMessage("Starting a new unloading operation while another is still running\nStoping the previous coroutine", LogType.Error);
+                StopUnloading();
+            }
+            #endif
+
+            // Start unloading.
+            unloadingCoroutine = StartCoroutine(PerformUnloading());
+        }
+
+        /// <summary>
+        /// /!\ Should only be called from a <see cref="UnloadingGameState{T}"/> /!\
+        /// <para/>
+        /// Stops all active unloading operation(s).
+        /// </summary>
+        public void StopUnloading() {
+            switch (unloadingState) {
+                // Ignore when inactive.
+                case UnloadingState.Inactive:
+                    return;
+
+                // Valid.
+                case UnloadingState.Complete:
+                    break;
+
+                // Prematurely stopped.
+                default:
+                    LogMessage("Unloading prematurely canceled before completion", LogType.Warning);
+                    StopCoroutine(unloadingCoroutine);
+
+                    Behaviour.OnCancelUnloading();
+                    break;
+            }
+
+            SetUnloadingState(UnloadingState.Inactive);
+            Behaviour.OnStopUnloading();
+
+            OnStopUnloading?.Invoke();
+            unloadingCoroutine = null;
+        }
+
+        // -------------------------------------------
+        // Unloading
+        // -------------------------------------------
+
         private IEnumerator PerformUnloading() {
+            // Preparation.
+            Behaviour.PrepareUnloading(unloadingBundles);
+            SetUnloadingState(UnloadingState.Prepare);
+
             // Wait while a loading operation is in process.
-            while (state != LoadingState.Inactive) {
+            while ((loadingState == LoadingState.Loading) || !Behaviour.StartUnloading) {
                 yield return null;
             }
 
             // Initialization.
-            SetLoadingState(LoadingState.Unloading);
-            behaviour.OnStartUnloading();
+            Behaviour.OnStartUnloading();
+            OnStartUnloading?.Invoke();
+
+            SetUnloadingState(UnloadingState.Start);
+            yield return new WaitForSecondsRealtime(StartUnloadDelay);
+
+            SetUnloadingState(UnloadingState.Unloading);
+
+            // Cache the yield instruction to avoid garbage.
+            var _interval = new WaitForSecondsRealtime(UnloadBundleInterval);
 
             // Unload bundles.
             for (int i = 0; i < unloadingBundles.Count; i++) {
                 var _pair = unloadingBundles[i];
                 SceneBundle _bundle = _pair.First;
+                UnloadSceneOptions _options = _pair.Second;
 
-                // Before unloading the bundle, call the associated callback on all registered objects,
+                // Before unloading the bundle, call the associated event
                 // and wait for all processors to be ready.
                 // This can be used to perform additional operations before destroying an object.
-                foreach (var item in unloadingCallbacks) {
-                    item.OnPreUnloadBundle(_bundle);
-                }
+                Behaviour.OnPreUnloadBundle(_bundle, _options);
+                OnPreUnloadBundle?.Invoke(_bundle);
 
                 while (IsAnyProcessorActive()) {
                     yield return null;
                 }
 
-                var _operation = _bundle.UnloadAsync(_pair.Second);
-                behaviour.OnUnloadBundle(_operation, i, loadingBundles.Count);
+                // Unloading operation.
+                var _operation = _bundle.UnloadAsync(_options);
+                Behaviour.OnUnloadBundle(_operation, i, loadingBundles.Count);
 
                 yield return _operation;
+                yield return _interval;
+
+                loadedBundles.Remove(_bundle);
+                OnPostLoadBundle?.Invoke(_bundle);
             }
 
             unloadingBundles.Clear();
+
+            // Free memory.
+            SetUnloadingState(UnloadingState.FreeMemory);
             yield return FreeMemory();
 
-            // Wait for the behaviour to be ready.
-            while (behaviour.CompleteUnloading()) {
+            yield return new WaitForSecondsRealtime(UnloadCompletionDelay);
+
+            SetUnloadingState(UnloadingState.Ready);
+            Behaviour.OnUnloadingReady();
+
+            // Wait for the behaviour to complete its associated operations.
+            while (!Behaviour.CompleteUnloading) {
                 yield return null;
             }
 
-            SetLoadingState(LoadingState.Complete);
+            SetUnloadingState(UnloadingState.Complete);
 
-            // Terminates state.
-            unloadingState.RemoveState();
+            // Terminates the state.
+            unloadingGameState.RemoveState();
+        }
+
+        /// <summary>
+        /// Sets the unloading state of the object, and perform all related operations.
+        /// </summary>
+        private void SetUnloadingState(UnloadingState _state) {
+            unloadingState = _state;
+            Behaviour.OnUnloadingState(_state);
+
+            OnUnloadingState?.Invoke(_state);
         }
         #endregion
 
@@ -580,18 +666,14 @@ namespace EnhancedFramework.Core {
         /// Indicates if any <see cref="ILoadingProcessor"/> is currently processing or not.
         /// </summary>
         public bool IsAnyProcessorActive() {
-            return processors.Exists(b => b.IsProcessing);
-        }
+            int _index = processors.FindIndex(b => b.IsProcessing);
 
-        /// <summary>
-        /// Sets the loading state of the object, and perform all related operations.
-        /// </summary>
-        private void SetLoadingState(LoadingState _state) {
-            state = _state;
-
-            foreach (ILoadingCallbackReceiver _callback in loadingCallbacks) {
-                _callback.OnLoadingState(_state);
+            if (_index != -1) {
+                //this.Log("Waiting for " + processors[_index].LogObject.name);
+                return true;
             }
+
+            return false;
         }
 
         /// <summary>

@@ -19,10 +19,10 @@ namespace EnhancedFramework.Core.GameStates {
         /// Make sure this state is behind all other gameplay states,
         /// <br/> but in front of <see cref="DefaultGameState"/> for a correct override on <see cref="GameStateOverride.IsQuitting"/>.
         /// </summary>
-        public const int QuitStatePriority = 0;
+        public const int PriorityConst = 0;
 
         public override int Priority {
-            get { return QuitStatePriority; }
+            get { return PriorityConst; }
         }
 
         public override bool IsPersistent {

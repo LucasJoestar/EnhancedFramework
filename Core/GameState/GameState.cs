@@ -128,6 +128,19 @@ namespace EnhancedFramework.Core.GameStates {
         /// </summary>
         /// <param name="_state">Global game state shared values to override.</param>
         public virtual void OnStateOverride(GameStateOverride _state) { }
+
+        /// <summary>
+        /// Implement this to override the game global chtonos (time scale) value. 
+        /// </summary>
+        /// <param name="_chronos">The new chronos value to apply.</param>
+        /// <param name="_priority">The priority of this chronos (only the one with the highest priority will be applied).</param>
+        /// <returns>True to override the game chronos, false otheriwse.</returns>
+        public virtual bool OverrideChronos(out float _chronos, out int _priority) {
+            _chronos = 1f;
+            _priority = -1;
+
+            return false;
+        }
         #endregion
 
         #region Behaviour
@@ -176,6 +189,12 @@ namespace EnhancedFramework.Core.GameStates {
         #region Comparer
         int IComparable<GameState>.CompareTo(GameState _other) {
             return Priority.CompareTo(_other.Priority);
+        }
+        #endregion
+
+        #region Utility
+        public override string ToString() {
+            return GetType().Name;
         }
         #endregion
     }

@@ -5,10 +5,9 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("EnhancedFramework.Chronos")]
 namespace EnhancedFramework.Core {
     /// <summary>
     /// Base class to derive every <see cref="MonoBehaviour"/> of the project from.
@@ -25,7 +24,7 @@ namespace EnhancedFramework.Core {
     /// <br/> You can use the OnPaused callback to implement specific behaviours when the object gets paused/unpaused,
     /// which happens when its local time scale factor reach 0.
     /// </summary>
-    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate {
+    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate, IPlayUpdate {
         #region Update Registration
         /// <summary>
         /// Override this to specify this object update registration.
@@ -34,6 +33,11 @@ namespace EnhancedFramework.Core {
         /// to add a new registration or override its value
         /// </summary>
         public virtual UpdateRegistration UpdateRegistration => 0;
+
+        /// <summary>
+        /// Override this to automatically register / unregister this behaviour as a <see cref="ILoadingProcessor"/>.
+        /// </summary>
+        public virtual bool IsLoadingProcessor => false;
 
         /// <summary>
         /// Object used for console logging, using <see cref="UpdateManager"/> update system.
@@ -46,6 +50,11 @@ namespace EnhancedFramework.Core {
         /// Indicates whether this object is initialized or not.
         /// </summary>
         bool IInitUpdate.IsInitialized { get; set; } = false;
+
+        /// <summary>
+        /// Indicates whether this object is currently "playing" or still holding its execution.
+        /// </summary>
+        bool IPlayUpdate.IsPlaying { get; set; } = false;
         #endregion
 
         #region Global Members
@@ -128,25 +137,49 @@ namespace EnhancedFramework.Core {
             OnInit();
         }
 
+        void IPlayUpdate.Play() {
+            OnPlay();
+        }
+
         // -----------------------
 
         /// <summary>
         /// Called when this behaviour is being enabled.
         /// </summary>
         protected virtual void OnBehaviourEnabled() {
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                return;
+            }
+            #endif
+
+            // Registration.
             if (UpdateRegistration != 0) {
                 UpdateManager.Instance.Register(this, UpdateRegistration);
+            }
+
+            if (IsLoadingProcessor && (this is ILoadingProcessor _processor)) {
+                EnhancedSceneManager.Instance.RegisterProcessor(_processor);
             }
         }
 
         /// <summary>
-        /// Called on object initialization.
+        /// Called on object initialization (during loading).
         /// <br/> Requires to set the flag <see cref="UpdateRegistration.Init"/> on this object <see cref="UpdateRegistration"/> property.
         /// <para/>
         /// Initialization is only called once after
         /// <br/> <see cref="OnBehaviourEnabled"/>, but before any local update.
         /// </summary>
         protected virtual void OnInit() { }
+
+        /// <summary>
+        /// Called once after exiting this object scene loading. Use this to start its behaviour execution.
+        /// <br/> Requires to set the flag <see cref="UpdateRegistration.Play"/> on this object <see cref="UpdateRegistration"/> property.
+        /// <para/>
+        /// Play is only called once after <see cref="OnInit"/>
+        /// <br/> and exiting loading, but before any local update.
+        /// </summary>
+        protected virtual void OnPlay() { }
 
         /// <summary>
         /// Called when this object is being paused or unpaused.
@@ -159,8 +192,19 @@ namespace EnhancedFramework.Core {
         /// Called when this behaviour is being disabled.
         /// </summary>
         protected virtual void OnBehaviourDisabled() {
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                return;
+            }
+            #endif
+
+            // Unregistration.
             if (UpdateRegistration != 0) {
                 UpdateManager.Instance.Unregister(this, UpdateRegistration);
+            }
+
+            if (IsLoadingProcessor && (this is ILoadingProcessor _processor)) {
+                EnhancedSceneManager.Instance.UnregisterProcessor(_processor);
             }
         }
         #endregion
@@ -226,6 +270,55 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="GetWorldVector(Vector3)"/>
         public Vector3 GetWorldVector(Vector3 _vector, Quaternion _rotation) {
             return _vector.Rotate(_rotation);
+        }
+        #endregion
+
+        #region Debug
+        /// <summary>
+        /// The <see cref="string"/> format used for logging messages to the console.
+        /// </summary>
+        public virtual string LogFormat {
+            get { return $"{$"{GetType().Name.Bold().Size(13)}  {UnicodeEmoji.RightTriangle.Get()}".Color(LogColor)}  {{0}}"; }
+        }
+
+        /// <summary>
+        /// The <see cref="Color"/> used for displaying the header of messages logged to the console.
+        /// </summary>
+        public virtual Color LogColor {
+            get { return SuperColor.White.Get(); }
+        }
+
+        // -----------------------
+
+        /// <summary>
+        /// Logs an info message to the console.
+        /// </summary>
+        /// <param name="_message">The message to log.</param>
+        /// <param name="_type">The <see cref="LogType"/> used for debug.</param>
+        [Conditional("DEBUG_LOGGER")]
+        public void LogMessage(string _message, LogType _type = LogType.Log) {
+            _message = string.Format(LogFormat, _message);
+
+            switch (_type) {
+                case LogType.Log:
+                    this.Log(_message);
+                    break;
+
+                case LogType.Warning:
+                    this.LogWarning(_message);
+                    break;
+
+                case LogType.Assert:
+                    this.LogAssertion(_message);
+                    break;
+
+                case LogType.Error:
+                    this.LogError(_message);
+                    break;
+
+                default:
+                    break;
+            }
         }
         #endregion
     }

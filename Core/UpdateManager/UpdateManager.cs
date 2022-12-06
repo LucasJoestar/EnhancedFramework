@@ -1,12 +1,13 @@
 ﻿// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
-//
+// 
 // Notes:
-//
+// 
 // ================================================================================== //
 
 using EnhancedEditor;
 using System;
 using System.Diagnostics;
+using UnityEngine;
 
 using Object = UnityEngine.Object;
 
@@ -18,26 +19,30 @@ namespace EnhancedFramework.Core {
 
     [Flags]
     public enum UpdateRegistration {
-        Early   = 1 << 0,
-        Input   = 1 << 1,
-        Update  = 1 << 2,
-        Dynamic = 1 << 3,
-        Movable = 1 << 4,
-        Late    = 1 << 5,
+        Early       = 1 << 0,
+        Input       = 1 << 2,
+        Update      = 1 << 9,
+        Dynamic     = 1 << 12,
+        Movable     = 1 << 15,
+        Late        = 1 << 19,
 
-        Init    = 1 << 31
+        Permanent   = 1 << 20,
+
+        Init        = 1 << 30,
+        Play        = 1 << 31,
     }
 
     public interface IBaseUpdate    { Object LogObject { get; } }
 
-    public interface IEarlyUpdate   : IBaseUpdate { void Update(); }
-    public interface IInputUpdate   : IBaseUpdate { void Update(); }
-    public interface IUpdate        : IBaseUpdate { void Update(); }
-    public interface IDynamicUpdate : IBaseUpdate { void Update(); }
-    public interface IMovableUpdate : IBaseUpdate { void Update(); }
-    public interface ILateUpdate    : IBaseUpdate { void Update(); }
+    public interface IEarlyUpdate       : IBaseUpdate { void Update(); }
+    public interface IInputUpdate       : IBaseUpdate { void Update(); }
+    public interface IUpdate            : IBaseUpdate { void Update(); }
+    public interface IDynamicUpdate     : IBaseUpdate { void Update(); }
+    public interface IMovableUpdate     : IBaseUpdate { void Update(); }
+    public interface ILateUpdate        : IBaseUpdate { void Update(); }
+    public interface IPermanentUpdate   : IBaseUpdate { void Update(); }
 
-    public interface IInitUpdate    : IBaseUpdate {
+    public interface IInitUpdate        : IBaseUpdate {
         bool IsInitialized { get;
             #if CSHARP_8_0_OR_NEWER
             internal
@@ -45,6 +50,18 @@ namespace EnhancedFramework.Core {
             set; }
 
         void Init();
+    }
+
+    public interface IPlayUpdate        : IBaseUpdate {
+        bool IsPlaying {
+            get;
+            #if CSHARP_8_0_OR_NEWER
+            internal
+            #endif
+            set;
+        }
+
+        void Play();
     }
     #endregion
 
@@ -55,23 +72,35 @@ namespace EnhancedFramework.Core {
         public override UpdateRegistration UpdateRegistration => UpdateRegistration.Init;
 
         #region Global Members
+        [Section("Update Manager")]
+
+        [Tooltip("When true, suspends all regular object updates while in loading (except for IInitUpdate and IPermanentUpdate)")]
+        [SerializeField] private bool suspendOnLoading = true;
+
+        // -----------------------
+
         // True while any object is waiting for its initialization.
         public bool IsProcessing {
             get { return initUpdates.Count != 0; }
         }
 
+        /// <summary>
+        /// When true, suspends all regular object updates, except for <see cref="IInitUpdate"/> and <see cref="IPermanentUpdate"/>.
+        /// </summary>
         public bool IsSuspended { get; private set; } = false;
 
         // -----------------------
 
-        private readonly EnhancedCollection<IEarlyUpdate> earlyUpdates      = new EnhancedCollection<IEarlyUpdate>();
-        private readonly EnhancedCollection<IInputUpdate> inputUpdates      = new EnhancedCollection<IInputUpdate>(1);
-        private readonly EnhancedCollection<IDynamicUpdate> dynamicUpdates  = new EnhancedCollection<IDynamicUpdate>(5);
-        private readonly EnhancedCollection<IUpdate> updates                = new EnhancedCollection<IUpdate>(10);
-        private readonly EnhancedCollection<IMovableUpdate> movableUpdates  = new EnhancedCollection<IMovableUpdate>(10);
-        private readonly EnhancedCollection<ILateUpdate> lateUpdates        = new EnhancedCollection<ILateUpdate>();
+        private readonly EnhancedCollection<IEarlyUpdate> earlyUpdates          = new EnhancedCollection<IEarlyUpdate>();
+        private readonly EnhancedCollection<IInputUpdate> inputUpdates          = new EnhancedCollection<IInputUpdate>(1);
+        private readonly EnhancedCollection<IDynamicUpdate> dynamicUpdates      = new EnhancedCollection<IDynamicUpdate>(5);
+        private readonly EnhancedCollection<IUpdate> updates                    = new EnhancedCollection<IUpdate>(10);
+        private readonly EnhancedCollection<IMovableUpdate> movableUpdates      = new EnhancedCollection<IMovableUpdate>(10);
+        private readonly EnhancedCollection<ILateUpdate> lateUpdates            = new EnhancedCollection<ILateUpdate>();
+        private readonly EnhancedCollection<IPermanentUpdate> permanentUpdates  = new EnhancedCollection<IPermanentUpdate>();
 
-        private readonly EnhancedCollection<Pair<IInitUpdate, UpdateRegistration>> initUpdates = new EnhancedCollection<Pair<IInitUpdate, UpdateRegistration>>(10);
+        private readonly PairCollection<IInitUpdate, UpdateRegistration> initUpdates    = new PairCollection<IInitUpdate, UpdateRegistration>(10);
+        private readonly PairCollection<IPlayUpdate, UpdateRegistration> playUpdates    = new PairCollection<IPlayUpdate, UpdateRegistration>();
         #endregion
 
         #region Global Registration
@@ -82,16 +111,26 @@ namespace EnhancedFramework.Core {
         /// <param name="_object">Object to be registered on update(s).</param>
         /// <param name="_registration">Defined update registration (can use multiple).</param>
         public void Register<T>(T _object, UpdateRegistration _registration) {
-            // Prevent registering on update before init.
+            // Prevent registering on update(s) before init and play.
             if (_registration.HasFlag(UpdateRegistration.Init)) {
                 IInitUpdate _init = _object as IInitUpdate;
 
                 if (!_init.IsInitialized) {
-                    initUpdates.Add(new Pair<IInitUpdate, UpdateRegistration>(_init, _registration));
+                    initUpdates.Set(_init, _registration);
                     return;
                 }
             }
 
+            if (_registration.HasFlag(UpdateRegistration.Play)) {
+                IPlayUpdate _play = _object as IPlayUpdate;
+
+                if (!_play.IsPlaying) {
+                    playUpdates.Set(_play, _registration);
+                    return;
+                }
+            }
+
+            // Regular updates.
             if (_registration.HasFlag(UpdateRegistration.Early)) {
                 earlyUpdates.Add((IEarlyUpdate)_object);
             }
@@ -115,6 +154,10 @@ namespace EnhancedFramework.Core {
             if (_registration.HasFlag(UpdateRegistration.Late)) {
                 lateUpdates.Add((ILateUpdate)_object);
             }
+
+            if (_registration.HasFlag(UpdateRegistration.Permanent)) {
+                permanentUpdates.Add((IPermanentUpdate)_object);
+            }
         }
 
         /// <summary>
@@ -124,18 +167,26 @@ namespace EnhancedFramework.Core {
         /// <param name="_object">Object to be unregistered from update(s).</param>
         /// <param name="_registration">Defined update unregistration (can use multiple).</param>
         public void Unregister<T>(T _object, UpdateRegistration _registration) {
-            // Non-init object unregistration.
+            // Non initialized and played objects unregistration.
             if (_registration.HasFlag(UpdateRegistration.Init)) {
                 IInitUpdate _init = _object as IInitUpdate;
 
                 if (!_init.IsInitialized) {
-                    int _index = initUpdates.FindIndex(i => i.First == _init);
-                    initUpdates.RemoveAt(_index);
-
+                    initUpdates.Remove(_init);
                     return;
                 }
             }
 
+            if (_registration.HasFlag(UpdateRegistration.Play)) {
+                IPlayUpdate _play = _object as IPlayUpdate;
+
+                if (!_play.IsPlaying) {
+                    playUpdates.Remove(_play);
+                    return;
+                }
+            }
+
+            // Regular updates.
             if (_registration.HasFlag(UpdateRegistration.Early)) {
                 earlyUpdates.Remove((IEarlyUpdate)_object);
             }
@@ -159,6 +210,10 @@ namespace EnhancedFramework.Core {
             if (_registration.HasFlag(UpdateRegistration.Late)) {
                 lateUpdates.Remove((ILateUpdate)_object);
             }
+
+            if (_registration.HasFlag(UpdateRegistration.Permanent)) {
+                permanentUpdates.Remove((IPermanentUpdate)_object);
+            }
         }
         #endregion
 
@@ -171,8 +226,24 @@ namespace EnhancedFramework.Core {
         protected override void OnInit() {
             base.OnInit();
 
-            // Loading initialization registration.
-            EnhancedSceneManager.Instance.RegisterProcessor(this);
+            EnhancedSceneManager.OnStartLoading += OnStartLoading;
+            EnhancedSceneManager.OnStopLoading  += OnStopLoading;
+
+            // ----- Local Methods ----- \\
+
+            void OnStartLoading() {
+                // Suspends updates when entering a new loading.
+                if (suspendOnLoading) {
+                    IsSuspended = true;
+                }
+            }
+
+            void OnStopLoading() {
+                // Resume execution after loading.
+                if (suspendOnLoading) {
+                    IsSuspended = false;
+                }
+            }
         }
 
         private void Update() {
@@ -182,7 +253,7 @@ namespace EnhancedFramework.Core {
             while ((initUpdates.Count > 0) && (initWatcher.ElapsedMilliseconds < InitWatcherMaxDuration)) {
                 var _pair = initUpdates.First();
                 var _init = _pair.First;
-                
+
                 CallUpdate(_init.Init, _init);
                 _init.IsInitialized = true;
 
@@ -192,13 +263,30 @@ namespace EnhancedFramework.Core {
                 Register<IBaseUpdate>(_init, _pair.Second);
             }
 
-            // Only perform initialization while suspended (useful when loading a scene).
+            // Only perform initializations and permanent updates while suspended (useful when loading a scene).
             if (IsSuspended) {
+                UpdatePermanents();
                 return;
+            }
+
+            // Play.
+            while ((playUpdates.Count > 0) && (initWatcher.ElapsedMilliseconds < InitWatcherMaxDuration)) {
+                var _pair = playUpdates.First();
+                var _play = _pair.First;
+
+                CallUpdate(_play.Play, _play);
+                _play.IsPlaying = true;
+
+                // Once the object is playing, register its other updates.
+                playUpdates.RemoveFirst();
+
+                Register<IBaseUpdate>(_play, _pair.Second);
             }
 
             // Perform inverse loops in case of the objects unregistrating themselves during the update.
             int i;
+
+            UpdatePermanents();
 
             for (i = earlyUpdates.Count; i-- > 0;) {
                 var _update = earlyUpdates[i];
@@ -230,7 +318,14 @@ namespace EnhancedFramework.Core {
                 CallUpdate(_update.Update, _update);
             }
 
-            // ----- Local Method ----- \\
+            // ----- Local Methods ----- \\
+
+            void UpdatePermanents() {
+                for (int i = permanentUpdates.Count; i-- > 0;) {
+                    var _update = permanentUpdates[i];
+                    CallUpdate(_update.Update, _update);
+                }
+            }
 
             void CallUpdate(Action _update, IBaseUpdate _base) {
                 try {

@@ -155,29 +155,35 @@ namespace EnhancedFramework.Core {
     /// Scene-depending manager class, used to automatically load and unload
     /// <br/> all resources associated with it following its lifetime.
     /// </summary>
-    public class SceneResourceManager : EnhancedBehaviour, ILoadingProcessor, IUnloadingCallbackReceiver {
+    public class SceneResourceManager : EnhancedBehaviour, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
-        #region Global Members
-        [Section("Scene Resource Manager")]
+        #region Loading Processor
+        public override bool IsLoadingProcessor => true;
 
-        [SerializeField, Enhanced, ReadOnly] private List<RLoader> resources = new List<RLoader>();
-
-        // -----------------------
-        
         public bool IsProcessing {
             get { return resources.Exists(r => r.Value.IsProcessing); }
         }
         #endregion
 
+        #region Global Members
+        [Section("Scene Resource Manager")]
+
+        [SerializeField, Enhanced, ReadOnly] private List<RLoader> resources = new List<RLoader>();
+        #endregion
+
         #region Enhanced Behaviour
+        protected override void OnBehaviourEnabled() {
+            base.OnBehaviourEnabled();
+
+            // Registration.
+            EnhancedSceneManager.OnPreUnloadBundle += OnPreUnloadBundle;
+        }
+
+
         protected override void OnInit() {
             base.OnInit();
 
-            // Registration.
-            EnhancedSceneManager.Instance.RegisterProcessor(this);
-            EnhancedSceneManager.Instance.RegisterUnloadingCallbackReceiver(this);
-            
             // Get and load all resources during initialization.
             foreach (ResourceLoader _resource in resources) {
                 _resource.Setup();
@@ -185,15 +191,18 @@ namespace EnhancedFramework.Core {
             }
         }
 
-        private void OnDestroy() {
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
             // Unregistration.
-            EnhancedSceneManager.Instance.UnregisterProcessor(this);
-            EnhancedSceneManager.Instance.UnregisterUnloadingCallbackReceiver(this);
+            EnhancedSceneManager.OnPreUnloadBundle -= OnPreUnloadBundle;
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Unloading Callback
+        // -------------------------------------------
 
-        void IUnloadingCallbackReceiver.OnPreUnloadBundle(SceneBundle _bundle) {
+        private void OnPreUnloadBundle(SceneBundle _bundle) {
             // When this object scene is about to be unloaded, unload its associated resources.
             Scene _scene = gameObject.scene;
             if (!_bundle.Scenes.Find(s => s.Scene == _scene, out _)) {

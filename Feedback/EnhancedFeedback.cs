@@ -247,9 +247,9 @@ namespace EnhancedFramework.Core {
 
         public void Play() {
             if (Delay != 0f) {
-                DOVirtual.DelayedCall(Delay, OnPlay, doIgnoreTimeScale);
+                DOVirtual.DelayedCall(Delay, OnPlay2, doIgnoreTimeScale);
             } else {
-                OnPlay();
+                OnPlay2();
             }
         }
 
@@ -265,7 +265,7 @@ namespace EnhancedFramework.Core {
         #region Behaviour
         protected virtual void OnPlay(Transform _transform) { }
 
-        protected virtual void OnPlay() { }
+        protected virtual void OnPlay2() { }
 
         protected virtual void OnStop(Transform _transform) { }
 

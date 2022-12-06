@@ -39,16 +39,16 @@ namespace EnhancedFramework.Core.GameStates {
     /// <summary>
     /// Default <see cref="GameState"/> applied when the game is performing a <see cref="SceneBundle"/> unloading operation.
     /// </summary>
-    [Serializable, DisplayName("Unloading [Default]")]
+    [Serializable, DisplayName("Loading/Unloading [Default]")]
     public class DefaultUnloadingGameState : UnloadingGameState<GameStateOverride> {
         #region Global Members
         /// <summary>
         /// Doesn't need to use a high priority, as the operations are called as soon as the state is created.
         /// </summary>
-        public const int UnloadingStatePriority = 0;
+        public const int PriorityConst = 0;
 
         public override int Priority {
-            get { return UnloadingStatePriority; }
+            get { return PriorityConst; }
         }
         #endregion
 

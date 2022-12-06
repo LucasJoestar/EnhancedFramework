@@ -5,7 +5,9 @@
         "EnhancedEditor",
         "EnhancedEditor.Editor",
         "EnhancedFramework.Core",
+        "EnhancedFramework.Core.Splash",
         "EnhancedFramework.Input",
+        "EnhancedFramework.UI",
         "Unity.InputSystem"
     ],
     "includePlatforms": [

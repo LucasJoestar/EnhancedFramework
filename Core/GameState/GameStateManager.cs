@@ -7,6 +7,7 @@
 using EnhancedEditor;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace EnhancedFramework.Core.GameStates {
@@ -27,15 +28,15 @@ namespace EnhancedFramework.Core.GameStates {
     }
 
     /// <summary>
-    /// Game global state shared values, overridden by the current states in the stack.
+    /// Default game global state shared values.
     /// </summary>
-    [Serializable]
-    public class GameStateOverride {
+    [Serializable, DisplayName("<Default>")]
+    public class DefaultGameStateOverride : GameStateOverride {
         #region Global Members
         /// <summary>
         /// Whether the player has control of their character or not.
         /// </summary>
-        public bool HasControl = true;
+        [Space(5f)] public bool HasControl = true;
 
         /// <summary>
         /// Whether the game can be paused or not.
@@ -48,35 +49,24 @@ namespace EnhancedFramework.Core.GameStates {
         public bool IsPaused = false;
 
         /// <summary>
-        /// Is the game currently performing a loading operation?
+        /// Whether the black bars on top and bottom of the screen should be visible or not.
         /// </summary>
-        [Space(5f)] public bool IsLoading = false;
-
-        /// <summary>
-        /// Is the game currently performing an unloading operation?
-        /// </summary>
-        public bool IsUnloading = false;
-
-        /// <summary>
-        /// Is the game application currently being quit?
-        /// </summary>
-        [Space(5f)] public bool IsQuitting = false;
+        [Space(5f)] public bool ShowBlackBars = false;
         #endregion
 
         #region Behaviour
         /// <summary>
         /// Resets the values back to default.
         /// </summary>
-        public virtual GameStateOverride Reset() {
+        public override GameStateOverride Reset() {
+            base.Reset();
+
             HasControl = true;
 
             CanPause = false;
             IsPaused = false;
 
-            IsLoading = false;
-            IsUnloading = false;
-
-            IsQuitting = false;
+            ShowBlackBars = false;
 
             return this;
         }
@@ -87,23 +77,23 @@ namespace EnhancedFramework.Core.GameStates {
     /// Global <see cref="GameState"/> manager instance,
     /// used to dynamically push and pop states on the stack of the game.
     /// </summary>
-    public class GameStateManager : EnhancedSingleton<GameStateManager>, IEarlyUpdate {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Early;
+    public class GameStateManager : EnhancedSingleton<GameStateManager>, IPermanentUpdate {
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
 
         #region Global Members
         [Section("Game State Manager")]
 
         [SerializeField, Enhanced, DisplayName("State Override")]
-        private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(GameStateOverride), SerializedTypeConstraint.BaseType);
+        private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(DefaultGameStateOverride));
 
         [SerializeField, Enhanced, DisplayName("Default State")]
         private SerializedType<GameState> defaultStateType = new SerializedType<GameState>(typeof(DefaultGameState));
-
+        
         /// <summary>
         /// Current global states override shared values.
         /// </summary>
         [field: SerializeReference, Space(10f), Enhanced, ReadOnly]
-        public GameStateOverride StateOverride { get; private set; } = new GameStateOverride();
+        public GameStateOverride StateOverride { get; private set; } = new DefaultGameStateOverride();
 
         /// <summary>
         /// The game state being currently active and enabled.
@@ -126,6 +116,12 @@ namespace EnhancedFramework.Core.GameStates {
 
         private readonly List<GameState> pushPendingStates = new List<GameState>();
         private readonly List<GameState> popPendingStates = new List<GameState>();
+
+        // -----------------------
+
+        public override Color LogColor {
+            get { return SuperColor.Lime.Get(); }
+        }
         #endregion
 
         #region Enhanced Behaviour
@@ -136,7 +132,7 @@ namespace EnhancedFramework.Core.GameStates {
             GameState.CreateState(defaultStateType);
         }
 
-        void IEarlyUpdate.Update() {
+        void IPermanentUpdate.Update() {
             // Push and pop pending states.
             bool _refresh = false;
 
@@ -193,6 +189,10 @@ namespace EnhancedFramework.Core.GameStates {
         #endregion
 
         #region State Management
+        private readonly int chronosID = EnhancedUtility.GenerateGUID();
+
+        // -----------------------
+
         /// <summary>
         /// Tells to push new state on the game stack on the next frame.
         /// </summary>
@@ -246,7 +246,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// <inheritdoc cref="PopState{T}"/>
         public bool PopState(Type _stateType) {
             if (!_stateType.IsSubclassOf(typeof(GameState))) {
-                Debug.LogError($"GameState - The type \'{_stateType.Name}\' does not inherit from \'{typeof(GameState).Name}\'");
+                LogMessage($"The type \'{_stateType.Name}\' does not inherit from \'{typeof(GameState).Name}\'", LogType.Error);
                 return false;
             }
 
@@ -284,7 +284,7 @@ namespace EnhancedFramework.Core.GameStates {
 
             states.Push(_state, _state.Priority);
 
-            this.Log($"GameState => Push '{_state}'");
+            LogMessage($"Push \"{_state}\"");
 
             _state.OnPushedOnStack();
 
@@ -307,7 +307,7 @@ namespace EnhancedFramework.Core.GameStates {
             }
 
             states.RemoveAt(_index);
-            this.Log($"GameState => Pop '{_state}'");
+            LogMessage($"Pop \"{_state}\"");
 
             if (_autoRefresh) {
                 RefreshCurrentState();
@@ -347,7 +347,7 @@ namespace EnhancedFramework.Core.GameStates {
                 GameState _previous = CurrentState;
                 CurrentState = _current;
 
-                this.Log($"GameState => Set new state \'{_current}\'");
+                LogMessage($"Set new state \"{_current}\"");
 
                 if (_previous.IsActive()) {
                     _previous.OnDisabled();
@@ -356,12 +356,22 @@ namespace EnhancedFramework.Core.GameStates {
                 _current.OnEnabled();
             }
 
-            // State override.
+            // State & chronos overrides.
             GameStateOverride _override = StateOverride.Reset();
+            float _chronos = 1f;
+            int _priority = -1;
 
             for (int i = 0; i < states.Count; i++) {
-                states.GetKeyAt(i).Value.OnStateOverride(_override);
+                GameState _state = states.GetKeyAt(i);
+                _state.OnStateOverride(_override);
+
+                if (_state.OverrideChronos(out float _chronosTemp, out int _priorityTemp) && (_priorityTemp >= _priority)) {
+                    _chronos = _chronosTemp;
+                    _priority = _priorityTemp;
+                }
             }
+
+            ChronosManager.Instance.ApplyOverride(chronosID, _chronos, _priority);
 
             foreach (IGameStateOverrideCallback _callback in overrideCallbacks) {
                 _callback.OnGameStateOverride(_override);

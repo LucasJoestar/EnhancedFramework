@@ -12,6 +12,56 @@ namespace EnhancedFramework.Core {
     /// Contains multiple useful math utility methods.
     /// </summary>
     public static class Mathm {
+        #region Mathematic
+        /// <summary>
+        /// Clamps the given value between a minimum and a maximum.
+        /// </summary>
+        /// <param name="_value">The value to restrict inside the range of the min and max values.</param>
+        /// <param name="_min">The minimum value to compare against.</param>
+        /// <param name="_max">The maximum value to compare against.</param>
+        /// <returns>The result between the min and max values.</returns>
+        public static double Clamp(double _value, double _min, double _max) {
+            return (_value < _min)
+                 ? _min : ((_value > _max)
+                        ? _max : _value);
+        }
+        #endregion
+
+        #region Decimal
+        /// <summary>
+        /// Rounds a given <see cref="float"/> value to a given decimals place.
+        /// </summary>
+        /// <param name="_value">The value to round.</param>
+        /// <param name="_decimal">The final amount of decimal(<see langword="sealed"/>).</param>
+        /// <returns>The rounded <see cref="float"/> value.</returns>
+        public static float RoundToDecimal(float _value, int _decimal) {
+            if (_decimal == 0) {
+                return Mathf.Round(_value);
+            }
+
+            float _factor = Mathf.Pow(10f, _decimal);
+            return Mathf.Round(_value * _factor) / _factor;
+        }
+
+        public static float FloorToDecimal(float _value, int _decimal) {
+            if (_decimal == 0) {
+                return Mathf.Floor(_value);
+            }
+
+            float _factor = Mathf.Pow(10f, _decimal);
+            return Mathf.Floor(_value * _factor) / _factor;
+        }
+
+        public static float CeilToDecimal(float _value, int _decimal) {
+            if (_decimal == 0) {
+                return Mathf.Ceil(_value);
+            }
+
+            float _factor = Mathf.Pow(10f, _decimal);
+            return Mathf.Ceil(_value * _factor) / _factor;
+        }
+        #endregion
+
         #region Sign
         /// <inheritdoc cref="BooleanExtensions.Sign(bool)"/>
         public static int Sign(bool _boolean) {

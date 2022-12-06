@@ -14,18 +14,18 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-using InputAsset = EnhancedFramework.Input.InputAsset;
+using InputActionEnhancedAsset = EnhancedFramework.Input.InputActionEnhancedAsset;
 using UnityInputActionAsset = UnityEngine.InputSystem.InputActionAsset;
 
 namespace EnhancedFramework.Editor {
     /// <summary>
-    /// Generates an <see cref="InputAsset"/> for each action setup in the first <see cref="UnityEngine.InputSystem.InputActionAsset"/> in the project.
+    /// Generates an <see cref="InputActionEnhancedAsset"/> for each action setup in the first <see cref="UnityEngine.InputSystem.InputActionAsset"/> in the project.
     /// </summary>
     public static class InputAssetGenerator {
         #region Content
         private const string DefaultInputAssetPath = "Assets/Input Assets/";
-        private const string InputActionAssetFormat = "INPACT_{0}_{1}";
-        private const string InputActionMapAssetFormat = "INPMAP_{0}";
+        private const string InputActionAssetFormat = "IPA_{0}_{1}";
+        private const string InputActionMapAssetFormat = "IPM_{0}";
 
         // -----------------------
 
@@ -36,15 +36,15 @@ namespace EnhancedFramework.Editor {
             }
 
             // Get new action assets path.
-            List<InputAsset> _inputs = new List<InputAsset>(EnhancedEditorUtility.LoadAssets<InputAsset>());
-            List<InputAsset> _inputList = new List<InputAsset>();
+            List<InputActionEnhancedAsset> _inputs = new List<InputActionEnhancedAsset>(EnhancedEditorUtility.LoadAssets<InputActionEnhancedAsset>());
+            List<InputActionEnhancedAsset> _inputList = new List<InputActionEnhancedAsset>();
 
             string _path = GetAssetPath(_inputs);
 
             // Create new action assets and rename wrong named existing ones.
             foreach (InputAction _action in _inputAsset) {
-                InputAsset _asset = _inputs.Find(i => i.Input.id == _action.id);
-                string _name = string.Format(InputActionAssetFormat, _action.actionMap.name, _action.name);
+                InputActionEnhancedAsset _asset = _inputs.Find(i => i.input.id == _action.id);
+                string _name = string.Format(InputActionAssetFormat, _action.actionMap.name, _action.name).Replace('/', '.');
 
                 if (_asset) {
                     if (_asset.name != _name) {
@@ -54,7 +54,7 @@ namespace EnhancedFramework.Editor {
 
                     _inputs.Remove(_asset);
                 } else {
-                    _asset = ScriptableObject.CreateInstance<InputAsset>();
+                    _asset = ScriptableObject.CreateInstance<InputActionEnhancedAsset>();
                     _asset.Initialize(_action);
 
                     AssetDatabase.CreateAsset(_asset, Path.Combine(_path, $"{_name}.asset"));
@@ -64,13 +64,13 @@ namespace EnhancedFramework.Editor {
             }
 
             // Do the same for action maps.
-            List<InputMapAsset> _maps = new List<InputMapAsset>(EnhancedEditorUtility.LoadAssets<InputMapAsset>());
+            List<InputMapEnhancedAsset> _maps = new List<InputMapEnhancedAsset>(EnhancedEditorUtility.LoadAssets<InputMapEnhancedAsset>());
 
             _path = GetAssetPath(_maps);
 
             foreach (InputActionMap _map in _inputAsset.actionMaps) {
-                InputMapAsset _asset = _maps.Find(i => i.Map.id == _map.id);
-                string _name = string.Format(InputActionMapAssetFormat, _map.name);
+                InputMapEnhancedAsset _asset = _maps.Find(i => i.map.id == _map.id);
+                string _name = string.Format(InputActionMapAssetFormat, _map.name.Replace('/', '.'));
 
                 if (_asset) {
                     if (_asset.name != _name) {
@@ -80,7 +80,7 @@ namespace EnhancedFramework.Editor {
 
                     _maps.Remove(_asset);
                 } else {
-                    _asset = ScriptableObject.CreateInstance<InputMapAsset>();
+                    _asset = ScriptableObject.CreateInstance<InputMapEnhancedAsset>();
                     _asset.Initialize(_map);
 
                     AssetDatabase.CreateAsset(_asset, Path.Combine(_path, $"{_name}.asset"));
@@ -95,11 +95,11 @@ namespace EnhancedFramework.Editor {
             }
 
             // Delete obsolete assets.
-            foreach (InputAsset _input in _inputs) {
+            foreach (InputActionEnhancedAsset _input in _inputs) {
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(_input));
             }
 
-            foreach (InputMapAsset _map in _maps) {
+            foreach (InputMapEnhancedAsset _map in _maps) {
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(_map));
             }
 

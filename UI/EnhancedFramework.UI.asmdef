@@ -4,7 +4,9 @@
     "references": [
         "DOTween.Modules",
         "EnhancedEditor",
-        "EnhancedFramework.Core"
+        "EnhancedFramework.Core",
+        "Unity.EditorCoroutines.Editor",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -13,6 +15,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.editorcoroutines",
+            "expression": "",
+            "define": "EDITOR_COROUTINE_ENABLED"
+        }
+    ],
     "noEngineReferences": false
 }

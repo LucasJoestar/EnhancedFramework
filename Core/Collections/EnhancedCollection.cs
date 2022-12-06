@@ -246,12 +246,39 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// Find the first matching element from this collection.
+        /// </summary>
+        /// <param name="_match">Used to know if an element match.</param>
+        /// <param name="_match">The first matching element found (null if none).</param>
+        /// <returns>True if the element is contained in the collection, false otherwise.</returns>
+        public virtual bool Find(Predicate<T> _match, out T _element) {
+            if (FindIndex(_match, out int _index)) {
+                _element = collection[_index];
+                return true;
+            }
+
+            _element = default;
+            return false;
+        }
+
+        /// <summary>
         /// Find the index of the first matching element from this collection.
         /// </summary>
         /// <param name="_match">Used to know if an element match.</param>
         /// <returns>-1 if no matching element could be found, or the element index if found.</returns>
         public virtual int FindIndex(Predicate<T> _match) {
             return collection.FindIndex(_match);
+        }
+
+        /// <summary>
+        /// Find the index of the first matching element from this collection.
+        /// </summary>
+        /// <param name="_match">Used to know if an element match.</param>
+        /// <param name="_index">-1 if no matching element could be found, or the element index if found.</param>
+        /// <returns>True if the element is contained in the collection, false otherwise.</returns>
+        public virtual bool FindIndex(Predicate<T> _match, out int _index) {
+            _index = FindIndex(_match);
+            return _index != -1;
         }
 
         /// <summary>

@@ -106,14 +106,16 @@ namespace EnhancedFramework.Localization {
     public class LocalizationManager : EnhancedSingleton<LocalizationManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
-        #region Global Members
+        #region Loading Processor
+        public override bool IsLoadingProcessor => true;
+
         // True while any localization table async operation is running.
         public bool IsProcessing {
             get { return operations.Count != 0; }
         }
+        #endregion
 
-        // -----------------------
-
+        #region Global Members
         private readonly List<ILocalizer> localizables = new List<ILocalizer>();
         private readonly List<AsyncOperationHandle> operations = new List<AsyncOperationHandle>();
         #endregion
@@ -123,7 +125,6 @@ namespace EnhancedFramework.Localization {
             base.OnInit();
 
             LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
-            EnhancedSceneManager.Instance.RegisterProcessor(this);
 
             // Initialize the localization system.
             // Tables can't be preloaded while not initialized.

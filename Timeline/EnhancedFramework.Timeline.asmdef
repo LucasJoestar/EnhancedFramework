@@ -1,0 +1,27 @@
+{
+    "name": "EnhancedFramework.Timeline",
+    "rootNamespace": "EnhancedFramework.Timeline",
+    "references": [
+        "EnhancedEditor",
+        "EnhancedFramework.Core",
+        "EnhancedFramework.UI",
+        "Unity.Timeline"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "TIMELINE_ENABLED"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.timeline",
+            "expression": "",
+            "define": "TIMELINE_ENABLED"
+        }
+    ],
+    "noEngineReferences": false
+}

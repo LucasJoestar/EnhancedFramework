@@ -4,15 +4,13 @@
 //
 // ================================================================================== //
 
-#if INPUT_SYSTEM_PACKAGE
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace EnhancedFramework.Input {
     /// <summary>
-    /// Base class to inherit all <see cref="InputAction"/>-related <see cref="ScriptableObject"/> assets.
+    /// Base class to inherit all input action related <see cref="ScriptableObject"/> assets.
     /// </summary>
-    public abstract class BaseInputAsset : ScriptableObject {
+    public abstract class BaseInputActionEnhancedAsset : InputEnhancedAsset {
         #region Input
         /// <summary>
         /// Get if this input was performed this frame.
@@ -54,4 +52,3 @@ namespace EnhancedFramework.Input {
         #endregion
     }
 }
-#endif

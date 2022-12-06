@@ -22,7 +22,7 @@ namespace EnhancedFramework.Editor {
     [CustomPropertyDrawer(typeof(CrossSceneReference<>), true)]
     public class CrossSceneReferencePropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
-        private const int CacheLimit = 25;
+        private const int CacheLimit = 100;
 
         private static readonly GUIContent lockGUI = new GUIContent(EditorGUIUtility.IconContent("IN LockButton on").image, "Toggles the reference GUID edit mode.");
         private static readonly GUIContent unlockGUI = new GUIContent(EditorGUIUtility.IconContent("IN LockButton").image, "Toggles the reference GUID edit mode.");
@@ -35,6 +35,8 @@ namespace EnhancedFramework.Editor {
         // -----------------------
 
         protected override float OnEnhancedGUI(Rect _position, SerializedProperty _property, GUIContent _label) {
+            _position.height = EditorGUIUtility.singleLineHeight;
+
             // Variable init.
             Rect _propertyPosition = new Rect(_position) {
                 width = _position.width - (EnhancedEditorGUIUtility.IconWidth + 2f)

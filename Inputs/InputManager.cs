@@ -4,7 +4,6 @@
 //
 // ================================================================================== //
 
-#if INPUT_SYSTEM_PACKAGE
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
@@ -27,31 +26,23 @@ namespace EnhancedFramework.Input {
         [Section("Input Manager")]
 
         [SerializeField, Enhanced, Required] private UnityInputActionAsset inputAsset = null;
-        [SerializeField] private bool enableOnStart = true;
 
         [Space(10f)]
 
-        [SerializeField] private InputAsset[] inputs = new InputAsset[] { };
-        [SerializeField] private InputMapAsset[] maps = new InputMapAsset[] { };
+        [SerializeField] private InputActionEnhancedAsset[] inputs = new InputActionEnhancedAsset[] { };
+        [SerializeField] private InputMapEnhancedAsset[] maps = new InputMapEnhancedAsset[] { };
 
         // -----------------------
 
         /// <summary>
-        /// The input action asset of the game.
-        /// </summary>
-        public UnityInputActionAsset InputAsset {
-            get { return inputAsset; }
-        }
-
-        /// <summary>
-        /// The total amount of <see cref="Input.InputAsset"/> in the game.
+        /// The total amount of <see cref="Input.InputActionEnhancedAsset"/> in the game.
         /// </summary>
         public int InputCount {
             get { return inputs.Length; }
         }
 
         /// <summary>
-        /// The total amount of <see cref="InputMapAsset"/> in the game.
+        /// The total amount of <see cref="InputMapEnhancedAsset"/> in the game.
         /// </summary>
         public int InputMapCount {
             get { return maps.Length; }
@@ -64,36 +55,36 @@ namespace EnhancedFramework.Input {
 
             // Inputs are not serialize with a consistant reference.
             // So use the asset to retrieve their target input within.
-            foreach (InputAsset _input in inputs) {
+            foreach (InputActionEnhancedAsset _input in inputs) {
                 _input.Initialize(inputAsset);
             }
 
-            foreach (InputMapAsset _map in maps) {
-                _map.Initialize(inputAsset, enableOnStart);
+            foreach (InputMapEnhancedAsset _map in maps) {
+                _map.Initialize(inputAsset);
             }
         }
         #endregion
 
         #region Utility
         /// <summary>
-        /// Get the <see cref="InputAsset"/> at a specific index.
+        /// Get the <see cref="InputActionEnhancedAsset"/> at a specific index.
         /// <para/>
         /// Use <see cref="InputCount"/> to get the total amount of input actions.
         /// </summary>
         /// <param name="_index">The index to get the input at.</param>
-        /// <returns>The <see cref="InputAsset"/> at the specified index.</returns>
-        public InputAsset GetInputAAt(int _index) {
+        /// <returns>The <see cref="InputActionEnhancedAsset"/> at the specified index.</returns>
+        public InputActionEnhancedAsset GetInputAAt(int _index) {
             return inputs[_index];
         }
 
         /// <summary>
-        /// Get the <see cref="InputMapAsset"/> at a specific index.
+        /// Get the <see cref="InputMapEnhancedAsset"/> at a specific index.
         /// <para/>
         /// Use <see cref="InputMapCount"/> to get the total amount of input action maps.
         /// </summary>
         /// <param name="_index">The index to get the input map at.</param>
-        /// <returns>The <see cref="InputMapAsset"/> at the specified index.</returns>
-        public InputMapAsset GetInputMapAt(int _index) {
+        /// <returns>The <see cref="InputMapEnhancedAsset"/> at the specified index.</returns>
+        public InputMapEnhancedAsset GetInputMapAt(int _index) {
             return maps[_index];
         }
         #endregion
@@ -102,11 +93,11 @@ namespace EnhancedFramework.Input {
         #if UNITY_EDITOR
         [ContextMenu("Get Inputs", false, 10)]
         private void GetInputs() {
-            string[] _paths = Array.ConvertAll(AssetDatabase.FindAssets($"t:{typeof(InputAsset).Name}"), AssetDatabase.GUIDToAssetPath);
-            inputs = Array.ConvertAll(_paths, AssetDatabase.LoadAssetAtPath<InputAsset>);
+            string[] _paths = Array.ConvertAll(AssetDatabase.FindAssets($"t:{typeof(InputActionEnhancedAsset).Name}"), AssetDatabase.GUIDToAssetPath);
+            inputs = Array.ConvertAll(_paths, AssetDatabase.LoadAssetAtPath<InputActionEnhancedAsset>);
 
-            _paths = Array.ConvertAll(AssetDatabase.FindAssets($"t:{typeof(InputMapAsset).Name}"), AssetDatabase.GUIDToAssetPath);
-            maps = Array.ConvertAll(_paths, AssetDatabase.LoadAssetAtPath<InputMapAsset>);
+            _paths = Array.ConvertAll(AssetDatabase.FindAssets($"t:{typeof(InputMapEnhancedAsset).Name}"), AssetDatabase.GUIDToAssetPath);
+            maps = Array.ConvertAll(_paths, AssetDatabase.LoadAssetAtPath<InputMapEnhancedAsset>);
 
             EditorUtility.SetDirty(this);
         }
@@ -114,4 +105,3 @@ namespace EnhancedFramework.Input {
         #endregion
     }
 }
-#endif

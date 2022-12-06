@@ -6,29 +6,33 @@
 //
 // ================================================================================== //
 
-#if INPUT_SYSTEM_PACKAGE
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace EnhancedFramework.Input {
     /// <summary>
-    /// Enhanced axis <see cref="InputAction"/>-related asset,
+    /// Axis <see cref="InputActionEnhancedAsset"/>-related asset,
     /// <br/> always using the last pressed input as the winning side.
     /// </summary>
     [Serializable]
-    public class AxisInputAsset : BaseInputAsset {
+    public class AxisInputActionEnhancedAsset : BaseInputActionEnhancedAsset {
         #region Global Members
         [Section("Enhanced Axis Input Action")]
 
-        [SerializeField, Enhanced, Required] private InputAsset positive = null;
-        [SerializeField, Enhanced, Required] private InputAsset negative = null;
+        [SerializeField, Enhanced, Required] private InputActionEnhancedAsset positive = null;
+        [SerializeField, Enhanced, Required] private InputActionEnhancedAsset negative = null;
 
         [Space(10f)]
 
         [SerializeField, Enhanced, ReadOnly] private bool isPositive = true;
+
+        // -----------------------
+
+        public override bool IsEnabled {
+            get { return positive.IsEnabled && negative.IsEnabled; }
+        }
         #endregion
 
         #region Side Comparison
@@ -37,11 +41,11 @@ namespace EnhancedFramework.Input {
 
         // -----------------------
 
-        private InputAsset UpdateActiveInput() {
+        private InputActionEnhancedAsset UpdateActiveInput() {
             float _positive = positive.GetAxis();
             float _negative = negative.GetAxis();
 
-            InputAsset _active = isPositive ? positive : negative;
+            InputActionEnhancedAsset _active = isPositive ? positive : negative;
 
             // If input values have not changed, there is no need for update.
             if ((_positive == positiveValue) && (_negative == negativeValue)) {
@@ -106,6 +110,17 @@ namespace EnhancedFramework.Input {
             return Vector3.zero;
         }
         #endregion
+
+        #region Utility
+        public override void Enable() {
+            positive.Enable();
+            negative.Enable();
+        }
+
+        public override void Disable() {
+            positive.Disable();
+            negative.Disable();
+        }
+        #endregion
     }
 }
-#endif

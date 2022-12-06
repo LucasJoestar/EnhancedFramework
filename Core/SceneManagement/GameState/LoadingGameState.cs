@@ -25,6 +25,9 @@ namespace EnhancedFramework.Core.GameStates {
         public override bool IsPersistent {
             get { return true; }
         }
+
+        /// <inheritdoc cref="LoadingGameState{T}"/>
+        public LoadingGameState() : base(false) { }
         #endregion
 
         #region State Override
@@ -39,16 +42,16 @@ namespace EnhancedFramework.Core.GameStates {
     /// <summary>
     /// Default <see cref="GameState"/> applied when the game is performing a <see cref="SceneBundle"/> loading operation.
     /// </summary>
-    [Serializable, DisplayName("Loading [Default]")]
+    [Serializable, DisplayName("Loading/Loading [Default]")]
     public class DefaultLoadingGameState : LoadingGameState<GameStateOverride> {
         #region Global Members
         /// <summary>
         /// Uses a high priority to make sure the state is the active one.
         /// </summary>
-        public const int DefaultLoadingStatePriority = 999;
+        public const int PriorityConst = 999;
 
         public override int Priority {
-            get { return DefaultLoadingStatePriority; }
+            get { return PriorityConst; }
         }
         #endregion
 

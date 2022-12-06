@@ -54,7 +54,7 @@ namespace EnhancedFramework.Core {
             }
 
             _reference = null;
-            return true;
+            return false;
         }
         #endregion
     }
