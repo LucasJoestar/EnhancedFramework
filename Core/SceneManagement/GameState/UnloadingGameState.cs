@@ -25,6 +25,11 @@ namespace EnhancedFramework.Core.GameStates {
         public override bool IsPersistent {
             get { return true; }
         }
+
+        // Manage unloading operations from this state callbacks.
+        public override IGameStateLifetimeCallback LifetimeCallback {
+            get { return EnhancedSceneManager.Instance; }
+        }
         #endregion
 
         #region State Override
@@ -49,22 +54,6 @@ namespace EnhancedFramework.Core.GameStates {
 
         public override int Priority {
             get { return PriorityConst; }
-        }
-        #endregion
-
-        #region Behaviour
-        protected override void OnInit() {
-            base.OnInit();
-
-            // Directly start unloading as soon as the state is created.
-            EnhancedSceneManager.Instance.StartUnloading();
-        }
-
-        protected override void OnTerminate() {
-            base.OnTerminate();
-
-            // Stop unloading when the state is terminated, and not when it stops being the active state.
-            EnhancedSceneManager.Instance.StopUnloading();
         }
         #endregion
     }

@@ -4,21 +4,35 @@
 //
 // ================================================================================== //
 
-#if LOCALIZATION_ENABLED
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using UnityEngine.Localization.Tables;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace EnhancedFramework.Localization {
+    /// <summary>
+    /// Implement this interface to easily load and unload an object associated
+    /// <br/> localization tables, using a <see cref="LocalizationResourceLoader"/>.
+    /// </summary>
     public interface ILocalizable {
+        #region Content
+        /// <summary>
+        /// Get all localization tables associated with this object instance.
+        /// </summary>
+        /// <param name="_stringTables">String table collection to fill.</param>
+        /// <param name="_assetTables">Asset table collection to fill.</param>
         void GetLocalizationTables(Set<TableReference> _stringTables, Set<TableReference> _assetTables);
+        #endregion
     }
 
+    /// <summary>
+    /// <see cref="ResourceLoader{T}"/> used to load various localization tables from a <see cref="ILocalizable"/>.
+    /// </summary>
     [Serializable]
     public class LocalizationResourceLoader : ResourceLoader<LocalizationResourceLoader> {
         #region Global Members
@@ -143,16 +157,16 @@ namespace EnhancedFramework.Localization {
 
                 switch (_operation.Status) {
                     case AsyncOperationStatus.Succeeded:
-                        this.Log("Localization initialization successfully completed");
+                        this.LogMessage("Localization initialization successfully completed");
                         break;
 
                     case AsyncOperationStatus.Failed:
-                        this.LogError("Localization initialization failed");
+                        this.LogErrorMessage("Localization initialization failed");
                         break;
 
                     case AsyncOperationStatus.None:
                     default:
-                        this.LogWarning("Localization initialization status unknown");
+                        this.LogWarningMessage("Localization initialization status unknown");
                         break;
                 }
             }
@@ -191,7 +205,7 @@ namespace EnhancedFramework.Localization {
         }
 
         private void OnLocaleChanged(Locale _locale) {
-            this.LogWarning("Changed Locale => " + _locale.name);
+            this.LogWarningMessage("Changed Locale to " + _locale.name);
 
             // Update localizables.
             foreach (ILocalizer _localizable in localizables) {
@@ -261,18 +275,18 @@ namespace EnhancedFramework.Localization {
             switch (_handle.Status) {
                 // Everything is fine.
                 case AsyncOperationStatus.Succeeded:
-                    this.Log("Localization Table loading operation successfully completed");
+                    this.LogMessage("Localization Table loading operation successfully completed");
                     break;
 
                 // Error.
                 case AsyncOperationStatus.Failed:
-                    this.LogError("Localization Table loading operation failed");
+                    this.LogErrorMessage("Localization Table loading operation failed");
                     break;
 
                 // Unknown.
                 case AsyncOperationStatus.None:
                 default:
-                    this.LogWarning("Localization Table loading operation status unknown");
+                    this.LogWarningMessage("Localization Table loading operation status unknown");
                     break;
             }
         }
@@ -323,9 +337,14 @@ namespace EnhancedFramework.Localization {
         [Button(ActivationMode.Play, SuperColor.Green)]
         #pragma warning disable IDE0051
         private void GetOperationCount() {
-            this.LogWarning($"Localization async operation count - {operations.Count}");
+            this.LogWarningMessage($"Localization async operation count - {operations.Count}");
+        }
+        #endregion
+
+        #region Logger
+        public override Color GetLogMessageColor(LogType _type) {
+            return SuperColor.DarkOrange.Get();
         }
         #endregion
     }
 }
-#endif

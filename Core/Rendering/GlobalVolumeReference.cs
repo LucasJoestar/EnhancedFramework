@@ -38,7 +38,7 @@ namespace EnhancedFramework.Core.Rendering {
 
             // If a volume is attached to the object, register it.
             if (gameObject.TryGetComponent(out Volume _volume) && _volume.isGlobal) {
-                id = EnhancedUtility.GenerateGUID();
+                id = EnhancedEditor.EnhancedUtility.GenerateGUID();
                 volumeBuffer.Push(id, new Pair<Volume, int>(_volume, (int)(_volume.priority * 100f)));
             }
         }

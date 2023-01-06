@@ -7,6 +7,7 @@
 using EnhancedEditor;
 using EnhancedFramework.Core.GameStates;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -35,7 +36,7 @@ namespace EnhancedFramework.Core {
 
         [Space(10f)]
 
-        [SerializeField] private BlockArray<PolymorphValue<SplashAnimation>> animations = new BlockArray<PolymorphValue<SplashAnimation>>();
+        [SerializeField] private List<PolymorphValue<SplashAnimation>> animations = new List<PolymorphValue<SplashAnimation>>();
 
         // -----------------------
 

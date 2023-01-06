@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if TEXT_MESH_PRO_PACKAGE
 using EnhancedFramework.UI;
 using UnityEditor;
 using UnityEditor.UI;
@@ -30,3 +31,4 @@ namespace EnhancedFramework.Editor {
         #endregion
     }
 }
+#endif

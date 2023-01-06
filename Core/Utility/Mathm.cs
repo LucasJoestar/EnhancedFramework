@@ -25,6 +25,23 @@ namespace EnhancedFramework.Core {
                  ? _min : ((_value > _max)
                         ? _max : _value);
         }
+
+
+        /// <inheritdoc cref="IsInRange(float, float, float)"/>
+        public static bool IsInRange(int _value, int _min, int _max) {
+            return (_value >= _min) && (_value <= (_max));
+        }
+
+        /// <summary>
+        /// Get if a specific value is within a given range.
+        /// </summary>
+        /// <param name="_value">The value to evaluate.</param>
+        /// <param name="_min">Minimum allowed value.</param>
+        /// <param name="_max">Maximum allowed value.</param>
+        /// <returns>True if the specified value is within the given range, false otherwise.</returns>
+        public static bool IsInRange(float _value, float _min, float _max) {
+            return (_value >= _min) && (_value <= (_max));
+        }
         #endregion
 
         #region Decimal

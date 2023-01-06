@@ -15,9 +15,19 @@ namespace EnhancedFramework.Core.GameStates {
     public abstract class GameStateOverride {
         #region Global Members
         /// <summary>
+        /// Determines whether the hardware cursor is currently visible or not.
+        /// </summary>
+        public bool IsCursorVisible = true;
+
+        /// <summary>
+        /// Determines the behaviour of the hardware cursor.
+        /// </summary>
+        public CursorLockMode CursorLockMode = CursorLockMode.None;
+
+        /// <summary>
         /// Is the game currently performing a loading operation?
         /// </summary>
-        public bool IsLoading = false;
+        [Space(5f)] public bool IsLoading = false;
 
         /// <summary>
         /// Is the game currently performing an unloading operation?
@@ -30,17 +40,29 @@ namespace EnhancedFramework.Core.GameStates {
         [Space(5f)] public bool IsQuitting = false;
         #endregion
 
-        #region Behaviour
+        #region Behaviour        
         /// <summary>
         /// Resets the values back to default.
         /// </summary>
         public virtual GameStateOverride Reset() {
+            IsCursorVisible = true;
+            CursorLockMode = CursorLockMode.None;
+
             IsQuitting = false;
 
             IsLoading = false;
             IsUnloading = false;
 
             return this;
+        }
+
+        /// <summary>
+        /// Applies the modifications made to this <see cref="GameStateOverride"/>.
+        /// </summary>
+        internal protected void Apply() {
+            // Cursor overrides.
+            Cursor.visible = IsCursorVisible;
+            Cursor.lockState = CursorLockMode;
         }
         #endregion
     }

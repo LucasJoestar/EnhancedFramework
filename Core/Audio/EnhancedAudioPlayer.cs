@@ -34,9 +34,9 @@ namespace EnhancedFramework.Core {
         [SerializeField, Enhanced, ValidationMember("PlayAfterLoading")]
         private bool playAfterLoading = false;
 
+        #if UNITY_EDITOR
         [Space(10f)]
 
-        #if UNITY_EDITOR
         [SerializeField, Enhanced, DrawMember("Time"), Range("TimeRange"), ValidationMember("Time")]
         private float time = 0f; // Should never be used outside of the inspector.
         #endif

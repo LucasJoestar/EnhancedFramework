@@ -11,7 +11,7 @@ namespace EnhancedFramework.Core.GameStates {
     /// <summary>
     /// <see cref="SplashManager"/>-related <see cref="GameState"/>, applied while in the splash scene.
     /// </summary>
-    [Serializable, DisplayName("Splash")]
+    [Serializable, DisplayName("Utility/Splash")]
     public class SplashGameState : GameState {
         #region Global Members
         /// <summary>

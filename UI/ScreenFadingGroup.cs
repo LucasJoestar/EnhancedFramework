@@ -4,7 +4,6 @@
 //
 // ================================================================================== //
 
-#if DOTWEEN_ENABLED
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using UnityEngine;
@@ -14,7 +13,13 @@ namespace EnhancedFramework.UI {
     /// <summary>
     /// <see cref="EnhancedBehaviour"/> UI class used to make a screen fade. 
     /// </summary>
-    public class ScreenFadingGroup : FadingGroupSingleton<ScreenFadingGroup, TweeningFadingGroup> {
+    public class ScreenFadingGroup : FadingGroupSingleton<ScreenFadingGroup,
+                                                         #if DOTWEEN_ENABLED
+                                                          TweeningFadingGroup
+                                                         #else
+                                                          FadingGroup
+                                                         #endif
+                                                         > {
         #region Global Members
         [Space(10f)]
 
@@ -41,4 +46,3 @@ namespace EnhancedFramework.UI {
         #endregion
     }
 }
-#endif

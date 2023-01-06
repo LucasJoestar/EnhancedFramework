@@ -4,7 +4,6 @@
 //
 // ================================================================================== //
 
-#if LOCALIZATION_ENABLED
 using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
@@ -168,4 +167,3 @@ namespace EnhancedFramework.Localization {
 		#endregion
 	}
 }
-#endif

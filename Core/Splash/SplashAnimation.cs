@@ -161,7 +161,7 @@ namespace EnhancedFramework.Core {
         public override IEnumerator Play() {
             bool _isWaiting = WaitForCompletion;
 
-            FadingObject.Interface.Fade(Mode, WaitDuration, OnComplete);
+            FadingObject.Interface.Fade(Mode, OnComplete, WaitDuration);
 
             while (_isWaiting) {
                 yield return null;
@@ -196,7 +196,7 @@ namespace EnhancedFramework.Core {
         public override IEnumerator Play() {
             bool _isWaiting = WaitForCompletion;
 
-            ScreenFadingGroup.Instance.Fade(Mode, WaitDuration, OnComplete);
+            ScreenFadingGroup.Instance.Fade(Mode, OnComplete, WaitDuration);
 
             while (_isWaiting) {
                 yield return null;

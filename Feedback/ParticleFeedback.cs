@@ -12,7 +12,7 @@ namespace EnhancedFramework.Core {
 	/// <summary>
 	/// <see cref="EnhancedAssetFeedback"/> used to play various <see cref="ParticleSystem"/>.
 	/// </summary>
-	[CreateAssetMenu(fileName = FilePrefix + "Particle", menuName = MenuPath + "Particle", order = 100)]
+	[CreateAssetMenu(fileName = FilePrefix + "Particle", menuName = MenuPath + "Particle", order = MenuOrder)]
 	public class ParticleFeedback : EnhancedAssetFeedback {
 		#region Global Members
 		[Section("Particle Feedback")]

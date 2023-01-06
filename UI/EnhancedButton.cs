@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+#if TEXT_MESH_PRO_PACKAGE
 using EnhancedEditor;
 using System;
 using UnityEngine;
@@ -159,3 +160,4 @@ namespace EnhancedFramework.UI {
         #endregion
     }
 }
+#endif

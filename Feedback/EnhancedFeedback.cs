@@ -166,11 +166,14 @@ namespace EnhancedFramework.Core {
     /// Base class for <see cref="ScriptableObject"/> enhanced feedback.
     /// </summary>
     public abstract class EnhancedAssetFeedback : ScriptableObject, IEnhancedFeedback {
+        #region Global Members
         public const string FilePrefix = "FBK_";
-        public const string MenuPath = "Enhanced Framework/Feedback/";
+        public const string MenuPath    = FrameworkUtility.MenuPath + "Feedback/";
+        public const int MenuOrder      = FrameworkUtility.MenuOrder;
 
-		#region Global Members
-		[Section("Enhanced Feedback")]
+        // -----------------------
+
+        [Section("Enhanced Feedback")]
 
 		[Enhanced, Range(0f, 5f)] public float Delay = 0f;
 		[SerializeField] private bool doIgnoreTimeScale = false;

@@ -12,7 +12,7 @@ namespace EnhancedFramework.Core {
 	/// <summary>
 	/// <see cref="EnhancedAssetFeedback"/> used to play various <see cref="AudioClip"/>.
 	/// </summary>
-	[CreateAssetMenu(fileName = FilePrefix + "Audio", menuName = MenuPath + "Audio", order = 100)]
+	[CreateAssetMenu(fileName = FilePrefix + "Audio", menuName = MenuPath + "Audio", order = MenuOrder)]
 	public class AudioAssetFeedback : EnhancedAssetFeedback {
 		#region Global Members
 		[Section("Audio Feedback")]

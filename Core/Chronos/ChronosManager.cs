@@ -5,6 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using EnhancedFramework.Core.GameStates;
 using UnityEngine;
 
 namespace EnhancedFramework.Core {
@@ -12,13 +13,18 @@ namespace EnhancedFramework.Core {
     /// Game global chronos manager singleton instance.
     /// <br/> Manages the whole time scale of the game, with numerous multiplicators and overrides.
     /// </summary>
-    public class ChronosManager : EnhancedSingleton<ChronosManager> {
+    public class ChronosManager : EnhancedSingleton<ChronosManager>, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
         public const float ChronosDefaultValue = 1f;
 
         [Section("Chronos Manager")]
+
+        [SerializeField] private bool hasPauseInterface = false;
+        [SerializeField, Enhanced, ShowIf("hasPauseInterface")] private SerializedInterface<IFadingObject> pauseInterface = null;
+
+        [Space(10f)]
 
         [SerializeField, Enhanced, ReadOnly, DisplayName("Chronos")] private float gameChronos = ChronosDefaultValue;
         [SerializeField, Enhanced, ReadOnly] private float coefficient = ChronosDefaultValue;
@@ -45,7 +51,11 @@ namespace EnhancedFramework.Core {
             base.OnInit();
 
             // Override the default chronos behaviour to implement it as a coefficient.
-            EnhancedEditor.Chronos.OnSetChronos = ApplyEditorChronos;
+            ChronosStepper.OnSetChronos = ApplyEditorChronos;
+        }
+
+        private void OnDestroy() {
+            ChronosStepper.OnSetChronos = (f) => Time.timeScale = f;
         }
 
         // -----------------------
@@ -80,17 +90,12 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         private void RefreshChronos(float _chronos) {
-            Time.timeScale = gameChronos
-                           = _chronos;
+            gameChronos = _chronos;
+            Time.timeScale = Mathf.Min(99f, _chronos * coefficient);
         }
         #endregion
 
         #region Coefficient
-        private const int ChronosCoefficientPriority = -999;
-        private readonly int chronosCoefficientID = EnhancedUtility.GenerateGUID();
-
-        // -----------------------
-
         /// <summary>
         /// Pushes and applies a new chronos coefficient in buffer.
         /// <br/> Coefficients are only applied when no global override is active.
@@ -121,7 +126,51 @@ namespace EnhancedFramework.Core {
             }
 
             coefficient = _coef;
-            ApplyOverride(chronosCoefficientID, coefficient, ChronosCoefficientPriority);
+            RefreshChronos(gameChronos);
+        }
+        #endregion
+
+        #region Pause
+        private GameState pauseState = null;
+
+        // -----------------------
+
+        /// <summary>
+        /// Pauses the game and set its chronos to zero.
+        /// </summary>
+        [Button(ActivationMode.Play, SuperColor.Pumpkin)]
+        public void Pause() {
+            if (!pauseState.IsActive()) {
+                pauseState = GameState.CreateState<PauseChronosGameState>();
+            }
+        }
+
+        /// <summary>
+        /// Resumes the game state and reset its chronos.
+        /// </summary>
+        [Button(ActivationMode.Play, SuperColor.Green)]
+        public void Resume() {
+            if (pauseState.IsActive()) {
+                pauseState.RemoveState();
+            }
+        }
+
+        // -----------------------
+
+        void IGameStateLifetimeCallback.OnInit(GameState _state) {
+            pauseState = _state;
+
+            if (hasPauseInterface) {
+                pauseInterface.Interface.Show();
+            }
+        }
+
+        void IGameStateLifetimeCallback.OnTerminate(GameState _state) {
+            pauseState = null;
+
+            if (hasPauseInterface) {
+                pauseInterface.Interface.Hide();
+            }
         }
         #endregion
     }

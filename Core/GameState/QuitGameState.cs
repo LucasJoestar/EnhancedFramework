@@ -36,8 +36,8 @@ namespace EnhancedFramework.Core.GameStates {
         #endregion
 
         #region State Override
-        public override void OnStateOverride(GameStateOverride _state) {
-            base.OnStateOverride(_state);
+        public override void OnGameStateOverride(GameStateOverride _state) {
+            base.OnGameStateOverride(_state);
 
             // Indicates the game is currently being quit.
             GameManager.IsQuittingApplication = true;

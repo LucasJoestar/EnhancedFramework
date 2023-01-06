@@ -11,7 +11,7 @@ namespace EnhancedFramework.Core.Settings {
     /// <summary>
     /// Global game settings, referencing each and every <see cref="BaseSettings{T}"/> shared across the game.
     /// </summary>
-    [CreateAssetMenu(fileName = "GGS_GameSettings", menuName = MenuPath + "GameSettings", order = MenuOrder - 25)]
+    [CreateAssetMenu(fileName = "GGS_GameSettings", menuName = MenuPath + "GameSettings", order = MenuOrder - 50)]
     public class GameSettings : BaseSettings<GameSettings> {
         #region Global Members
         [Section("Game Settings")]

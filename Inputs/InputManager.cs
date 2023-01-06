@@ -13,8 +13,6 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-using UnityInputActionAsset = UnityEngine.InputSystem.InputActionAsset;
-
 namespace EnhancedFramework.Input {
     /// <summary>
     /// Input-managing singleton class used for the whole game.
@@ -25,17 +23,17 @@ namespace EnhancedFramework.Input {
         #region Global Members
         [Section("Input Manager")]
 
-        [SerializeField, Enhanced, Required] private UnityInputActionAsset inputAsset = null;
+        [SerializeField, Enhanced, Required] private InputDatabase database = null;
 
         [Space(10f)]
 
-        [SerializeField] private InputActionEnhancedAsset[] inputs = new InputActionEnhancedAsset[] { };
-        [SerializeField] private InputMapEnhancedAsset[] maps = new InputMapEnhancedAsset[] { };
+        [SerializeField] private InputActionEnhancedAsset[] inputs  = new InputActionEnhancedAsset[] { };
+        [SerializeField] private InputMapEnhancedAsset[] maps       = new InputMapEnhancedAsset[] { };
 
         // -----------------------
 
         /// <summary>
-        /// The total amount of <see cref="Input.InputActionEnhancedAsset"/> in the game.
+        /// The total amount of <see cref="InputActionEnhancedAsset"/> in the game.
         /// </summary>
         public int InputCount {
             get { return inputs.Length; }
@@ -53,14 +51,14 @@ namespace EnhancedFramework.Input {
         protected override void OnInit() {
             base.OnInit();
 
-            // Inputs are not serialize with a consistant reference.
-            // So use the asset to retrieve their target input within.
+            // Inputs may not be serialized with a consistant reference,
+            // so use the database to retrieve their target input within.
             foreach (InputActionEnhancedAsset _input in inputs) {
-                _input.Initialize(inputAsset);
+                _input.Initialize(database);
             }
 
             foreach (InputMapEnhancedAsset _map in maps) {
-                _map.Initialize(inputAsset);
+                _map.Initialize(database);
             }
         }
         #endregion
@@ -73,7 +71,7 @@ namespace EnhancedFramework.Input {
         /// </summary>
         /// <param name="_index">The index to get the input at.</param>
         /// <returns>The <see cref="InputActionEnhancedAsset"/> at the specified index.</returns>
-        public InputActionEnhancedAsset GetInputAAt(int _index) {
+        public InputActionEnhancedAsset GetInputAt(int _index) {
             return inputs[_index];
         }
 
@@ -91,8 +89,15 @@ namespace EnhancedFramework.Input {
 
         #region Editor Tool
         #if UNITY_EDITOR
+        /// <summary>
+        /// Editor utility, retrieving all inputs assets from the project.
+        /// </summary>
         [ContextMenu("Get Inputs", false, 10)]
         private void GetInputs() {
+            if (AssetDatabase.FindAssets($"t:{typeof(InputDatabase).Name}").SafeFirst(out string _path)) {
+                database = AssetDatabase.LoadAssetAtPath<InputDatabase>(AssetDatabase.GUIDToAssetPath(_path));
+            }
+
             string[] _paths = Array.ConvertAll(AssetDatabase.FindAssets($"t:{typeof(InputActionEnhancedAsset).Name}"), AssetDatabase.GUIDToAssetPath);
             inputs = Array.ConvertAll(_paths, AssetDatabase.LoadAssetAtPath<InputActionEnhancedAsset>);
 

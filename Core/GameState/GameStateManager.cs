@@ -7,13 +7,12 @@
 using EnhancedEditor;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace EnhancedFramework.Core.GameStates {
     /// <summary>
     /// Implement this interface to receive a callback
-    /// when the <see cref="GameStateManager.StateOverride"/> values are overridden by a new state.
+    /// when the <see cref="GameStateManager.stateOverride"/> values are overridden by a new state.
     /// <para/>
     /// Requires to be registered first using <see cref="GameStateManager.RegisterOverrideCallback(IGameStateOverrideCallback)"/>.
     /// </summary>
@@ -83,17 +82,12 @@ namespace EnhancedFramework.Core.GameStates {
         #region Global Members
         [Section("Game State Manager")]
 
-        [SerializeField, Enhanced, DisplayName("State Override")]
-        private SerializedType<GameStateOverride> overrideType = new SerializedType<GameStateOverride>(typeof(DefaultGameStateOverride));
-
         [SerializeField, Enhanced, DisplayName("Default State")]
         private SerializedType<GameState> defaultStateType = new SerializedType<GameState>(typeof(DefaultGameState));
-        
-        /// <summary>
-        /// Current global states override shared values.
-        /// </summary>
-        [field: SerializeReference, Space(10f), Enhanced, ReadOnly]
-        public GameStateOverride StateOverride { get; private set; } = new DefaultGameStateOverride();
+
+        [SerializeField, Enhanced, ReadOnly]
+        private PolymorphValue<GameStateOverride> stateOverride = new PolymorphValue<GameStateOverride>(SerializedTypeConstraint.None,
+                                                                                                        typeof(DefaultGameStateOverride));
 
         /// <summary>
         /// The game state being currently active and enabled.
@@ -101,9 +95,16 @@ namespace EnhancedFramework.Core.GameStates {
         [field: SerializeReference, Space(10f)]
         public GameState CurrentState { get; private set; } = null;
 
-        [SerializeField, Enhanced, ReadOnly, Block] private BufferR<Reference<GameState>> states = new BufferR<Reference<GameState>>();
+        [SerializeField, Enhanced, ReadOnly] private BufferR<Reference<GameState>> states = new BufferR<Reference<GameState>>();
 
         // -----------------------
+
+        /// <summary>
+        /// Current global states override shared values.
+        /// </summary>
+        public GameStateOverride StateOverride {
+            get { return stateOverride; }
+        }
 
         /// <summary>
         /// The total amount of <see cref="GameState"/> currently pushed in the stack.
@@ -116,12 +117,6 @@ namespace EnhancedFramework.Core.GameStates {
 
         private readonly List<GameState> pushPendingStates = new List<GameState>();
         private readonly List<GameState> popPendingStates = new List<GameState>();
-
-        // -----------------------
-
-        public override Color LogColor {
-            get { return SuperColor.Lime.Get(); }
-        }
         #endregion
 
         #region Enhanced Behaviour
@@ -159,14 +154,6 @@ namespace EnhancedFramework.Core.GameStates {
                 }
             }
         }
-
-        #if UNITY_EDITOR
-        private void OnValidate() {
-            if (StateOverride.GetType() != overrideType) {
-                StateOverride = Activator.CreateInstance(overrideType) as GameStateOverride;
-            }
-        }
-        #endif
         #endregion
 
         #region Override Callbacks
@@ -176,7 +163,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// <param name="_callback">Callback receiver to register.</param>
         public void RegisterOverrideCallback(IGameStateOverrideCallback _callback) {
             overrideCallbacks.Add(_callback);
-            _callback.OnGameStateOverride(StateOverride);
+            _callback.OnGameStateOverride(stateOverride);
         }
 
         /// <summary>
@@ -246,7 +233,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// <inheritdoc cref="PopState{T}"/>
         public bool PopState(Type _stateType) {
             if (!_stateType.IsSubclassOf(typeof(GameState))) {
-                LogMessage($"The type \'{_stateType.Name}\' does not inherit from \'{typeof(GameState).Name}\'", LogType.Error);
+                this.LogErrorMessage($"The type \'{_stateType.Name}\' does not inherit from \'{typeof(GameState).Name}\'");
                 return false;
             }
 
@@ -282,9 +269,15 @@ namespace EnhancedFramework.Core.GameStates {
                 RemoveFromPendingState(_state);
             }
 
+            // Prevent from having multiple states of the same type on the stack if it is not allowed.
+            if (!_state.MultipleInstance && IsOnStack(_state.GetType(), out _)) {
+                this.LogWarningMessage($"A GameState of type \"{_state.GetType()}\" is already pushed on the stack");
+                return;
+            }
+
             states.Push(_state, _state.Priority);
 
-            LogMessage($"Push \"{_state}\"");
+            this.LogMessage($"Push \"{_state}\"");
 
             _state.OnPushedOnStack();
 
@@ -307,7 +300,7 @@ namespace EnhancedFramework.Core.GameStates {
             }
 
             states.RemoveAt(_index);
-            LogMessage($"Pop \"{_state}\"");
+            this.LogMessage($"Pop \"{_state}\"");
 
             if (_autoRefresh) {
                 RefreshCurrentState();
@@ -347,7 +340,7 @@ namespace EnhancedFramework.Core.GameStates {
                 GameState _previous = CurrentState;
                 CurrentState = _current;
 
-                LogMessage($"Set new state \"{_current}\"");
+                this.LogMessage($"Set new state \"{_current}\"");
 
                 if (_previous.IsActive()) {
                     _previous.OnDisabled();
@@ -357,13 +350,13 @@ namespace EnhancedFramework.Core.GameStates {
             }
 
             // State & chronos overrides.
-            GameStateOverride _override = StateOverride.Reset();
+            GameStateOverride _override = stateOverride.Value.Reset();
             float _chronos = 1f;
             int _priority = -1;
 
             for (int i = 0; i < states.Count; i++) {
                 GameState _state = states.GetKeyAt(i);
-                _state.OnStateOverride(_override);
+                _state.OnGameStateOverride(_override);
 
                 if (_state.OverrideChronos(out float _chronosTemp, out int _priorityTemp) && (_priorityTemp >= _priority)) {
                     _chronos = _chronosTemp;
@@ -372,6 +365,7 @@ namespace EnhancedFramework.Core.GameStates {
             }
 
             ChronosManager.Instance.ApplyOverride(chronosID, _chronos, _priority);
+            _override.Apply();
 
             foreach (IGameStateOverrideCallback _callback in overrideCallbacks) {
                 _callback.OnGameStateOverride(_override);
@@ -389,6 +383,76 @@ namespace EnhancedFramework.Core.GameStates {
         /// <returns>The <see cref="GameState"/> at the given index from the stack.</returns>
         public GameState GetGameStateAt(int _index) {
             return states.GetKeyAt(_index);
+        }
+
+        /// <typeparam name="T"><inheritdoc cref="IsActive(Type, out GameState, bool)" path="/param[@name='_type']"/></typeparam>
+        /// <inheritdoc cref="IsActive(Type, out GameState, bool)"/>
+        public bool IsActive<T>(out GameState _state, bool _inherit = true) where T : GameState {
+            Type _type = typeof(T);
+            return IsActive(_type, out _state, _inherit);
+        }
+
+        /// <summary>
+        /// Get if any <see cref="GameState"/> of a specific type is a currently active.
+        /// </summary>
+        /// <param name="_type">The <see cref="GameState"/> type to check.</param>
+        /// <param name="_state">The first found active <see cref="GameState"/> of the given type (null if none).</param>
+        /// <param name="_inherit">If true, will also check for any type inheriting from the given one.</param>
+        /// <returns>True if any <see cref="GameState"/> of the given type is active, false otherwise.</returns>
+        public bool IsActive(Type _type, out GameState _state, bool _inherit = true) {
+            foreach (var _pair in states) {
+                _state = _pair.First.Value;
+                if (IsType(_state)) {
+                    return true;
+                }
+            }
+
+            foreach (var _gameState in pushPendingStates) {
+                if (IsType(_gameState)) {
+                    _state = _gameState;
+                    return true;
+                }
+            }
+
+            _state = null;
+            return false;
+
+            // ----- Local Method ----- \\
+
+            bool IsType(GameState _state) {
+                Type _stateType = _state.GetType();
+
+                if ((_stateType == _type) || (_inherit && _stateType.IsSubclassOf(_type))) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get if any <see cref="GameState"/> of a specific type is currently on the stack.
+        /// </summary>
+        /// <param name="_type">The <see cref="GameState"/> type to check.</param>
+        /// <param name="_state">The first found <see cref="GameState"/> on the stack of the given type (null if none).</param>
+        /// <returns>True if any <see cref="GameState"/> of the given type is currently on the stack, false otherwise.</returns>
+        public bool IsOnStack(Type _type, out GameState _state) {
+            foreach (var _pair in states) {
+                _state = _pair.First.Value;
+
+                if (_state.GetType() == _type) {
+                    return true;
+                }
+            }
+
+            _state = null;
+            return false;
+        }
+        #endregion
+
+        #region Logger
+        public override Color GetLogMessageColor(LogType _type) {
+            return SuperColor.Lime.Get();
         }
         #endregion
     }

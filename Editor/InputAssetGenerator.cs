@@ -4,46 +4,56 @@
 //
 // ================================================================================== //
 
-#if INPUT_SYSTEM_PACKAGE
+#if ENABLE_INPUT_SYSTEM
+#define NEW_INPUT_SYSTEM
+#endif
+
+#if NEW_INPUT_SYSTEM
 using EnhancedEditor.Editor;
 using EnhancedFramework.Input;
-using EnhancedFramework.Core;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-using InputActionEnhancedAsset = EnhancedFramework.Input.InputActionEnhancedAsset;
 using UnityInputActionAsset = UnityEngine.InputSystem.InputActionAsset;
 
 namespace EnhancedFramework.Editor {
     /// <summary>
-    /// Generates an <see cref="InputActionEnhancedAsset"/> for each action setup in the first <see cref="UnityEngine.InputSystem.InputActionAsset"/> in the project.
+    /// Generates an <see cref="SingleInputActionEnhancedAsset"/> for each action setup in the first <see cref="UnityEngine.InputSystem.InputActionAsset"/> in the project.
     /// </summary>
     public static class InputAssetGenerator {
         #region Content
-        private const string DefaultInputAssetPath = "Assets/Input Assets/";
-        private const string InputActionAssetFormat = "IPA_{0}_{1}";
-        private const string InputActionMapAssetFormat = "IPM_{0}";
+        private const string DefaultInputAssetPath      = "Assets/Input Assets/";
+        private const string InputMapAssetFormat        = InputMapEnhancedAsset.FilePrefix + "{0}";
+        private const string InputActionAssetFormat     = SingleInputActionEnhancedAsset.FilePrefix + "{0}_{1}";
 
         // -----------------------
 
-        [MenuItem(InternalUtility.MenuItemPath + "Refresh Input Assets", false, 20)]
+        [MenuItem(FrameworkUtility.MenuItemPath + "Refresh Input Assets", false, 20)]
         private static void RefreshInputAssets() {
             if (!EnhancedEditorUtility.LoadMainAsset(out UnityInputActionAsset _inputAsset)){
                 return;
             }
 
             // Get new action assets path.
-            List<InputActionEnhancedAsset> _inputs = new List<InputActionEnhancedAsset>(EnhancedEditorUtility.LoadAssets<InputActionEnhancedAsset>());
-            List<InputActionEnhancedAsset> _inputList = new List<InputActionEnhancedAsset>();
+            List<SingleInputActionEnhancedAsset> _inputs = new List<SingleInputActionEnhancedAsset>(EnhancedEditorUtility.LoadAssets<SingleInputActionEnhancedAsset>());
+            List<SingleInputActionEnhancedAsset> _inputList = new List<SingleInputActionEnhancedAsset>();
 
             string _path = GetAssetPath(_inputs);
 
+            // Database.
+            if (!EnhancedEditorUtility.LoadMainAsset(out InputDatabase _database)) {
+                _database = ScriptableObject.CreateInstance<InputDatabase>();
+                _database.ActionDatabase = _inputAsset;
+
+                AssetDatabase.CreateAsset(_database, Path.Combine(_path, $"{InputDatabase.FileName}.asset"));
+            }
+
             // Create new action assets and rename wrong named existing ones.
             foreach (InputAction _action in _inputAsset) {
-                InputActionEnhancedAsset _asset = _inputs.Find(i => i.input.id == _action.id);
+                SingleInputActionEnhancedAsset _asset = _inputs.Find(i => i.input.id == _action.id);
                 string _name = string.Format(InputActionAssetFormat, _action.actionMap.name, _action.name).Replace('/', '.');
 
                 if (_asset) {
@@ -54,7 +64,7 @@ namespace EnhancedFramework.Editor {
 
                     _inputs.Remove(_asset);
                 } else {
-                    _asset = ScriptableObject.CreateInstance<InputActionEnhancedAsset>();
+                    _asset = ScriptableObject.CreateInstance<SingleInputActionEnhancedAsset>();
                     _asset.Initialize(_action);
 
                     AssetDatabase.CreateAsset(_asset, Path.Combine(_path, $"{_name}.asset"));
@@ -70,7 +80,7 @@ namespace EnhancedFramework.Editor {
 
             foreach (InputActionMap _map in _inputAsset.actionMaps) {
                 InputMapEnhancedAsset _asset = _maps.Find(i => i.map.id == _map.id);
-                string _name = string.Format(InputActionMapAssetFormat, _map.name.Replace('/', '.'));
+                string _name = string.Format(InputMapAssetFormat, _map.name.Replace('/', '.'));
 
                 if (_asset) {
                     if (_asset.name != _name) {
@@ -95,7 +105,11 @@ namespace EnhancedFramework.Editor {
             }
 
             // Delete obsolete assets.
-            foreach (InputActionEnhancedAsset _input in _inputs) {
+            foreach (SingleInputActionEnhancedAsset _input in _inputs) {
+                if (_input.isOrphan) {
+                    continue;
+                }
+
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(_input));
             }
 

@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 9a073e5a8daabcb488de6242334e7a29
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Noto Sans
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 186f45606a60c55429c37dda9b5531f0, type: 3}
+  - {fileID: 12800000, guid: 194684b2c58350649804373b09a05d8c, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

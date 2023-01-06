@@ -10,8 +10,6 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-using Range = EnhancedEditor.RangeAttribute;
-
 namespace EnhancedFramework.UI {
     /// <summary>
     /// Base class for <see cref="EnhancedBehaviour"/>-encapsulated <see cref="FadingGroup"/>.
@@ -29,7 +27,7 @@ namespace EnhancedFramework.UI {
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, Range(0f, 1f)] protected float startAlpha = 1f;
+        [SerializeField] protected bool visibleOnStart = true;
 
         /// <inheritdoc cref="FadingGroup.Group"/>
         public CanvasGroup Group {
@@ -38,7 +36,7 @@ namespace EnhancedFramework.UI {
 
         // -----------------------
 
-        public bool IsVisible {
+        public virtual bool IsVisible {
             get { return group.IsVisible; }
         }
         #endregion
@@ -47,7 +45,7 @@ namespace EnhancedFramework.UI {
         protected override void OnInit() {
             base.OnInit();
 
-            group.Group.alpha = startAlpha;
+            group.SetVisibility(visibleOnStart);
         }
 
         #if UNITY_EDITOR
@@ -57,7 +55,7 @@ namespace EnhancedFramework.UI {
                 group.Group = GetComponent<CanvasGroup>();
 
                 if (group.Group) {
-                    startAlpha = group.Group.alpha;
+                    visibleOnStart = group.Group.alpha == group.FadeAlpha.y;
                 }
             }
         }
@@ -65,6 +63,10 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Visiblity
+        // -------------------------------------------
+        // General
+        // -------------------------------------------
+
         public virtual void Show(Action _onComplete = null) {
             group.Show(_onComplete);
         }
@@ -73,12 +75,12 @@ namespace EnhancedFramework.UI {
             group.Hide(_onComplete);
         }
 
-        public virtual void FadeInOut(float _duration, Action _onAfterFadeIn = null, Action _onBeforeFadeOut = null) {
-            group.FadeInOut(_duration, _onAfterFadeIn, _onBeforeFadeOut);
+        public virtual void FadeInOut(float _duration, Action _onAfterFadeIn = null, Action _onBeforeFadeOut = null, Action _onComplete = null) {
+            group.FadeInOut(_duration, _onAfterFadeIn, _onBeforeFadeOut, _onComplete);
         }
 
-        public virtual void Fade(FadingMode _mode, float _inOutWaitDuration = .5f, Action _onComplete = null) {
-            group.Fade(_mode, _inOutWaitDuration, _onComplete);
+        public virtual void Fade(FadingMode _mode, Action _onComplete = null, float _inOutWaitDuration = .5f) {
+            group.Fade(_mode, _onComplete, _inOutWaitDuration);
         }
 
         public virtual void Invert(Action _onComplete = null) {
@@ -89,7 +91,33 @@ namespace EnhancedFramework.UI {
             group.SetVisibility(_isVisible, _onComplete);
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Instant
+        // -------------------------------------------
+
+        public virtual void Show(bool _isInstant, Action _onComplete = null) {
+            group.Show(_isInstant, _onComplete);
+        }
+
+        public virtual void Hide(bool _isInstant, Action _onComplete = null) {
+            group.Hide(_isInstant, _onComplete);
+        }
+
+        public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null) {
+            group.Fade(_mode, _isInstant, _onComplete);
+        }
+
+        public virtual void Invert(bool _isInstant, Action _onComplete = null) {
+            group.Invert(_isInstant, _onComplete);
+        }
+
+        public virtual void SetVisibility(bool _isVisible, bool _isInstant, Action _onComplete = null) {
+            group.SetVisibility(_isVisible, _isInstant, _onComplete);
+        }
+
+        // -------------------------------------------
+        // Inspector
+        // -------------------------------------------
 
         [Button(SuperColor.Green)]
         protected void ShowGroup() {

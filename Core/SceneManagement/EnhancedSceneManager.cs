@@ -26,6 +26,7 @@ namespace EnhancedFramework.Core {
         Loading                 = 20,
         Unloading,
         FreeMemory,
+        MinimumDuration,
         WaitForInitialization,
         Ready,
         Complete                = 99,
@@ -81,7 +82,7 @@ namespace EnhancedFramework.Core {
 
         #region Loading
         private const int ChronosPriority = 999;
-        private readonly int chronosID = EnhancedUtility.GenerateGUID();
+        private readonly int chronosID = EnhancedEditor.EnhancedUtility.GenerateGUID();
 
         // -----------------------
 
@@ -114,23 +115,22 @@ namespace EnhancedFramework.Core {
     /// <br/> Then, get access to it using the <see cref="Behaviour"/>
     /// property to call your own functions and receive multiple callbacks.
     /// </summary>
-    public class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager> {
+    public class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager>, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
-        public const int DefaultOperationPriority = 0;
-
         [Section("Enhanced Scene Manager")]
 
-        [SerializeField]
-        private SerializedType<ILoadingState> loadingStateType      = new SerializedType<ILoadingState>(SerializedTypeConstraint.None, typeof(DefaultLoadingGameState));
+        [SerializeField] private SerializedType<ILoadingState> loadingStateType     = new SerializedType<ILoadingState>(SerializedTypeConstraint.None,
+                                                                                                                        typeof(DefaultLoadingGameState));
 
-        [SerializeField]
-        private SerializedType<IUnloadingState> unloadingStateType  = new SerializedType<IUnloadingState>(SerializedTypeConstraint.None, typeof(DefaultUnloadingGameState));
+        [SerializeField] private SerializedType<IUnloadingState> unloadingStateType = new SerializedType<IUnloadingState>(SerializedTypeConstraint.None,
+                                                                                                                          typeof(DefaultUnloadingGameState));
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, Required, Tooltip("The first scene to load when starting the game")] private SceneBundle firstScene = null;
+        [Tooltip("The first scene to load when starting the game")]
+        [SerializeField, Enhanced, Required] private SceneBundle firstScene = null;
 
         [Space(10f)]
 
@@ -141,11 +141,22 @@ namespace EnhancedFramework.Core {
 
         [SerializeField, Enhanced, ReadOnly] private Set<SceneBundle> loadedBundles = new Set<SceneBundle>();
 
+        // -------------------------------------------
+        // Settings & Behaviour
+        // -------------------------------------------
+
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeField, Enhanced, Block]
-        private PolymorphValue<SceneManagerBehaviour> behaviour = new PolymorphValue<SceneManagerBehaviour>(SerializedTypeConstraint.None,
-                                                                                                            typeof(DefaultSceneManagerBehaviour), "Behaviour");
+        [SerializeField] public PolymorphValue<LoadSceneSettings> LoadingSettings       = new PolymorphValue<LoadSceneSettings>(SerializedTypeConstraint.BaseType,
+                                                                                                                                typeof(LoadSceneSettings));
+
+        [SerializeField] public PolymorphValue<UnloadSceneSettings> UnloadingSettings   = new PolymorphValue<UnloadSceneSettings>(SerializedTypeConstraint.BaseType,
+                                                                                                                                  typeof(UnloadSceneSettings));
+
+        [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
+
+        [SerializeField] private PolymorphValue<SceneManagerBehaviour> behaviour = new PolymorphValue<SceneManagerBehaviour>(SerializedTypeConstraint.None,
+                                                                                                                             typeof(DefaultSceneManagerBehaviour));
 
         // -----------------------
 
@@ -248,6 +259,11 @@ namespace EnhancedFramework.Core {
                 if (loadingBundles.Count == 0) {
                     DoPerformLoading();
                 }
+
+                // Simulate game loading if another scene than core or than the first game scene is loaded.
+                if ((loadingBundles.Count != 2) || !loadingBundles.Exists(p => p.First == firstScene)) {
+                    Behaviour.OnEnterPlayModeEditor(loadingBundles, LoadingSettings);
+                }
             }
             #else
             LoadFirstScene();
@@ -290,6 +306,42 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
+        #region Game State
+        void IGameStateLifetimeCallback.OnInit(GameState _state) {
+            switch (_state) {
+                // Start loading.
+                case ILoadingState _:
+                    StartLoading(_state);
+                    break;
+
+                // Start unloading.
+                case IUnloadingState _:
+                    StartUnloading(_state);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        void IGameStateLifetimeCallback.OnTerminate(GameState _state) {
+            switch (_state) {
+                // Stop loading.
+                case ILoadingState _:
+                    StopLoading();
+                    break;
+
+                // Stop unloading.
+                case IUnloadingState _:
+                    StopUnloading();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        #endregion
+
         #region Loading
         private const float StartLoadDelay      = .2f;
         private const float LoadBundleInterval  = .01f;
@@ -300,9 +352,23 @@ namespace EnhancedFramework.Core {
         private Coroutine loadingCoroutine = null;
         private GameState loadingGameState = null;
 
+        /// <summary>
+        /// The <see cref="GameState"/> of the current loading operation.
+        /// </summary>
+        public GameState LoadingGameState {
+            get { return loadingGameState; }
+        }
+
         // -------------------------------------------
         // Requests
         // -------------------------------------------
+
+        /// <param name="_settings">The settings to use to perform this loading.</param>
+        /// <inheritdoc cref="LoadSceneBundle(SceneBundle, LoadSceneMode)"/>
+        public void LoadSceneBundle(SceneBundle _bundle, LoadSceneMode _mode, LoadSceneSettings _settings) {
+            LoadingSettings.Value = _settings;
+            LoadSceneBundle(_bundle, _mode);
+        }
 
         /// <summary>
         /// Requests to load a specific <see cref="SceneBundle"/>.
@@ -329,15 +395,17 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <summary>
-        /// /!\ Should only be called from a <see cref="LoadingGameState{T}"/> /!\
-        /// <para/>
         /// Starts loading all previously requested <see cref="SceneBundle"/>.
+        /// <para/>
+        /// Used as a <see cref="LoadingGameState{T}"/> callback.
         /// </summary>
-        public void StartLoading() {
+        private void StartLoading(GameState _gameState) {
+            loadingGameState = _gameState;
+
             #if DEVELOPMENT
             // This case should never happen. If it does, log an error.
             if (loadingCoroutine != null) {
-                LogMessage("Starting a new loading operation while another is still running\nStoping the previous coroutine", LogType.Error);
+                this.LogErrorMessage("Starting a new loading operation while another is still running\nStoping the previous coroutine");
                 StopLoading();
             }
             #endif
@@ -347,11 +415,11 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// /!\ Should only be called from a <see cref="LoadingGameState{T}"/> /!\
-        /// <para/>
         /// Stops all active loading operation(s).
+        /// <para/>
+        /// Used as a <see cref="LoadingGameState{T}"/> callback.
         /// </summary>
-        public void StopLoading() {
+        private void StopLoading() {
             switch (loadingState) {
                 // Ignore when inactive.
                 case LoadingState.Inactive:
@@ -363,7 +431,7 @@ namespace EnhancedFramework.Core {
 
                 // Prematurely stopped.
                 default:
-                    LogMessage("Loading prematurely canceled before completion", LogType.Warning);
+                    this.LogWarningMessage("Loading prematurely canceled before completion");
                     StopCoroutine(loadingCoroutine);
 
                     Behaviour.OnCancelLoading();
@@ -382,8 +450,10 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private IEnumerator PerformLoading() {
+            yield return null;
+
             // Preparation.
-            Behaviour.PrepareLoading(loadingBundles);
+            Behaviour.PrepareLoading(loadingBundles, LoadingSettings);
             SetLoadingState(LoadingState.Prepare);
             
             // Wait for all pending operations to be compelete.
@@ -396,6 +466,8 @@ namespace EnhancedFramework.Core {
             OnStartLoading?.Invoke();
 
             SetLoadingState(LoadingState.Start);
+            double _startTime = Time.realtimeSinceStartup;
+
             yield return null;
 
             // Terminates all gameplay states.
@@ -462,12 +534,18 @@ namespace EnhancedFramework.Core {
                 yield return null;
             }
 
+            SetLoadingState(LoadingState.MinimumDuration);
+
+            // Minimum duration.
+            while ((Time.realtimeSinceStartup - _startTime) < Behaviour.LoadingMinimumDuration) {
+                yield return null;
+            }
+
             SetLoadingState(LoadingState.Ready);
             Behaviour.OnLoadingReady();
 
-            // Before completion, make sure the loading state is the current active one,
-            // and let the behaviour complete its requested operations (like a press for any key).
-            while (!loadingGameState.IsCurrentState || !Behaviour.CompleteLoading) {
+            // Before completion, let the behaviour complete its requested operations (like a press for any key).
+            while (!Behaviour.CompleteLoading) {
                 yield return null;
             }
 
@@ -498,9 +576,23 @@ namespace EnhancedFramework.Core {
         private Coroutine unloadingCoroutine = null;
         private GameState unloadingGameState = null;
 
+        /// <summary>
+        /// The <see cref="GameState"/> of the current unloading operation.
+        /// </summary>
+        public GameState UnloadingGameState {
+            get { return unloadingGameState; }
+        }
+
         // -------------------------------------------
         // Requests
         // -------------------------------------------
+
+        /// <param name="_settings">The settings to use to perform this unloading.</param>
+        /// <inheritdoc cref="UnloadSceneBundle(SceneBundle, UnloadSceneOptions)"/>
+        public void UnloadSceneBundle(SceneBundle _bundle, UnloadSceneOptions _options, UnloadSceneSettings _settings) {
+            UnloadingSettings.Value = _settings;
+            UnloadSceneBundle(_bundle, _options);
+        }
 
         /// <summary>
         /// Requests to unload a specific <see cref="SceneBundle"/>.
@@ -527,15 +619,17 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <summary>
-        /// /!\ Should only be called from a <see cref="UnloadingGameState{T}"/> /!\
-        /// <para/>
         /// Starts unloading all previously requested <see cref="SceneBundle"/>.
+        /// <para/>
+        /// Used as a <see cref="UnloadingGameState{T}"/> callback.
         /// </summary>
-        public void StartUnloading() {
+        private void StartUnloading(GameState _gameState) {
+            unloadingGameState = _gameState;
+
             #if DEVELOPMENT
             // This case should never happen. If it does, log an error.
             if (unloadingCoroutine != null) {
-                LogMessage("Starting a new unloading operation while another is still running\nStoping the previous coroutine", LogType.Error);
+                this.LogErrorMessage("Starting a new unloading operation while another is still running\nStoping the previous coroutine");
                 StopUnloading();
             }
             #endif
@@ -545,11 +639,11 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// /!\ Should only be called from a <see cref="UnloadingGameState{T}"/> /!\
-        /// <para/>
         /// Stops all active unloading operation(s).
+        /// <para/>
+        /// Used as a <see cref="UnloadingGameState{T}"/> callback.
         /// </summary>
-        public void StopUnloading() {
+        private void StopUnloading() {
             switch (unloadingState) {
                 // Ignore when inactive.
                 case UnloadingState.Inactive:
@@ -561,7 +655,7 @@ namespace EnhancedFramework.Core {
 
                 // Prematurely stopped.
                 default:
-                    LogMessage("Unloading prematurely canceled before completion", LogType.Warning);
+                    this.LogWarningMessage("Unloading prematurely canceled before completion");
                     StopCoroutine(unloadingCoroutine);
 
                     Behaviour.OnCancelUnloading();
@@ -580,8 +674,10 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private IEnumerator PerformUnloading() {
+            yield return null;
+
             // Preparation.
-            Behaviour.PrepareUnloading(unloadingBundles);
+            Behaviour.PrepareUnloading(unloadingBundles, UnloadingSettings);
             SetUnloadingState(UnloadingState.Prepare);
 
             // Wait while a loading operation is in process.
@@ -662,6 +758,38 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Utility
+        /// <summary>
+        /// Get the current <see cref="LoadSceneSettings"/> as the desired type.
+        /// </summary>
+        /// <typeparam name="T">The type to convert the settings in.</typeparam>
+        /// <param name="_settings">The current <see cref="LoadSceneSettings"/> object.</param>
+        /// <returns>True if the settings could be converted to the desired type, false otherwise.</returns>
+        public bool GetLoadingSettings<T>(out T _settings) where T : LoadSceneSettings {
+            if (LoadingSettings.Value is T _temp) {
+                _settings = _temp;
+                return true;
+            }
+
+            _settings = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Get the current <see cref="UnloadSceneSettings"/> as the desired type.
+        /// </summary>
+        /// <typeparam name="T">The type to convert the settings in.</typeparam>
+        /// <param name="_settings">The current <see cref="UnloadSceneSettings"/> object.</param>
+        /// <returns>True if the settings could be converted to the desired type, false otherwise.</returns>
+        public bool GetUnloadingSettings<T>(out T _settings) where T : UnloadSceneSettings {
+            if (UnloadingSettings.Value is T _temp) {
+                _settings = _temp;
+                return true;
+            }
+
+            _settings = null;
+            return false;
+        }
+
         /// <summary>
         /// Indicates if any <see cref="ILoadingProcessor"/> is currently processing or not.
         /// </summary>

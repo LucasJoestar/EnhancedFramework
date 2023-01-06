@@ -26,6 +26,13 @@ namespace EnhancedFramework.Core.GameStates {
             get { return true; }
         }
 
+        // Manage loading operations from this state callbacks.
+        public override IGameStateLifetimeCallback LifetimeCallback {
+            get { return EnhancedSceneManager.Instance; }
+        }
+
+        // -----------------------
+
         /// <inheritdoc cref="LoadingGameState{T}"/>
         public LoadingGameState() : base(false) { }
         #endregion
@@ -52,22 +59,6 @@ namespace EnhancedFramework.Core.GameStates {
 
         public override int Priority {
             get { return PriorityConst; }
-        }
-        #endregion
-
-        #region Behaviour
-        protected internal override void OnEnabled() {
-            base.OnEnabled();
-
-            // Only start loading when this state becomes the active state.
-            EnhancedSceneManager.Instance.StartLoading();
-        }
-
-        protected override void OnTerminate() {
-            base.OnTerminate();
-
-            // Stop loading when the state is terminated, and not when it stops being the active state.
-            EnhancedSceneManager.Instance.StopLoading();
         }
         #endregion
     }

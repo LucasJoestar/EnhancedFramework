@@ -2,8 +2,6 @@
 //
 // Notes:
 //
-//  • Add dead zone value.
-//
 // ================================================================================== //
 
 using EnhancedEditor;
@@ -13,16 +11,18 @@ using UnityEngine;
 
 namespace EnhancedFramework.Input {
     /// <summary>
-    /// Axis <see cref="InputActionEnhancedAsset"/>-related asset,
+    /// Axis <see cref="SingleInputActionEnhancedAsset"/>-related asset,
     /// <br/> always using the last pressed input as the winning side.
     /// </summary>
-    [Serializable]
-    public class AxisInputActionEnhancedAsset : BaseInputActionEnhancedAsset {
-        #region Global Members
-        [Section("Enhanced Axis Input Action")]
+    [CreateAssetMenu(fileName = FilePrefix + "AxisInputAction", menuName = MenuPath + "Axis Action", order = MenuOrder)]
+    public class AxisInputActionEnhancedAsset : InputActionEnhancedAsset {
+        public const string FilePrefix  = "IPA_";
 
-        [SerializeField, Enhanced, Required] private InputActionEnhancedAsset positive = null;
-        [SerializeField, Enhanced, Required] private InputActionEnhancedAsset negative = null;
+        #region Global Members
+        [Space(10f)]
+
+        [SerializeField, Enhanced, Required] private SingleInputActionEnhancedAsset positive = null;
+        [SerializeField, Enhanced, Required] private SingleInputActionEnhancedAsset negative = null;
 
         [Space(10f)]
 
@@ -35,17 +35,51 @@ namespace EnhancedFramework.Input {
         }
         #endregion
 
+        #region Initialization
+        protected override void OnInit(InputDatabase _database) {
+            // Event setup.
+            positive.OnStarted += OnInputStarted;
+            negative.OnStarted += OnInputStarted;
+
+            positive.OnCanceled += OnInputCanceled;
+            negative.OnCanceled += OnInputCanceled;
+
+            positive.OnPerformed += OnInputPerformed;
+            negative.OnPerformed += OnInputPerformed;
+
+            // ----- Local Methods ----- \\
+
+            void OnInputStarted(InputActionEnhancedAsset _input) {
+                if (_input == UpdateActiveInput()) {
+                    CallOnStarted();
+                }
+            }
+
+            void OnInputCanceled(InputActionEnhancedAsset _input) {
+                if (_input == UpdateActiveInput()) {
+                    CallOnCanceled();
+                }
+            }
+
+            void OnInputPerformed(InputActionEnhancedAsset _input) {
+                if (_input == UpdateActiveInput()) {
+                    CallOnPerformed();
+                }
+            }
+        }
+        #endregion
+
         #region Side Comparison
         private float positiveValue = 0f;
         private float negativeValue = 0f;
 
         // -----------------------
 
-        private InputActionEnhancedAsset UpdateActiveInput() {
+        private SingleInputActionEnhancedAsset UpdateActiveInput() {
             float _positive = positive.GetAxis();
             float _negative = negative.GetAxis();
 
-            InputActionEnhancedAsset _active = isPositive ? positive : negative;
+            SingleInputActionEnhancedAsset _active = isPositive ? positive : negative;
 
             // If input values have not changed, there is no need for update.
             if ((_positive == positiveValue) && (_negative == negativeValue)) {
@@ -101,12 +135,12 @@ namespace EnhancedFramework.Input {
         }
 
         public override Vector2 GetVector2Axis() {
-            this.LogError("Axis Input error! This asset cannot be used for getting a Vector2 value");
+            this.LogError($"{GetType().Name} value cannot be read as a Vector2");
             return Vector2.zero;
         }
 
         public override Vector3 GetVector3Axis() {
-            this.LogError("Axis Input error! This asset cannot be used for getting a Vector3 value");
+            this.LogError($"{GetType().Name} value cannot be read as a Vector3");
             return Vector3.zero;
         }
         #endregion

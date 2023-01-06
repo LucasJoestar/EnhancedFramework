@@ -15,9 +15,9 @@ namespace EnhancedFramework.Core.Settings {
     /// </summary>
     public abstract class BaseSettings : ScriptableObject {
         #region Content
-        public const string MenuPrefix    = "GS_";
-        public const string MenuPath    = "Enhanced Framework/Game Settings/";
-        public const int MenuOrder      = 150;
+        public const string MenuPrefix  = "GS_";
+        public const string MenuPath    = FrameworkUtility.MenuPath + "Game Settings/";
+        public const int MenuOrder      = FrameworkUtility.MenuOrder;
 
         // -----------------------
 

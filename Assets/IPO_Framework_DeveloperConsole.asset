@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c43c75ba9c2c6b4ebe11bc8f613f3e9, type: 3}
+  m_Name: IPO_Framework_DeveloperConsole
+  m_EditorClassIdentifier: 
+  enableOnInit: 0
+  isOrphan: 1
+  map: {fileID: 0}
+  input:
+    m_Name: DeveloperConsole
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: c4f457d6-3c8b-46b6-82cd-d155e29bd410
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 8c387b1e-e7b0-47ac-823f-733230678847
+      m_Path: <Keyboard>/f12
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: DeveloperConsole
+      m_Flags: 0
+    m_Flags: 0

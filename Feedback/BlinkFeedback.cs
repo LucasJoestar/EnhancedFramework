@@ -12,7 +12,7 @@ namespace EnhancedFramework.Core {
 	/// <summary>
 	/// <see cref="EnhancedAssetFeedback"/> used to change the color of an object.
 	/// </summary>
-	[CreateAssetMenu(fileName = FilePrefix + "Blink", menuName = MenuPath + "Blink", order = 100)]
+	[CreateAssetMenu(fileName = FilePrefix + "Blink", menuName = MenuPath + "Blink", order = MenuOrder)]
 	public class BlinkFeedback : EnhancedAssetFeedback {
 		#region Global Members
 		[Section("Blink Feedback")]

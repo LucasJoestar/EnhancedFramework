@@ -5,7 +5,6 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace EnhancedFramework.Core {
@@ -24,7 +23,7 @@ namespace EnhancedFramework.Core {
     /// <br/> You can use the OnPaused callback to implement specific behaviours when the object gets paused/unpaused,
     /// which happens when its local time scale factor reach 0.
     /// </summary>
-    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate, IPlayUpdate {
+    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate, IPlayUpdate, IMessageLogger {
         #region Update Registration
         /// <summary>
         /// Override this to specify this object update registration.
@@ -273,52 +272,18 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        #region Debug
-        /// <summary>
-        /// The <see cref="string"/> format used for logging messages to the console.
-        /// </summary>
-        public virtual string LogFormat {
-            get { return $"{$"{GetType().Name.Bold().Size(13)}  {UnicodeEmoji.RightTriangle.Get()}".Color(LogColor)}  {{0}}"; }
+        #region Logger
+        public virtual string GetLogMessageFormat(LogType _type) {
+            return EnhancedLogger.GetMessageFormat(GetType(), GetLogMessageColor(_type));
         }
 
         /// <summary>
-        /// The <see cref="Color"/> used for displaying the header of messages logged to the console.
+        /// Get the <see cref="Color"/> used to identify a log message of a specific type..
         /// </summary>
-        public virtual Color LogColor {
-            get { return SuperColor.White.Get(); }
-        }
-
-        // -----------------------
-
-        /// <summary>
-        /// Logs an info message to the console.
-        /// </summary>
-        /// <param name="_message">The message to log.</param>
-        /// <param name="_type">The <see cref="LogType"/> used for debug.</param>
-        [Conditional("DEBUG_LOGGER")]
-        public void LogMessage(string _message, LogType _type = LogType.Log) {
-            _message = string.Format(LogFormat, _message);
-
-            switch (_type) {
-                case LogType.Log:
-                    this.Log(_message);
-                    break;
-
-                case LogType.Warning:
-                    this.LogWarning(_message);
-                    break;
-
-                case LogType.Assert:
-                    this.LogAssertion(_message);
-                    break;
-
-                case LogType.Error:
-                    this.LogError(_message);
-                    break;
-
-                default:
-                    break;
-            }
+        /// <param name="_type">The type of the log message to get the associated color.</param>
+        /// <returns>The color to use for the given <see cref="LogType"/> message.</returns>
+        public virtual Color GetLogMessageColor(LogType _type) {
+            return SuperColor.White.Get();
         }
         #endregion
     }

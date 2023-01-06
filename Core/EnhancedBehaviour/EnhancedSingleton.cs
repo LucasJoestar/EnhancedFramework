@@ -74,7 +74,7 @@ namespace EnhancedFramework.Core {
         /// By default, this base method call will log an error and destroy the object. Override its content to specify another behaviour.
         /// </summary>
         protected virtual void OnNonSingletonInstance() {
-            this.LogError($"A Singleton Instance of \"{GetType().Name}\" already exist! Destroying object \"{name}\".");
+            this.LogErrorMessage($"Singleton Instance of \"{GetType().Name}\" already exist! Destroying object \"{name}\"");
             Destroy(this);
         }
         #endregion

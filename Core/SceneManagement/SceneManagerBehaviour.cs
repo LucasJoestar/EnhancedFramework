@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace EnhancedFramework.Core {
@@ -24,6 +25,13 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// The minimum time (in seconds) for the current loading operation to last.
+        /// </summary>
+        public virtual double LoadingMinimumDuration {
+            get { return 0d; }
+        }
+
+        /// <summary>
         /// Holds the completion of the current loading while false.
         /// </summary>
         public virtual bool CompleteLoading {
@@ -38,7 +46,8 @@ namespace EnhancedFramework.Core {
         /// Prepare a new loading operation.
         /// </summary>
         /// <param name="_loadingBundles">All <see cref="SceneBundle"/> to load, with their associated <see cref="LoadSceneMode"/>.</param>
-        public virtual void PrepareLoading(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles) { }
+        /// <param name="_settings">The settings to use to perform this loading.</param>
+        public virtual void PrepareLoading(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles, LoadSceneSettings _settings) { }
 
         /// <summary>
         /// Called when starting the current loading operation.
@@ -89,6 +98,17 @@ namespace EnhancedFramework.Core {
         /// Called when the current loading operation has stopped.
         /// </summary>
         public virtual void OnStopLoading() { }
+
+        // -------------------------------------------
+        // Other
+        // -------------------------------------------
+
+        /// <summary>
+        /// Called when entering play mode in the editor, with more than one scene already loaded.
+        /// </summary>
+        /// <param name="_loadingBundles">All <see cref="SceneBundle"/> already loaded, to simulate loading.</param>
+        /// <param name="_settings">The current <see cref="LoadSceneSettings"/> used to simulate the first loading.</param>
+        internal protected virtual void OnEnterPlayModeEditor(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles, LoadSceneSettings _settings) { }
         #endregion
 
         #region Unloading
@@ -114,7 +134,8 @@ namespace EnhancedFramework.Core {
         /// Prepare a new unloading operation.
         /// </summary>
         /// <param name="_unloadingBundles">All <see cref="SceneBundle"/> to unload, with their associated <see cref="UnloadSceneOptions"/>.</param>
-        public virtual void PrepareUnloading(in PairCollection<SceneBundle, UnloadSceneOptions> _unloadingBundles) { }
+        /// <param name="_settings">The settings to use to perform this unloading.</param>
+        public virtual void PrepareUnloading(in PairCollection<SceneBundle, UnloadSceneOptions> _unloadingBundles, UnloadSceneSettings _settings) { }
 
         /// <summary>
         /// Called when starting the current unloading operation.
@@ -165,6 +186,63 @@ namespace EnhancedFramework.Core {
         /// Called when the current unloading operation has stopped.
         /// </summary>
         public virtual void OnStopUnloading() { }
+        #endregion
+    }
+
+    /// <summary>
+    /// Base class to inherit you own <see cref="EnhancedSceneManager"/> behaviours from, with specific loading and unloading settings.
+    /// <br/> Receives callbacks on loading, and can be used to perform additional operations.
+    /// </summary>
+    public abstract class SceneManagerBehaviour<T, U> : SceneManagerBehaviour where T : LoadSceneSettings
+                                                                              where U : UnloadSceneSettings {
+        #region Loading
+        public override sealed void PrepareLoading(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles, LoadSceneSettings _settings) {
+            base.PrepareLoading(_loadingBundles, _settings);
+
+            if (_settings is T _loadSettings) {
+                PrepareLoading(_loadingBundles, _loadSettings);
+                return;
+            }
+
+            EnhancedSceneManager.Instance.LogErrorMessage($"\"{_settings.GetType().Name}\" loading settings cannot be converted to \"{typeof(T).Name}\"");
+        }
+
+        protected internal override sealed void OnEnterPlayModeEditor(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles, LoadSceneSettings _settings) {
+            base.OnEnterPlayModeEditor(_loadingBundles, _settings);
+
+            if (_settings is T _loadSettings) {
+                OnEnterPlayModeEditor(_loadingBundles, _loadSettings);
+                return;
+            }
+
+            EnhancedSceneManager.Instance.LogErrorMessage($"\"{_settings.GetType().Name}\" loading settings cannot be converted to \"{typeof(T).Name}\"");
+        }
+
+        // -----------------------
+
+        /// <inheritdoc cref="PrepareLoading(in PairCollection{SceneBundle, LoadSceneMode}, LoadSceneSettings)"/>
+        protected virtual void PrepareLoading(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles, T _settings) { }
+
+        /// <inheritdoc cref="OnEnterPlayModeEditor(in PairCollection{SceneBundle, LoadSceneMode}, LoadSceneSettings)"/>
+        protected virtual void OnEnterPlayModeEditor(in PairCollection<SceneBundle, LoadSceneMode> _loadingBundles, T _settings) { }
+        #endregion
+
+        #region Unloading
+        public override sealed void PrepareUnloading(in PairCollection<SceneBundle, UnloadSceneOptions> _unloadingBundles, UnloadSceneSettings _settings) {
+            base.PrepareUnloading(_unloadingBundles, _settings);
+
+            if (_settings is U _unloadSettings) {
+                PrepareUnloading(_unloadingBundles, _unloadSettings);
+                return;
+            }
+
+            EnhancedSceneManager.Instance.LogErrorMessage($"\"{_settings.GetType().Name}\" unloading settings cannot be converted to \"{typeof(U).Name}\"");
+        }
+
+        // -----------------------
+
+        /// <inheritdoc cref="PrepareUnloading(in PairCollection{SceneBundle, UnloadSceneOptions}, UnloadSceneSettings)"/>
+        protected virtual void PrepareUnloading(in PairCollection<SceneBundle, UnloadSceneOptions> _unloadingBundles, U _settings) { }
         #endregion
     }
 }

@@ -4,125 +4,88 @@
 //
 // ================================================================================== //
 
-using EnhancedEditor;
 using System;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-[assembly: InternalsVisibleTo("EnhancedFramework.Editor")]
 namespace EnhancedFramework.Input {
     /// <summary>
-    /// <see cref="ScriptableObject"/> asset used to reference an input action.
+    /// Base class to inherit all input action related <see cref="ScriptableObject"/> assets.
     /// </summary>
-    public class InputActionEnhancedAsset : BaseInputActionEnhancedAsset {
-        #region Global Members
-        [Section("Input Asset")]
+    public abstract class InputActionEnhancedAsset : InputEnhancedAsset {
+        public new const int MenuOrder      = FrameworkUtility.MenuOrder;
 
-        [SerializeField, Enhanced, ReadOnly] private InputMapEnhancedAsset map  = null;
-        [SerializeField, Enhanced, ReadOnly] internal InputAction input = null;
-
-        /// <summary>
-        /// The <see cref="InputMapEnhancedAsset"/> associated with this input.
-        /// </summary>
-        public InputMapEnhancedAsset Map {
-            get { return map; }
-        }
-
-        public override bool IsEnabled {
-            get { return input.enabled; }
-        }
-
-        // -----------------------
-
+        #region Event
         /// <summary>
         /// Called when this input starts performing.
+        /// <br/> Never called when using the native input system.
         /// </summary>
-        public event Action<InputActionEnhancedAsset> OnStarted   = null;
+        public event Action<InputActionEnhancedAsset> OnStarted     = null;
 
         /// <summary>
         /// Called when this input peform action has been canceled.
+        /// <br/> Never called when using the native input system.
         /// </summary>
-        public event Action<InputActionEnhancedAsset> OnCanceled  = null;
+        public event Action<InputActionEnhancedAsset> OnCanceled    = null;
 
         /// <summary>
         /// Called when this input has been fully performed.
+        /// <br/> Never called when using the native input system.
         /// </summary>
-        public event Action<InputActionEnhancedAsset> OnPerformed = null;
-        #endregion
+        public event Action<InputActionEnhancedAsset> OnPerformed   = null;
 
-        #region Initialization
-        /// <summary>
-        /// Editor generator called method.
-        /// </summary>
-        internal void Initialize(InputAction _input) {
-            input = _input;
+        // -----------------------
+
+        protected void CallOnStarted() {
+            OnStarted?.Invoke(this);
         }
 
-        /// <summary>
-        /// <see cref="InputManager"/> runtime called method.
-        /// </summary>
-        internal void Initialize(InputActionAsset _asset) {
-            input = _asset.FindAction(input.id);
+        protected void CallOnCanceled() {
+            OnCanceled?.Invoke(this);
+        }
 
-            input.started   += (InputAction.CallbackContext _context) => OnStarted?.Invoke(this);
-            input.canceled  += (InputAction.CallbackContext _context) => OnCanceled?.Invoke(this);
-            input.performed += (InputAction.CallbackContext _context) => OnPerformed?.Invoke(this);
+        protected void CallOnPerformed() {
+            OnPerformed?.Invoke(this);
         }
         #endregion
 
         #region Input
-        public override bool Performed() {
-            return input.WasPerformedThisFrame();
-        }
+        /// <summary>
+        /// Get if this input was performed this frame.
+        /// </summary>
+        /// <returns>True if this input was performed this frame, false otherwise.</returns>
+        public abstract bool Performed();
 
-        public override bool Pressed() {
-            return input.WasPressedThisFrame();
-        }
+        /// <summary>
+        /// Get if this input was pressed this frame.
+        /// </summary>
+        /// <returns>True if this input was pressed this frame, false otherwise.</returns>
+        public abstract bool Pressed();
 
-        public override bool Holding() {
-            InputActionPhase _phase = input.phase;
-            return (_phase != InputActionPhase.Waiting) && (_phase != InputActionPhase.Started) && (_phase != InputActionPhase.Performed);
-        }
-
-        // -----------------------
-
-        public override float GetAxis() {
-            return input.ReadValue<float>();
-        }
-
-        public override Vector2 GetVector2Axis() {
-            return input.ReadValue<Vector2>();
-        }
-
-        public override Vector3 GetVector3Axis() {
-            Vector2 _value = input.ReadValue<Vector2>();
-            return new Vector3(_value.x, 0f, _value.y);
-        }
-        #endregion
-
-        #region Utility
-        public override void Enable() {
-            input.Enable();
-        }
-
-        public override void Disable() {
-            input.Disable();
-        }
+        /// <summary>
+        /// Get if this input was being hold this frame.
+        /// </summary>
+        /// <returns>True if this input was being hold this frame, false otherwise.</returns>
+        public abstract bool Holding();
 
         // -----------------------
 
         /// <summary>
-        /// Editor generator called method.
+        /// Get this input value as a 1-dimensional axis.
         /// </summary>
-        internal bool SetMap(InputMapEnhancedAsset _map) {
-            if (_map.Contains(this)) {
-                map = _map;
-                return true;
-            }
+        /// <returns>Input value as a <see cref="float"/></returns>
+        public abstract float GetAxis();
 
-            return false;
-        }
+        /// <summary>
+        /// Get this input axis value as a <see cref="Vector2"/>.
+        /// </summary>
+        /// <returns>Input value as a <see cref="Vector2"/>.</returns>
+        public abstract Vector2 GetVector2Axis();
+
+        /// <summary>
+        /// Get this input axis value as a <see cref="Vector3"/>.
+        /// </summary>
+        /// <returns>Input value as a <see cref="Vector3"/>.</returns>
+        public abstract Vector3 GetVector3Axis();
         #endregion
     }
 }
