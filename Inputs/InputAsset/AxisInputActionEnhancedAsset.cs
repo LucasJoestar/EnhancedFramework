@@ -9,7 +9,7 @@ using EnhancedFramework.Core;
 using System;
 using UnityEngine;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Axis <see cref="SingleInputActionEnhancedAsset"/>-related asset,
     /// <br/> always using the last pressed input as the winning side.

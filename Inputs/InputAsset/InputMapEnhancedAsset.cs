@@ -4,7 +4,7 @@
 //
 // ================================================================================== //
 
-#if !zENABLE_INPUT_SYSTEM
+#if ENABLE_INPUT_SYSTEM
 #define NEW_INPUT_SYSTEM
 #endif
 
@@ -17,7 +17,7 @@ using UnityEngine.InputSystem;
 #endif
 
 [assembly: InternalsVisibleTo("EnhancedFramework.Editor")]
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// <see cref="ScriptableObject"/> asset used to reference an input map.
     /// <br/> Not of any use when using the native input system.

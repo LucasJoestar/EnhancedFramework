@@ -9,7 +9,7 @@ using EnhancedFramework.Core;
 using EnhancedFramework.Core.GameStates;
 using UnityEngine;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Utility component used to automatically push/remove
     /// <br/> a specific <see cref="GameState"/> from the stack whenever a specific input is being performed.

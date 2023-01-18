@@ -9,12 +9,12 @@ using EnhancedFramework.Core;
 using EnhancedFramework.Core.GameStates;
 using UnityEngine;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// <see cref="ChronosManager"/>-related input utility class.
     /// </summary>
     [ScriptingDefineSymbol("CHRONOS_INPUT", "Chronos runtime inputs")]
-    public class ChronosInput : EnhancedBehaviour {
+    public class ChronosInputs : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members

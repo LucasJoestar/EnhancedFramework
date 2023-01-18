@@ -82,7 +82,7 @@ namespace EnhancedFramework.Core {
 
         #region Loading
         private const int ChronosPriority = 999;
-        private readonly int chronosID = EnhancedEditor.EnhancedUtility.GenerateGUID();
+        private readonly int chronosID = EnhancedUtility.GenerateGUID();
 
         // -----------------------
 
@@ -254,6 +254,9 @@ namespace EnhancedFramework.Core {
                         LoadSceneBundle(_bundle, LoadSceneMode.Additive);
                     }
                 }
+
+                // Avoid any Play callback before loading end by suspending the UpdateManager.
+                UpdateManager.Instance.IsSuspended = true;
 
                 // Default loading.
                 if (loadingBundles.Count == 0) {

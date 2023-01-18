@@ -19,7 +19,7 @@ using InputSystem = UnityEngine.Input;
 #endif
 
 [assembly: InternalsVisibleTo("EnhancedFramework.Editor")]
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// <see cref="ScriptableObject"/> asset used to reference an input action.
     /// </summary>
@@ -91,7 +91,7 @@ namespace EnhancedFramework.Input {
             #if NEW_INPUT_SYSTEM
             return input.WasPerformedThisFrame();
             #else
-            return InputSystem.GetButtonDown(Input);
+            return InputSystem.GetButtonDown(input);
             #endif
         }
 
@@ -99,7 +99,7 @@ namespace EnhancedFramework.Input {
             #if NEW_INPUT_SYSTEM
             return input.WasPressedThisFrame();
             #else
-            return InputSystem.GetButtonDown(Input);
+            return InputSystem.GetButtonDown(input);
             #endif
         }
 
@@ -108,7 +108,7 @@ namespace EnhancedFramework.Input {
             InputActionPhase _phase = input.phase;
             return (_phase != InputActionPhase.Waiting) && (_phase != InputActionPhase.Started) && (_phase != InputActionPhase.Performed);
             #else
-            return InputSystem.GetButton(Input);
+            return InputSystem.GetButton(input);
             #endif
         }
 
@@ -118,7 +118,7 @@ namespace EnhancedFramework.Input {
             #if NEW_INPUT_SYSTEM
             return input.ReadValue<float>();
             #else
-            return InputSystem.GetAxis(Input);
+            return InputSystem.GetAxis(input);
             #endif
         }
 

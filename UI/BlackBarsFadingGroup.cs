@@ -4,7 +4,6 @@
 //
 // ================================================================================== //
 
-#if DOTWEEN_ENABLED
 using EnhancedFramework.Core;
 using EnhancedFramework.Core.GameStates;
 
@@ -12,7 +11,13 @@ namespace EnhancedFramework.UI {
     /// <summary>
     /// <see cref="EnhancedBehaviour"/> UI class used to manage the black bars displayed at the top and bottom of the screen. 
     /// </summary>
-    public class BlackBarsFadingGroup : FadingGroupSingleton<BlackBarsFadingGroup, TweeningFadingGroup>, IGameStateOverrideCallback {
+    public class BlackBarsFadingGroup : FadingGroupSingleton<BlackBarsFadingGroup,
+                                                            #if DOTWEEN_ENABLED
+                                                            TweeningFadingGroup
+                                                            #else
+                                                            FadingGroup
+                                                            #endif
+                                                            >, IGameStateOverrideCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Enhanced Behaviour
@@ -38,4 +43,3 @@ namespace EnhancedFramework.UI {
         #endregion
     }
 }
-#endif

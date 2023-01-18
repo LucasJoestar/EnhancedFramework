@@ -87,7 +87,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// When true, suspends all regular object updates, except for <see cref="IInitUpdate"/> and <see cref="IPermanentUpdate"/>.
         /// </summary>
-        public bool IsSuspended { get; private set; } = false;
+        public bool IsSuspended { get; internal set; } = false;
 
         // -----------------------
 

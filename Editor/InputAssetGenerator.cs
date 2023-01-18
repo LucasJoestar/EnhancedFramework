@@ -10,7 +10,7 @@
 
 #if NEW_INPUT_SYSTEM
 using EnhancedEditor.Editor;
-using EnhancedFramework.Input;
+using EnhancedFramework.Inputs;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;

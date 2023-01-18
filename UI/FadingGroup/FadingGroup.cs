@@ -9,6 +9,7 @@ using EnhancedFramework.Core;
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 #if DOTWEEN_ENABLED
 using DG.Tweening;
@@ -31,6 +32,28 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [Serializable]
     public class FadingGroup : IFadingObject {
+        #region Flags
+        /// <summary>
+        /// Contains a variety of parameters for this group.
+        /// </summary>
+        [Flags]
+        public enum Parameters {
+            None = 0,
+
+            [Tooltip("Enables/disables the associated canvas on visibility toggle")]
+            Canvas          = 1 << 0,
+
+            [Tooltip("Enables/disables the group interactability on visibility toggle")]
+            Interactable    = 1 << 1,
+
+            [Tooltip("Selects a specific Selectable once visible")]
+            Selectable      = 1 << 2,
+
+            [Tooltip("Fading won't be affected by time scale")]
+            UnscaledTime    = 1 << 31,
+        }
+        #endregion
+
         #region Global Members
         /// <summary>
         /// This object <see cref="UnityEngine.Canvas"/>.
@@ -49,21 +72,46 @@ namespace EnhancedFramework.UI {
         [Enhanced, MinMax(0f, 1f)] public Vector2 FadeAlpha = new Vector2(0f, 1f);
 
         /// <summary>
-        /// If true, fading will not be affected by time scale.
+        /// Parameters of this group.
         /// </summary>
-        [Tooltip("If true, fading will not be affected by time scale")]
-        public bool UseUnscaledTime = false;
+        [Tooltip("Parameters of this group")]
+        [Enhanced, DisplayName("Parameters")] public Parameters GroupParameters = Parameters.Interactable | Parameters.UnscaledTime;
 
-        /// <summary>
-        /// If true, automatically enable/disable the associated canvas on visibility toggle.
-        /// </summary>
-        [Tooltip("If true, automatically enable/disable the associated canvas on visibility toggle")]
-        public bool UseCanvas = false;
+        [Tooltip("Object to first select when visible")]
+        [Enhanced, ShowIf("UseSelectable"), Required] public Selectable Selectable = null;
 
         // -----------------------
 
         public virtual bool IsVisible {
             get { return Group.alpha == FadeAlpha.y; }
+        }
+
+        /// <summary>
+        /// If true, automatically enable/disable the associated canvas on visibility toggle.
+        /// </summary>
+        public bool UseCanvas {
+            get { return HasParameter(Parameters.Canvas); }
+        }
+
+        /// <summary>
+        /// If true, automatically enable/disable the associated group interactability on visibility toggle.
+        /// </summary>
+        public bool IsInteractable {
+            get { return HasParameter(Parameters.UnscaledTime); }
+        }
+
+        /// <summary>
+        /// If true, fading will not be affected by time scale.
+        /// </summary>
+        public bool UseUnscaledTime {
+            get { return HasParameter(Parameters.UnscaledTime); }
+        }
+
+        /// <summary>
+        /// Get if this group uses a specific selectable or not.
+        /// </summary>
+        public bool UseSelectable {
+            get { return HasParameter(Parameters.Selectable); }
         }
         #endregion
 
@@ -101,7 +149,7 @@ namespace EnhancedFramework.UI {
             void OnShow() {
                 _onAfterFadeIn?.Invoke();
 
-                guid = EnhancedEditor.EnhancedUtility.GenerateGUID();
+                guid = EnhancedUtility.GenerateGUID();
                 Delayer.Call(guid, _duration, OnWaitComplete, UseUnscaledTime);
             }
 
@@ -147,18 +195,29 @@ namespace EnhancedFramework.UI {
 
         protected virtual void CancelCurrentFade() {
             if (guid != DefaultGUID) {
-                Delayer.CancelCall(guid);
+                Delayer.Cancel(guid);
                 guid = DefaultGUID;
             }
         }
 
         protected void ToggleCanvas() {
             EnableCanvas(Group.alpha != FadeAlpha.x);
+            SetInteractable(Group.alpha != FadeAlpha.x);
         }
 
         protected void EnableCanvas(bool _isVisible) {
             if (UseCanvas) {
                 Canvas.enabled = _isVisible;
+            }
+
+            if (_isVisible && UseSelectable) {
+                Selectable.Select();
+            }
+        }
+
+        protected void SetInteractable(bool _isInteractable) {
+            if (IsInteractable) {
+                Group.interactable = _isInteractable;
             }
         }
 
@@ -174,7 +233,7 @@ namespace EnhancedFramework.UI {
             Hide(_onComplete);
         }
 
-        public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null) {
+        public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null, float _inOutWaitDuration = .5f) {
             switch (_mode) {
                 case FadingMode.Show:
                     Show(_isInstant, _onComplete);
@@ -185,7 +244,12 @@ namespace EnhancedFramework.UI {
                     break;
 
                 case FadingMode.FadeInOut:
-                    FadeInOut(0f, null, null, _onComplete);
+                    if (_isInstant) {
+                        Show(_isInstant, _onComplete);
+                        Hide(_isInstant, _onComplete);
+                    } else {
+                        FadeInOut(_inOutWaitDuration, null, null, _onComplete);
+                    }
                     break;
 
                 case FadingMode.None:
@@ -204,6 +268,17 @@ namespace EnhancedFramework.UI {
             } else {
                 Hide(_isInstant, _onComplete);
             }
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Get if this group has a specific parameter enabled.
+        /// </summary>
+        /// <param name="_parameter">Parameter to check.</param>
+        /// <returns>True if this group has the parameter enabled, false otherwise.</returns>
+        public bool HasParameter(Parameters _parameter) {
+            return GroupParameters.HasFlag(_parameter);
         }
         #endregion
     }
@@ -296,10 +371,9 @@ namespace EnhancedFramework.UI {
 
             void OnFaded() {
                 base.Show();
-
                 _onFaded?.Invoke();
 
-                guid = EnhancedEditor.EnhancedUtility.GenerateGUID();
+                guid = EnhancedUtility.GenerateGUID();
                 Delayer.Call(guid, ShowDuration, OnWaitComplete, UseUnscaledTime);
             }
 
@@ -322,10 +396,9 @@ namespace EnhancedFramework.UI {
 
             void OnFaded() {
                 base.Hide();
-
                 _onFaded?.Invoke();
 
-                guid = EnhancedEditor.EnhancedUtility.GenerateGUID();
+                guid = EnhancedUtility.GenerateGUID();
                 Delayer.Call(guid, ShowDuration, OnWaitComplete, UseUnscaledTime);
             }
 
@@ -408,7 +481,7 @@ namespace EnhancedFramework.UI {
             }
             #endif
 
-            Tween.DoKill(false);
+            Tween = Tween.DoKill(false);
         }
 
         // -------------------------------------------
@@ -427,9 +500,10 @@ namespace EnhancedFramework.UI {
         private void Fade(float _alpha, float _duration, Ease _ease, Action _onComplete) {
             CancelCurrentFade();
             EnableCanvas(true);
+            SetInteractable(true);
 
             if (Group.alpha == _alpha) {
-                _onComplete?.Invoke();
+                OnComplete();
                 return;
             }
             
@@ -447,11 +521,14 @@ namespace EnhancedFramework.UI {
             }
             #endif
 
-            Tween = Group.DOFade(_alpha, _duration).SetEase(_ease).SetUpdate(UseUnscaledTime).OnComplete(OnComplete);
+            Tween = Group.DOFade(_alpha, _duration).SetEase(_ease).SetUpdate(UseUnscaledTime)
+                         .SetRecyclable(true).SetAutoKill(true).OnKill(OnComplete);
 
             // ----- Local Method ----- \\
 
             void OnComplete() {
+                Tween = null;
+
                 ToggleCanvas();
                 _onComplete?.Invoke();
             }
@@ -459,7 +536,9 @@ namespace EnhancedFramework.UI {
 
         #if UNITY_EDITOR
         private IEnumerator DoFade(float _alpha, float _duration, Ease _ease, Action _onComplete) {
-            if (_duration != 0f) {
+            if (_duration == 0f) {
+                Group.alpha = _alpha;
+            } else {
                 double _timer = EditorApplication.timeSinceStartup;
                 float _from = Group.alpha;
 

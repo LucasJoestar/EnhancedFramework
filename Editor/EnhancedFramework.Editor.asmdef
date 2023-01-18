@@ -6,7 +6,7 @@
         "EnhancedEditor.Editor",
         "EnhancedFramework.Core",
         "EnhancedFramework.Core.Splash",
-        "EnhancedFramework.Input",
+        "EnhancedFramework.Inputs",
         "EnhancedFramework.UI",
         "Unity.InputSystem"
     ],

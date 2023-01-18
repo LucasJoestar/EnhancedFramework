@@ -4,7 +4,6 @@
 //
 // ================================================================================== //
 
-#if TEXT_MESH_PRO_PACKAGE
 using EnhancedFramework.UI;
 using UnityEditor;
 using UnityEditor.UI;
@@ -20,15 +19,13 @@ namespace EnhancedFramework.Editor {
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("AutoSelectOnEnabled"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("UseTextEffects"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("TextEffects"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Effects"));
 
             serializedObject.ApplyModifiedProperties();
 
-            EditorGUILayout.Space(10f);
+            EditorGUILayout.Space(5f);
             base.OnInspectorGUI();
         }
         #endregion
     }
 }
-#endif

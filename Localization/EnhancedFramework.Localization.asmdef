@@ -4,6 +4,7 @@
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Core",
+        "EnhancedFramework.Core.Splash",
         "Unity.Localization",
         "Unity.ResourceManager"
     ],

@@ -1,0 +1,78 @@
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
+// Notes:
+//
+// ================================================================================== //
+
+using EnhancedFramework.Core;
+using HutongGames.PlayMaker;
+using UnityEngine;
+
+using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
+
+namespace EnhancedFramework.PlayMaker {
+    /// <summary>
+    /// Base abstract <see cref="FsmStateAction"/> used to fade an <see cref="IFadingObject"/>.
+    /// </summary>
+    public abstract class FadingObjectFade : FsmStateAction {
+        #region Global Members
+        // -------------------------------------------
+        // Mode - Instant - Wait - Event
+        // -------------------------------------------
+
+        [Tooltip("Fading Mode used to fade the group.")]
+        [RequiredField, ObjectType(typeof(FadingMode))]
+        public FsmEnum FadingMode = null;
+
+        [Tooltip("Whether to fade the group instantly or not.")]
+        public FsmBool Instant = null;
+
+        [Tooltip("Whether to fade the group instantly or not.")]
+        [HideIf("HideWaitDuration")]
+        public FsmFloat WaitDuration = null;
+
+        [Tooltip("Event to send when fade is completed.")]
+        public FsmEvent CompletedEvent;
+
+        // -----------------------
+
+        /// <summary>
+        /// The <see cref="IFadingObject"/> to fade.
+        /// </summary>
+        public abstract IFadingObject FadingObject { get; }
+
+        public bool HideWaitDuration() {
+            return (((FadingMode)FadingMode.Value) != Core.FadingMode.FadeInOut) || Instant.Value;
+        }
+        #endregion
+
+        #region Behaviour
+        public override void Reset() {
+            base.Reset();
+
+            FadingMode = null;
+            Instant = null;
+            WaitDuration = null;
+            CompletedEvent = null;
+        }
+
+        public override void OnEnter() {
+            base.OnEnter();
+
+            var _fadingObject = FadingObject;
+
+            if (_fadingObject != null) {
+                _fadingObject.Fade((FadingMode)FadingMode.Value, Instant.Value, OnComplete, WaitDuration.Value);
+            }
+
+            Finish();
+        }
+
+        // -----------------------
+
+        private void OnComplete() {
+            Fsm.Event(CompletedEvent);
+        }
+        #endregion
+    }
+}

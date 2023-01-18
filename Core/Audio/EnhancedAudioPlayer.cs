@@ -11,9 +11,27 @@ using Range = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Core {
     /// <summary>
-    /// Enhanced behaviour used to manage a <see cref="VideoPlayer"/>.
-    /// <para/>
-    /// Allow to preview the video in the editor, and use additional callbacks and functionalities.
+    /// 
+    /// </summary>
+    [RequireComponent(typeof(AudioSource))]
+    public class AudioPlayer : EnhancedBehaviour {
+        #region Global Members
+
+        #endregion
+
+        #region Enhanced Behaviour
+        public void Play(AudioAsset _asset) {
+
+        }
+
+        public void Stop() {
+
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// 
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     #pragma warning disable 0414
@@ -120,7 +138,7 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        [HideInInspector] private AudioSource audioSource = null;
+        [SerializeField, HideInInspector] private AudioSource audioSource = null;
         #endregion
 
         #region Enhanced Behaviour

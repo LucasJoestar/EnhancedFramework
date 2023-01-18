@@ -20,8 +20,9 @@ namespace EnhancedFramework.Core.Settings {
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, Required] protected TagDatabase tagDatabase = null;
-        [SerializeField, Enhanced, Required] protected BuildSceneDatabase buildSceneDatabase = null;
+        [SerializeField, Enhanced, Required] protected BuildSceneDatabase buildSceneDatabase    = null;
+        [SerializeField, Enhanced, Required] protected FlagDatabase flagDatabase                = null;
+        [SerializeField, Enhanced, Required] protected TagDatabase tagDatabase                  = null;
         #endregion
 
         #region Initialization
@@ -33,8 +34,9 @@ namespace EnhancedFramework.Core.Settings {
                 _settings.Init();
             }
 
-            MultiTags.Database = tagDatabase;
             BuildSceneDatabase.Database = buildSceneDatabase;
+            FlagDatabase.Database = flagDatabase;
+            MultiTags.Database = tagDatabase;
         }
         #endregion
     }

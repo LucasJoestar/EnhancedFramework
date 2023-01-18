@@ -15,7 +15,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Base class for any Enhanced input <see cref="ScriptableObject"/> asset.
     /// </summary>
@@ -24,9 +24,8 @@ namespace EnhancedFramework.Input {
         public const string FileName = "IPD_InputDatabase";
 
         #region Global Members
-        [Section("Input Database")]
-
         #if NEW_INPUT_SYSTEM
+        [Section("Input Database")]
         [SerializeField, Enhanced, Required] private InputActionAsset database = null;
 
         /// <summary>

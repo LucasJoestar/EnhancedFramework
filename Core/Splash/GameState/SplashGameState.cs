@@ -18,7 +18,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// High priority to remain above gameplay states, but lower than loadings
         /// (which need to be active to execute).
         /// </summary>
-        public const int PriorityConst = 99;
+        public const int PriorityConst = 999;
 
         public override int Priority {
             get { return PriorityConst; }

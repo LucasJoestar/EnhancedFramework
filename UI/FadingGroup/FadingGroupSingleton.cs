@@ -25,7 +25,7 @@ namespace EnhancedFramework.UI {
 
         [Space(10f)]
 
-        [SerializeField] protected bool visibleOnStart = true;
+        [SerializeField] protected FadingMode initMode = FadingMode.Hide;
 
         /// <inheritdoc cref="FadingGroup.Group"/>
         public CanvasGroup Group {
@@ -43,7 +43,7 @@ namespace EnhancedFramework.UI {
         protected override void OnInit() {
             base.OnInit();
 
-            group.SetVisibility(visibleOnStart);
+            group.Fade(initMode);
         }
 
         #if UNITY_EDITOR
@@ -51,10 +51,6 @@ namespace EnhancedFramework.UI {
             // Initialization.
             if ((group != null) && !group.Group) {
                 group.Group = GetComponent<CanvasGroup>();
-
-                if (group.Group) {
-                    visibleOnStart = group.Group.alpha == group.FadeAlpha.y;
-                }
             }
         }
         #endif
@@ -101,8 +97,8 @@ namespace EnhancedFramework.UI {
             group.Hide(_isInstant, _onComplete);
         }
 
-        public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null) {
-            group.Fade(_mode, _isInstant, _onComplete);
+        public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null, float _inOutWaitDuration = .5f) {
+            group.Fade(_mode, _isInstant, _onComplete, _inOutWaitDuration);
         }
 
         public virtual void Invert(bool _isInstant, Action _onComplete = null) {

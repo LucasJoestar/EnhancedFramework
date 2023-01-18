@@ -7,7 +7,7 @@
 using EnhancedFramework.Core.GameStates;
 using System;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs.GameStates {
     /// <summary>
     /// References all different modes used to enable/disable the associated input.
     /// </summary>

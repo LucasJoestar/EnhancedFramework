@@ -22,7 +22,7 @@ namespace EnhancedFramework.Core {
         #region Global Members
         [Section("Cross Scene Object")]
 
-        [SerializeField, Enhanced, ReadOnly] private int guid = EnhancedEditor.EnhancedUtility.GenerateGUID();
+        [SerializeField, Enhanced, ReadOnly] private int guid = EnhancedUtility.GenerateGUID();
 
         /// <summary>
         /// The unique GUID this object, acting as an identifier.
@@ -55,9 +55,9 @@ namespace EnhancedFramework.Core {
                                              "All references will be lost.", "Confirm", "Cancel")) {
                 return;
             }
-#endif
+            #endif
 
-            guid = EnhancedEditor.EnhancedUtility.GenerateGUID();
+            guid = EnhancedUtility.GenerateGUID();
         }
         #endregion
     }

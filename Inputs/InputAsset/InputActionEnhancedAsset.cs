@@ -7,7 +7,7 @@
 using System;
 using UnityEngine;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Base class to inherit all input action related <see cref="ScriptableObject"/> assets.
     /// </summary>

@@ -27,7 +27,8 @@ namespace EnhancedFramework.Core {
             // -----------------------
 
             public ChronosAlteration(int _id, EaseCurveTween<float> _easeCurve, DOGetter<float> _getter, DOSetter<float> _setter, TweenCallback _onComplete) {
-                Tween = _easeCurve.To(_getter, _setter).SetUpdate(true).OnComplete(_onComplete).Pause();
+                Tween = _easeCurve.To(_getter, _setter).SetUpdate(true).OnKill(_onComplete)
+                                  .SetRecyclable(true).SetAutoKill(true).Pause();
                 ID = _id;
             }
 
@@ -42,7 +43,7 @@ namespace EnhancedFramework.Core {
             }
 
             public void Complete() {
-                Tween.Complete(true);
+                Tween.DoKill(true);
             }
         }
         #endregion

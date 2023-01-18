@@ -1,10 +1,12 @@
 {
-    "name": "EnhancedFramework.Input",
-    "rootNamespace": "EnhancedFramework.Input",
+    "name": "EnhancedFramework.PlayMaker",
+    "rootNamespace": "EnhancedFramework.PlayMaker",
     "references": [
         "EnhancedEditor",
         "EnhancedFramework.Core",
-        "Unity.InputSystem"
+        "EnhancedFramework.Inputs",
+        "EnhancedFramework.Timeline",
+        "EnhancedFramework.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,13 +14,9 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.inputsystem",
-            "expression": "",
-            "define": "INPUT_SYSTEM_PACKAGE"
-        }
+    "defineConstraints": [
+        "PLAYMAKER"
     ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

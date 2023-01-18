@@ -197,15 +197,25 @@ namespace EnhancedFramework.Localization {
 
         #region Locale
         /// <summary>
+        /// Called whenever selecting a locale (even if it has not changed).
+        /// </summary>
+        public static Action<Locale> OnSelectLocale = null;
+
+        // -----------------------
+
+        /// <summary>
         /// Selects and activates a specific locale.
         /// </summary>
         /// <param name="_locale">The new locale to select.</param>
         public void SelectLocale(Locale _locale) {
+            this.LogMessage($"Select Locale \'{_locale.name}\'");
+
             LocalizationSettings.SelectedLocale = _locale;
+            OnSelectLocale?.Invoke(_locale);
         }
 
         private void OnLocaleChanged(Locale _locale) {
-            this.LogWarningMessage("Changed Locale to " + _locale.name);
+            this.LogWarningMessage($"Changed Locale to \'{_locale.name}\'");
 
             // Update localizables.
             foreach (ILocalizer _localizable in localizables) {

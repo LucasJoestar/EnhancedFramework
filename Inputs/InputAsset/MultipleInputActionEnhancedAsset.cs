@@ -8,7 +8,7 @@ using EnhancedEditor;
 using System;
 using UnityEngine;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Multiple <see cref="SingleInputActionEnhancedAsset"/>-related asset,
     /// <br/> being performed when all specified inputs are being performed together.

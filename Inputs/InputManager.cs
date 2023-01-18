@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Input-managing singleton class used for the whole game.
     /// </summary>

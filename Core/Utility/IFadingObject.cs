@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
 
 namespace EnhancedFramework.Core {
@@ -77,21 +78,131 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="Show(Action)"/>
         void Show(bool _isInstant, Action _onComplete = null);
 
-        /// <param name="_isInstant"><inheritdoc cref="Show(bool)" path="/param[@name='_isInstant']"/></param>
+        /// <param name="_isInstant"><inheritdoc cref="Show(bool, Action)" path="/param[@name='_isInstant']"/></param>
         /// <inheritdoc cref="Hide(Action)"/>
         void Hide(bool _isInstant, Action _onComplete = null);
 
-        /// <param name="_isInstant"><inheritdoc cref="Show(bool)" path="/param[@name='_isInstant']"/></param>
+        /// <param name="_isInstant"><inheritdoc cref="Show(bool, Action)" path="/param[@name='_isInstant']"/></param>
         /// <inheritdoc cref="Fade(FadingMode, Action, float)"/>
-        void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null);
+        void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null, float _inOutWaitDuration = .5f);
 
-        /// <param name="_isInstant"><inheritdoc cref="Show(bool)" path="/param[@name='_isInstant']"/></param>
+        /// <param name="_isInstant"><inheritdoc cref="Show(bool, Action)" path="/param[@name='_isInstant']"/></param>
         /// <inheritdoc cref="Invert(Action)"/>
         void Invert(bool _isInstant, Action _onComplete = null);
 
-        /// <param name="_isInstant"><inheritdoc cref="Show(bool)" path="/param[@name='_isInstant']"/></param>
+        /// <param name="_isInstant"><inheritdoc cref="Show(bool, Action)" path="/param[@name='_isInstant']"/></param>
         /// <inheritdoc cref="SetVisibility(bool, Action)"/>
         void SetVisibility(bool _isVisible, bool _isInstant, Action _onComplete = null);
+        #endregion
+    }
+
+    /// <summary>
+    /// Base non-generic class for <see cref="IFadingObject"/>-encapsulated <see cref="EnhancedBehaviour"/>.
+    /// </summary>
+    public abstract class FadingObjectBehaviour : EnhancedBehaviour, IFadingObject {
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
+
+        #region Global Members
+        /// <summary>
+        /// <see cref="IFadingObject"/> of this behaviour.
+        /// </summary>
+        public abstract IFadingObject FadingObject { get; }
+
+        /// <summary>
+        /// <see cref="FadingMode"/> applied on this object initialization.
+        /// </summary>
+        public abstract FadingMode InitMode { get; }
+
+        // -----------------------
+
+        public virtual bool IsVisible {
+            get { return FadingObject.IsVisible; }
+        }
+
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <summary>
+        /// Prevents from inheriting this class in other assemblies.
+        /// </summary>
+        internal protected FadingObjectBehaviour() { }
+        #endregion
+
+        #region Enhanced Behaviour
+        protected override void OnInit() {
+            base.OnInit();
+
+            FadingObject.Fade(InitMode);
+        }
+        #endregion
+
+        #region Visiblity
+        // -------------------------------------------
+        // General
+        // -------------------------------------------
+
+        public virtual void Show(Action _onComplete = null) {
+            FadingObject.Show(_onComplete);
+        }
+
+        public virtual void Hide(Action _onComplete = null) {
+            FadingObject.Hide(_onComplete);
+        }
+
+        public virtual void FadeInOut(float _duration, Action _onAfterFadeIn = null, Action _onBeforeFadeOut = null, Action _onComplete = null) {
+            FadingObject.FadeInOut(_duration, _onAfterFadeIn, _onBeforeFadeOut, _onComplete);
+        }
+
+        public virtual void Fade(FadingMode _mode, Action _onComplete = null, float _inOutWaitDuration = .5f) {
+            FadingObject.Fade(_mode, _onComplete, _inOutWaitDuration);
+        }
+
+        public virtual void Invert(Action _onComplete = null) {
+            FadingObject.Invert(_onComplete);
+        }
+
+        public virtual void SetVisibility(bool _isVisible, Action _onComplete = null) {
+            FadingObject.SetVisibility(_isVisible, _onComplete);
+        }
+
+        // -------------------------------------------
+        // Instant
+        // -------------------------------------------
+
+        public virtual void Show(bool _isInstant, Action _onComplete = null) {
+            FadingObject.Show(_isInstant, _onComplete);
+        }
+
+        public virtual void Hide(bool _isInstant, Action _onComplete = null) {
+            FadingObject.Hide(_isInstant, _onComplete);
+        }
+
+        public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null, float _inOutWaitDuration = .5f) {
+            FadingObject.Fade(_mode, _isInstant, _onComplete, _inOutWaitDuration);
+        }
+
+        public virtual void Invert(bool _isInstant, Action _onComplete = null) {
+            FadingObject.Invert(_isInstant, _onComplete);
+        }
+
+        public virtual void SetVisibility(bool _isVisible, bool _isInstant, Action _onComplete = null) {
+            FadingObject.SetVisibility(_isVisible, _isInstant, _onComplete);
+        }
+
+        // -------------------------------------------
+        // Inspector
+        // -------------------------------------------
+
+        [Button(SuperColor.Green)]
+        protected void ShowGroup() {
+            Show();
+        }
+
+        [Button(SuperColor.Crimson)]
+        protected void HideGroup() {
+            Hide();
+        }
         #endregion
     }
 }

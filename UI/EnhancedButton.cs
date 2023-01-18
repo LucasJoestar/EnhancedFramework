@@ -4,54 +4,49 @@
 //
 // ================================================================================== //
 
-#if TEXT_MESH_PRO_PACKAGE
-using EnhancedEditor;
-using System;
+using EnhancedFramework.Core;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using TMPro;
 
 namespace EnhancedFramework.UI {
     /// <summary>
+    /// Enum referencing all <see cref="Selectable"/> possible states.
+    /// </summary>
+    public enum SelectableState {
+        Normal,
+        Highlighted,
+        Pressed,
+        Selected,
+        Disabled
+    }
+
+    /// <summary>
+    /// Base class to inherit your own <see cref="EnhancedButton"/> effects from.
+    /// </summary>
+    public abstract class EnhancedButtonEffect : EnhancedBehaviour {
+        #region Behaviour
+        /// <summary>
+        /// Called when changing the selection state of the associated button.
+        /// </summary>
+        /// <param name="_button">Source button of this effect.</param>
+        /// <param name="_state"><see cref="SelectableState"/> of the button.</param>
+        /// <param name="_instant">Whether the effect should be applied instantly or not.</param>
+        public abstract void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant);
+        #endregion
+    }
+
+    /// <summary>
     /// Enhanced <see cref="Button"/> behaviour, being automatically selected on mouse hover.
     /// </summary>
-    public class EnhancedButton : Button{
-        #region Effects
-        /// <summary>
-        /// <see cref="TextMeshPro"/>-related additional button effects.
-        /// </summary>
-        [Serializable]
-        public class TextEffect {
-            public EnumValues<State, float> Size = new EnumValues<State, float>(1f);
-            public EnumValues<State, Vector2> Offset = new EnumValues<State, Vector2>(Vector2.zero);
-        }
-
-        /// <summary>
-        /// Enum referencing all <see cref="Button"/> possible states.
-        /// </summary>
-        public enum State {
-            Normal,
-            Highlighted,
-            Pressed,
-            Selected,
-            Disabled
-        }
-        #endregion
-
+    public class EnhancedButton : Button {
         #region Global Members
         [Tooltip("Automatically selects this button whenever its GameObject gets enabled")]
         [SerializeField, HideInInspector] public bool AutoSelectOnEnabled = false;
-        [SerializeField, HideInInspector] public bool UseTextEffects = false;
 
-        [Space(10f)]
+        [Space(5f)]
 
-        [Tooltip("Additional TextMeshPro-related effects")]
-        [SerializeField, Enhanced, ShowIf("UseTextEffects")] public TextEffect TextEffects = new TextEffect();
-
-        // -----------------------
-
-        [SerializeField, HideInInspector] private Color outlineColor = Color.white;
+        [SerializeField, HideInInspector] public EnhancedButtonEffect[] Effects = new EnhancedButtonEffect[0];
         #endregion
 
         #region Mono Behaviour
@@ -65,17 +60,6 @@ namespace EnhancedFramework.UI {
                 OnDeselect(null);
             }
         }
-
-        #if UNITY_EDITOR
-        protected override void OnValidate() {
-            base.OnValidate();
-
-            // Serialize outline graphic on validate, as the value is not initialized yet on enable.
-            if (!Application.isPlaying && (targetGraphic is TextMeshProUGUI _text)) {
-                outlineColor = _text.outlineColor;
-            }
-        }
-        #endif
         #endregion
 
         #region Selectable
@@ -93,71 +77,43 @@ namespace EnhancedFramework.UI {
             OnPointerExit(null);
         }
 
-        protected override void DoStateTransition(SelectionState state, bool instant) {
-            base.DoStateTransition(state, instant);
+        protected override void DoStateTransition(SelectionState _state, bool _instant) {
+            base.DoStateTransition(_state, _instant);
 
-            #if UNITY_EDITOR
-            if (!Application.isPlaying) {
-                return;
+            // Apply effects.
+            SelectableState _selectableState = GetSelectableState(_state);
+
+            foreach (var _effect in Effects) {
+                if (_effect == null) {
+                    continue;
+                }
+
+                _effect.OnSelectionState(this, _selectableState, _instant);
             }
-            #endif
+        }
+        #endregion
 
-            // Extra play animations.
-            if (!gameObject.activeInHierarchy || !(targetGraphic is TextMeshProUGUI _text)) {
-                return;
-            }
-
-            Color _color;
-            float _size;
-            Vector2 _offset;
-
-            switch (state) {
+        #region Utility
+        private SelectableState GetSelectableState(SelectionState _state) {
+            switch (_state) {
                 case SelectionState.Normal:
-                    _color  = colors.normalColor;
-                    _size   = TextEffects.Size[State.Normal];
-                    _offset = TextEffects.Offset[State.Normal];
-                    break;
+                default:
+                    return SelectableState.Normal;
 
                 case SelectionState.Highlighted:
-                    _color  = colors.highlightedColor;
-                    _size   = TextEffects.Size[State.Highlighted];
-                    _offset = TextEffects.Offset[State.Highlighted];
-                    break;
+                    return SelectableState.Highlighted;
 
                 case SelectionState.Pressed:
-                    _color  = colors.pressedColor;
-                    _size   = TextEffects.Size[State.Pressed];
-                    _offset = TextEffects.Offset[State.Pressed];
-                    break;
+                    return SelectableState.Pressed;
 
                 case SelectionState.Selected:
-                    _color  = colors.selectedColor;
-                    _size   = TextEffects.Size[State.Selected];
-                    _offset = TextEffects.Offset[State.Selected];
-                    break;
+                    return SelectableState.Selected;
 
                 case SelectionState.Disabled:
-                    _color  = colors.disabledColor;
-                    _size   = TextEffects.Size[State.Disabled];
-                    _offset = TextEffects.Offset[State.Disabled];
-                    break;
+                    return SelectableState.Disabled;
 
-                default:
-                    return;
-            }
-
-            // Text outline.
-            if ((transition == Transition.ColorTint) && (_text.outlineWidth != 0f)) {
-                _text.outlineColor = outlineColor * _color;
-            }
-
-            // Additional effects.
-            if (UseTextEffects) {
-                _text.fontSize = _size;
-                _text.margin = new Vector4(_offset.x, _offset.y, _text.margin.y, _text.margin.z);
             }
         }
         #endregion
     }
 }
-#endif

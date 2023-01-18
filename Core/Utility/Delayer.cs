@@ -47,7 +47,7 @@ namespace EnhancedFramework.Core {
                 Delay -= GetDeltaTime();
 
                 if (Delay <= 0f) {
-                    Callback?.Invoke();
+                    Invoke();
                     return true;
                 }
 
@@ -66,6 +66,10 @@ namespace EnhancedFramework.Core {
                 return UseUnscaledTime
                       ? Time.unscaledDeltaTime
                       : Time.deltaTime;
+            }
+
+            public void Invoke() {
+                Callback?.Invoke();
             }
             #endregion
         }
@@ -137,7 +141,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Calls a given callback after a certain delay.
         /// </summary>
-        /// <param name="_id">The id of this delayed call. You can use the same id to cancel it using <see cref="CancelCall(int)"/></param>
+        /// <param name="_id">The id of this delayed call. You can use the same id to cancel it using <see cref="Cancel(int)"/></param>
         /// <param name="_delay">The time (in seconds) to wait for this callback to be called.</param>
         /// <param name="_callback">The delayed callback delegate.</param>
         /// <param name="_useUnscaledTime">If true, this callback delay will not be affected by the game time scale.
@@ -151,8 +155,8 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_id">The id of the call to cancel.</param>
         /// <returns>True if the call with the given id could be found and successfully canceled, false otherwise.</returns>
-        public static bool CancelCall(int _id) {
-            if (_id == DefaultCallID) {
+        public static bool Cancel(int _id) {
+            if ((_id == DefaultCallID) || (_id == currentID)) {
                 return false;
             }
 
@@ -164,19 +168,76 @@ namespace EnhancedFramework.Core {
 
             return false;
         }
+
+        /// <summary>
+        /// Cancels all previously registered call matching a specific id.
+        /// </summary>
+        /// <param name="_id">Id to cancel the associated calls.</param>
+        public static void CancelAll(int _id) {
+            for (int i = calls.Count; i-- > 0;) {
+                if (calls[i].ID == _id) {
+                    calls.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Completes a previously registered delayed call.
+        /// </summary>
+        /// <param name="_id">The id of the call to complete.</param>
+        /// <returns>True if the call with the given id could be found and successfully completed, false otherwise.</returns>
+        public static bool Complete(int _id) {
+            if ((_id == DefaultCallID) || (_id == currentID)) {
+                return false;
+            }
+
+            int _index = calls.FindIndex(p => p.ID == _id);
+
+            if (_index != -1) {
+                calls[_index].Invoke();
+                calls.RemoveAt(_index);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Completes all previously registered call matching a specific id.
+        /// </summary>
+        /// <param name="_id">Id to complete the associated calls.</param>
+        public static void CompleteAll(int _id) {
+            for (int i = 0; i < calls.Count; i++) {
+
+                if (calls[i].ID == _id) {
+                    calls[i].Invoke();
+                    calls.RemoveAt(i);
+
+                    i--;
+                }
+            }
+        }
         #endregion
 
         #region Behaviour
+        private static int currentID = DefaultCallID;
+
+        // -----------------------
+
         public void Update() {
-            for (int i = calls.Count; i-- > 0;) {
+            for (int i = 0; i < calls.Count; i++) {
                 var _call = calls[i];
+                currentID = _call.ID;
 
                 if (_call.Update()) {
                     calls.RemoveAt(i);
+                    i--;
                 } else {
                     calls[i] = _call;
                 }
             }
+
+            currentID = DefaultCallID;
         }
         #endregion
     }

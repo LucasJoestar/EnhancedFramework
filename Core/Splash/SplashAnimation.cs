@@ -124,24 +124,6 @@ namespace EnhancedFramework.Core {
     }
 
     /// <summary>
-    /// Set the alpha value of a specific <see cref="CanvasGroup"/>.
-    /// </summary>
-    [Serializable, DisplayName("Canvas Group")]
-    public class CanvasGroupSplashAnimation : SplashAnimation {
-        #region Global Members
-        [Enhanced, Required, Duo("Alpha")] public CanvasGroup Group     = null;
-        [HideInInspector] public float Alpha   = 1f;
-        #endregion
-
-        #region Behaviour
-        public override IEnumerator Play() {
-            Group.alpha = Alpha;
-            yield break;
-        }
-        #endregion
-    }
-
-    /// <summary>
     /// Set the visibility of a specific <see cref="IFadingObject"/>.
     /// </summary>
     [Serializable, DisplayName("Fading Object")]

@@ -36,6 +36,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public virtual int Capacity {
             get { return collection.Capacity; }
+            set { collection.Capacity = value; }
         }
 
         bool ICollection<T>.IsReadOnly {
@@ -75,7 +76,7 @@ namespace EnhancedFramework.Core {
 
         #region IEnumerable
         public IEnumerator<T> GetEnumerator() {
-            for (int i = Count; i-- > 0;) {
+            for (int i = 0; i < Count; i++) {
                 yield return collection[i];
             }
         }

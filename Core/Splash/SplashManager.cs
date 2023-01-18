@@ -7,7 +7,6 @@
 using EnhancedEditor;
 using EnhancedFramework.Core.GameStates;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -36,7 +35,21 @@ namespace EnhancedFramework.Core {
 
         [Space(10f)]
 
-        [SerializeField] private List<PolymorphValue<SplashAnimation>> animations = new List<PolymorphValue<SplashAnimation>>();
+        [SerializeField] private PolymorphValue<SplashAnimation>[] animations = new PolymorphValue<SplashAnimation>[0];
+
+        // This field is not meant to be used in any way.
+        // It doesn't belong here, and it should be removed.
+        // Yet, without hit, the game will crash on build when loading the Splash scene (even if the component is disabled).
+        // Happens because of the List<PolymorphValue<SplashAnimation>> above.
+        //
+        // It needs to be a SerializeField PolymorphValue, its name doesn't matter.
+        // I have absolutely no idea why with this field, the game doesn't crash. There isn't a single log for this.
+        // This should require deeper investigation some day.
+        //
+        // See https://forum.unity.com/threads/unity-crashes-when-adding-an-element-to-a-list-of-serialized-interfaces.1100491/
+        // for more informations.
+        #pragma warning disable IDE0052
+        [SerializeField, HideInInspector] private PolymorphValue<SplashAnimation> buildFix = new PolymorphValue<SplashAnimation>();
 
         // -----------------------
 
@@ -100,7 +113,7 @@ namespace EnhancedFramework.Core {
             EnhancedSceneManager.Instance.LoadSceneBundle(nextScene, LoadSceneMode.Additive);
 
             // Play each animation.
-            for (int i = 0; i < animations.Count; i++) {
+            for (int i = 0; i < animations.Length; i++) {
                 SplashAnimation _animation = animations[i];
                 yield return _animation.Play();
             }

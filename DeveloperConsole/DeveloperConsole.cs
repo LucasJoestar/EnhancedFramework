@@ -21,7 +21,7 @@ using EnhancedEditor;
 using EnhancedFramework.Core;
 using EnhancedFramework.Core.GameStates;
 using EnhancedFramework.DeveloperConsoleSystem.GameStates;
-using EnhancedFramework.Input;
+using EnhancedFramework.Inputs;
 using EnhancedFramework.UI;
 using Mono.CSharp;
 using System;
@@ -2000,7 +2000,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             #endregion
 
             #region Miscs
-            // Time
+            // Time.
             {
                 AddBuiltInCommand(Command.Create(
                     "datetime",
@@ -2071,6 +2071,270 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                     null,
                     c => LogValue($"<color=#{ColorUtility.ToHtmlStringRGBA(c)}>Colour</color>", c),
                     new DeveloperConsoleCommandParameter("color", "Color to display - Formats: #RRGGBBAA (hex), #RRGGBB (hex), name (red,yellow,etc.), R.R,G.G,B.B (0.0-1.0)")
+                ));
+            }
+            #endregion
+
+            // --- Enhanced Editor --- \\
+
+            #region Flag
+            // Get.
+            {
+                AddBuiltInCommand(Command.Create<string>(
+                    "getflag",
+                    "get_flag",
+                    "Get the current value of a flag",
+                    null,
+                    s => {
+                        if (!FlagDatabase.Database.FindFlag(s, out Flag _flag)) {
+                            LogError("Could not find the specified flag");
+                            return;
+                        }
+
+                        LogValue(_flag.Name, _flag.Value);
+                    },
+                    new DeveloperConsoleCommandParameter("name", "Name of the flag to get")
+                ));
+            }
+
+            // Set.
+            {
+                AddBuiltInCommand(Command.Create<string, bool>(
+                    "setflag",
+                    "set_flag",
+                    "Set the current value of a flag",
+                    null,
+                    (s, b) => {
+                        if (!FlagDatabase.Database.SetFlag(s, b)) {
+                            LogError("Could not find the specified flag");
+                            return;
+                        }
+
+                        LogSuccess($"{s} value set to {b}");
+                    },
+                    new DeveloperConsoleCommandParameter("name", "Name of the flag to set"),
+                    new DeveloperConsoleCommandParameter("value", "Value to assign to the flag")
+                ));
+
+                AddBuiltInCommand(Command.Create<string, string, bool>(
+                    "set_flag",
+                    "setflag",
+                    "Set the current value of a flag",
+                    null,
+                    (flagName, holderName, value) => {
+                        if (!FlagDatabase.Database.SetFlag(flagName, holderName, value)) {
+                            LogError("Could not find the specified flag");
+                            return;
+                        }
+
+                        LogSuccess($"{flagName} value set to {value}");
+                    },
+                    new DeveloperConsoleCommandParameter("flagName", "Name of the flag to set"),
+                    new DeveloperConsoleCommandParameter("holderName", "Name of the holder containing the flag"),
+                    new DeveloperConsoleCommandParameter("value", "Value to assign to the flag")
+                ));
+
+                AddBuiltInCommand(Command.Create<string, bool>(
+                    "set_flag_holder",
+                    "setflagholder",
+                    "Set the current value of all flags in a given holder",
+                    null,
+                    (holderName, value) => {
+                        if (!FlagDatabase.Database.FindHolder(holderName, out FlagHolder _holder)) {
+                            LogError("Could not find the specified FlagHolder");
+                            return;
+                        }
+
+                        foreach (var _flag in _holder.Flags) {
+                            _flag.Value = value;
+                        }
+
+                        LogSuccess($"{_holder.name} flag values set to {value}");
+                    },
+                    new DeveloperConsoleCommandParameter("holderName", "Name of the holder to set the flag values"),
+                    new DeveloperConsoleCommandParameter("value", "Value to assign to all flags in the holder")
+                ));
+            }
+
+            // List.
+            {
+                AddBuiltInCommand(Command.Create(
+                    "flags",
+                    "flaglist,flag_list",
+                    "Get the current value of all flags",
+                    () => {
+                        List<Pair<Flag, FlagHolder>> _flags = new List<Pair<Flag, FlagHolder>>();
+                        foreach (var _holder in FlagDatabase.Database.Holders) {
+                            _flags.AddRange(Array.ConvertAll(_holder.Flags, f => new Pair<Flag, FlagHolder>(f, _holder)));
+                        }
+
+                        LogCollection("Flags", _flags, List, string.Empty, (f) => $"[{f.Second.name}] {f.First.Name}: {f.First.Value}");
+                    }
+                ));
+
+                AddBuiltInCommand(Command.Create<string>(
+                    "holder_flags",
+                    "holderflags",
+                    "Get the current value of all flags in a holder",
+                    null,
+                    s => {
+                        if (!FlagDatabase.Database.FindHolder(s, out FlagHolder _holder)) {
+                            LogError("Could not find the specified FlagHolder");
+                            return;
+                        }
+
+                        LogCollection($"{_holder.name} Flags", _holder.Flags, List, string.Empty, (f) => $"{f.Name}: {f.Value}");
+                    },
+                    new DeveloperConsoleCommandParameter("name", "Name of the holder to get the associated flags")
+                ));
+            }
+
+            // Enabled.
+            {
+                AddBuiltInCommand(Command.Create(
+                    "enabledflags",
+                    "enabled_flags",
+                    "Get all currently enabled flags in the project",
+                    () => {
+                        List<Pair<Flag, FlagHolder>> _enabledFlags = new List<Pair<Flag, FlagHolder>>();
+
+                        foreach (var _holder in FlagDatabase.Database.Holders) {
+                            foreach (var _flag in _holder) {
+                                if (_flag.Value) {
+                                    _enabledFlags.Add(new Pair<Flag, FlagHolder>(_flag, _holder));
+                                }
+                            }
+                        }
+
+                        LogCollection($"Enabled Flags", _enabledFlags, List, string.Empty, (f) => $"[{f.Second.name}] {f.First.Name}");
+                    }
+                ));
+
+                AddBuiltInCommand(Command.Create<string>(
+                    "enabled_holderflags",
+                    "enabledholderflags",
+                    "Get all currently enabled flags in a specific holder",
+                    null,
+                    s => {
+                        if (!FlagDatabase.Database.FindHolder(s, out FlagHolder _holder)) {
+                            LogError("Could not find the specified FlagHolder");
+                            return;
+                        }
+
+                        List<Flag> _enabledFlags = new List<Flag>();
+                        foreach (var _flag in _holder) {
+                            if (_flag.Value) {
+                                _enabledFlags.Add(_flag);
+                            }
+                        }
+
+                        LogCollection($"{_holder.name} Enabled Flags", _enabledFlags, List, string.Empty, (f) => f.Name);
+                    },
+                    new DeveloperConsoleCommandParameter("name", "Name of the holder to get the enabled flags")
+                ));
+            }
+
+            // Disabled.
+            {
+                AddBuiltInCommand(Command.Create(
+                    "disabledflags",
+                    "disabled_flags",
+                    "Get all currently disabled flags in the project",
+                    () => {
+                        List<Pair<Flag, FlagHolder>> _disabledFlags = new List<Pair<Flag, FlagHolder>>();
+
+                        foreach (var _holder in FlagDatabase.Database.Holders) {
+                            foreach (var _flag in _holder) {
+                                if (!_flag.Value) {
+                                    _disabledFlags.Add(new Pair<Flag, FlagHolder>(_flag, _holder));
+                                }
+                            }
+                        }
+
+                        LogCollection($"Disabled Flags", _disabledFlags, List, string.Empty, (f) => $"[{f.Second.name}] {f.First.Name}");
+                    }
+                ));
+
+                AddBuiltInCommand(Command.Create<string>(
+                    "disabled_holderflags",
+                    "disabledholderflags",
+                    "Get all currently disabled flags in a specific holder",
+                    null,
+                    s => {
+                        if (!FlagDatabase.Database.FindHolder(s, out FlagHolder _holder)) {
+                            LogError("Could not find the specified FlagHolder");
+                            return;
+                        }
+
+                        List<Flag> _disabledFlags = new List<Flag>();
+                        foreach (var _flag in _holder) {
+                            if (!_flag.Value) {
+                                _disabledFlags.Add(_flag);
+                            }
+                        }
+
+                        LogCollection($"{_holder.name} Disabled Flags", _disabledFlags, List, string.Empty, (f) => f.Name);
+                    },
+                    new DeveloperConsoleCommandParameter("name", "Name of the holder to get the disabled flags")
+                ));
+            }
+            #endregion
+
+            #region Scene Management
+            // Load
+            {
+                AddBuiltInCommand(Command.Create<string>(
+                    "loadscenebundle",
+                    "load_scenebundle",
+                    "Loads a SceneBundle by its name",
+                    null,
+                    s => {
+                        if (!BuildSceneDatabase.Database.GetSceneBundle(s, out SceneBundle _bundle)) {
+                            LogError($"{s.Bold()} Scene Bundle could not be found");
+                            return;
+                        }
+
+                        EnhancedSceneManager.Instance.LoadSceneBundle(_bundle, LoadSceneMode.Single);
+                        LogSuccess($"Loading SceneBundle {s.Bold()}");
+                    },
+                    new DeveloperConsoleCommandParameter("sceneBundleName", "Name of the SceneBundle to load")
+                ));
+
+                AddBuiltInCommand(Command.Create<string>(
+                    "loadscenebundle_additively",
+                    "load_scenebundle_additively",
+                    "Loads additively a SceneBundle by its name",
+                    null,
+                    s => {
+                        if (!BuildSceneDatabase.Database.GetSceneBundle(s, out SceneBundle _bundle)) {
+                            LogError($"{s.Bold()} Scene Bundle could not be found");
+                            return;
+                        }
+
+                        EnhancedSceneManager.Instance.LoadSceneBundle(_bundle, LoadSceneMode.Additive);
+                        LogSuccess($"Loading additively SceneBundle {s.Bold()}");
+                    },
+                    new DeveloperConsoleCommandParameter("sceneBundleName", "Name of the SceneBundle to load")
+                ));
+            }
+
+            // Unload
+            {
+                AddBuiltInCommand(Command.Create<string>(
+                    "unloadscenebundle",
+                    "unload_scenebundle",
+                    "Unloads a SceneBundle by its name",
+                    null,
+                    s => {
+                        if (!BuildSceneDatabase.Database.GetSceneBundle(s, out SceneBundle _bundle)) {
+                            LogError($"{s.Bold()} Scene Bundle could not be found");
+                            return;
+                        }
+
+                        EnhancedSceneManager.Instance.UnloadSceneBundle(_bundle, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
+                        LogSuccess($"Loading SceneBundle {s.Bold()}");
+                    },
+                    new DeveloperConsoleCommandParameter("sceneBundleName", "Name of the SceneBundle to unload")
                 ));
             }
             #endregion

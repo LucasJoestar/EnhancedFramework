@@ -211,9 +211,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                 _parameters[i] = _parameter;
             }
 
+            Action _defaultDelegate = () => _method.Invoke(null, null);
             Action<object[]> _delegate = (p) => _method.Invoke(null, p);
-            DeveloperConsoleCommand _command = new DeveloperConsoleCommand(_name, _aliases, _description, null, _delegate, _parameters);
 
+            DeveloperConsoleCommand _command = new DeveloperConsoleCommand(_name, _aliases, _description, _defaultDelegate, _delegate, _parameters);
             return _command;
         }
         #endregion

@@ -157,7 +157,7 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        [HideInInspector] public PlayableDirector playableDirector = null;
+        [SerializeField, HideInInspector] private PlayableDirector playableDirector = null;
         #endregion
 
         #region Enhanced Behaviour

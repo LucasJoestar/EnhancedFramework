@@ -1,0 +1,28 @@
+{
+    "name": "EnhancedFramework.PlayMaker.Timeline",
+    "rootNamespace": "EnhancedFramework.PlayMaker.Timeline",
+    "references": [
+        "GUID:129318ae7fd7f8c4ba59a61149b32d24",
+        "GUID:73963eaa1a440a54180919b79857661d",
+        "GUID:0de85572b5a384d408b0629a2ec957d3",
+        "GUID:f06555f75b070af458a003d92f9efb00"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "PLAYMAKER",
+        "TIMELINE_ENABLED"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.timeline",
+            "expression": "",
+            "define": "TIMELINE_ENABLED"
+        }
+    ],
+    "noEngineReferences": false
+}

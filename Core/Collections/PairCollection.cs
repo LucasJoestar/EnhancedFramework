@@ -158,7 +158,7 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// Get the key of the element at a specific index.
+        /// Get the key of the collection at a specific index.
         /// </summary>
         /// <param name="_index">Index to get the element at.</param>
         /// <returns>The key of the element at the given index.</returns>
@@ -167,12 +167,30 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// Get the value of the element at a specific index.
+        /// Get the value of the collection at a specific index.
         /// </summary>
         /// <param name="_index">Index to get the element at.</param>
         /// <returns>The value of the element at the given index.</returns>
         public U GetValueAt(int _index) {
             return collection[_index].Second;
+        }
+
+        /// <summary>
+        /// Set the key of this collection at a specific index.
+        /// </summary>
+        /// <param name="_index">Index to set the key at.</param>
+        /// <param name="_key">Key to set.</param>
+        public void SetKey(int _index, T _key) {
+            collection[_index] = new Pair<T, U>(_key, collection[_index].Second);
+        }
+
+        /// <summary>
+        /// Set the value of this collection at a specific index.
+        /// </summary>
+        /// <param name="_index">Index to set the value at.</param>
+        /// <param name="_value">Value to set.</param>
+        public void SetValue(int _index, U _value) {
+            collection[_index] = new Pair<T, U>(collection[_index].First, _value);
         }
 
         // -----------------------

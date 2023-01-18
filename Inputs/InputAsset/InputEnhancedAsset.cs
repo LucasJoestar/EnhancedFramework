@@ -7,7 +7,7 @@
 using EnhancedEditor;
 using UnityEngine;
 
-namespace EnhancedFramework.Input {
+namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Base class for any Enhanced input <see cref="ScriptableObject"/> asset.
     /// </summary>

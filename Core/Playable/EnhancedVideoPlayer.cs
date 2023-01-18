@@ -64,7 +64,7 @@ namespace EnhancedFramework.Core {
 
         [Tooltip("Use this to automatically show a CanvasGroup when the video start playing, and hide it when it stops")]
         [SerializeField] private bool manageRenderingCanvas = false;
-        [SerializeField, Enhanced, ShowIf("manageRenderingCanvas")] private CrossSceneReference<CanvasGroup> renderingCanvas = null;
+        [SerializeField, Enhanced, ShowIf("manageRenderingCanvas")] private CrossSceneReference<FadingObjectBehaviour> renderingCanvas = null;
 
         [Space(10f)]
 
@@ -216,7 +216,7 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        [HideInInspector] private VideoPlayer videoPlayer = null;
+        [SerializeField, HideInInspector] private VideoPlayer videoPlayer = null;
 
         // -----------------------
 
@@ -339,7 +339,7 @@ namespace EnhancedFramework.Core {
             isActive = true;
             Started?.Invoke(videoPlayer);
 
-            SetRenderCanvasAlpha(1f);
+            SetRenderCanvasAlpha(true);
 
             // Stop callback.
             videoPlayer.loopPointReached -= OnStop;
@@ -454,7 +454,7 @@ namespace EnhancedFramework.Core {
 
             _player.loopPointReached -= OnStop;
 
-            SetRenderCanvasAlpha(0f);
+            SetRenderCanvasAlpha(false);
 
             // Clear the render texture to avoid displaying the last frame when playing a new video.
             if (videoPlayer.renderMode == VideoRenderMode.RenderTexture) {
@@ -525,10 +525,10 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Sets the alpha value of this object rendering <see cref="CanvasGroup"/>.
         /// </summary>
-        /// <param name="_alpha">Rendering canvas new alpha value (between 0 and 1).</param>
-        public void SetRenderCanvasAlpha(float _alpha) {
+        /// <param name="_isVisible">Whether the rendering canvas should be visible or not.</param>
+        public void SetRenderCanvasAlpha(bool _isVisible) {
             if (manageRenderingCanvas) {
-                renderingCanvas.GetReference().alpha = _alpha;
+                renderingCanvas.GetReference().SetVisibility(_isVisible);
             }
         }
 
