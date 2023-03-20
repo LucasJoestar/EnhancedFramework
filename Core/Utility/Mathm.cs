@@ -26,10 +26,9 @@ namespace EnhancedFramework.Core {
                         ? _max : _value);
         }
 
-
         /// <inheritdoc cref="IsInRange(float, float, float)"/>
         public static bool IsInRange(int _value, int _min, int _max) {
-            return (_value >= _min) && (_value <= (_max));
+            return (_value >= _min) && (_value <= _max);
         }
 
         /// <summary>
@@ -40,7 +39,42 @@ namespace EnhancedFramework.Core {
         /// <param name="_max">Maximum allowed value.</param>
         /// <returns>True if the specified value is within the given range, false otherwise.</returns>
         public static bool IsInRange(float _value, float _min, float _max) {
-            return (_value >= _min) && (_value <= (_max));
+            return (_value >= _min) && (_value <= _max);
+        }
+
+        /// <inheritdoc cref="IsInRangeExclusive(float, float, float)"/>
+        public static bool IsInRangeExclusive(int _value, int _min, int _max) {
+            return (_value > _min) && (_value < _max);
+        }
+
+        /// <summary>
+        /// Get if a specific value is within a given range (min and max exclusive).
+        /// </summary>
+        /// <inheritdoc cref="IsInRange(float, float, float)"/>
+        public static bool IsInRangeExclusive(float _value, float _min, float _max) {
+            return (_value > _min) && (_value < _max);
+        }
+
+        /// <summary>
+        /// Increments a given value looping between 0 and a given limit (exclusive).
+        /// <br/> When the value reaches the limits, it comes back to zero, and vice-versa.
+        /// </summary>
+        /// <param name="_value">Value to increase.</param>
+        /// <param name="_limit"></param>
+        /// <param name="_increase">Increase value.</param>
+        /// <returns>Clamped loop value.</returns>
+        public static int LoopIncrement(int _value, int _limit, int _increase) {
+            _value += _increase;
+
+            while (_value < 0) {
+                _value += _limit;
+            }
+
+            while (_value >= _limit) {
+                _value -= _limit;
+            }
+
+            return _value;
         }
         #endregion
 
@@ -166,6 +200,22 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="VectorExtensions.PerpendicularSurface(Vector3, Vector3)"/>
         public static Vector3 ParallelSurface(Vector3 _direction, Vector3 _normal) {
             return _direction.PerpendicularSurface(_normal);
+        }
+
+        /// <summary>
+        /// Normalizes a specific value on a given range.
+        /// <br/> For exemple, a value of 3 on a range of (1, 4) has a 0,666 normalized value.
+        /// </summary>
+        /// <param name="_value">Value to normalize.</param>
+        /// <param name="_from">Range from value.</param>
+        /// <param name="_to">Range to value.</param>
+        /// <returns>This normalized value.</returns>
+        public static float NormalizedValue(float _value, float _from, float _to) {
+
+            float _range = _to - _from;
+            float _position = _value - _from;
+
+            return (_position == 0f) ? 0f : Mathf.Clamp01(_position / _range);
         }
         #endregion
     }

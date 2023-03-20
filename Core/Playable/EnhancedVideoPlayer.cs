@@ -18,7 +18,9 @@ namespace EnhancedFramework.Core {
     /// <para/>
     /// Allow to preview the video in the editor, and use additional callbacks and functionalities.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [RequireComponent(typeof(VideoPlayer))]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Video Player"), DisallowMultipleComponent]
     #pragma warning disable 0414
     public class EnhancedVideoPlayer : EnhancedBehaviour, ISkippableElement, IPermanentUpdate, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Play;
@@ -54,11 +56,11 @@ namespace EnhancedFramework.Core {
 
         [Space(10f)]
 
-        [HelpBox("Whether the video can be skipped or not.\nHas no effect by itself. Should be used from another script (like an IBoundGameState).", MessageType.Info)]
+        [HelpBox("Whether the video can be skipped or not.\nHas no effect by itself. Should be used from another script (like an IBoundGameState)", MessageType.Info)]
         [SerializeField] private bool isSkippable = false;
 
-        [Tooltip("The time (in seconds) where to advance the video to when being skipped.")]
-        [SerializeField, Enhanced, ShowIf("isSkippable"), Range("playRange")] private double skipTime = 0d;
+        [Tooltip("Time (in seconds) where skip is available and where to advance the video to when being skipped")]
+        [SerializeField, Enhanced, ShowIf("isSkippable"), MinMax("playRange")] private Vector2 skipInterval = new Vector2();
 
         [Space(10f)]
 
@@ -69,7 +71,7 @@ namespace EnhancedFramework.Core {
         [Space(10f)]
 
         [Tooltip("The total range used to play the video (from start to end)")]
-        [SerializeField, Enhanced, DrawMember("PlayRange"), MinMax("TimeRange")] private Vector2 playRange = new Vector2(0f, 0f);
+        [SerializeField, Enhanced/*, DrawMember("PlayRange")*/, MinMax("TimeRange")] private Vector2 playRange = new Vector2(0f, 0f);
 
         #if UNITY_EDITOR
         [SerializeField, Enhanced, DrawMember("Time"), Range("playRange"), ValidationMember("Time")]
@@ -104,10 +106,10 @@ namespace EnhancedFramework.Core {
                 videoPlayer.clip = value;
 
                 Stop();
-                PlayRange = TimeRange;
+                playRange = TimeRange;
 
                 if (isSkippable) {
-                    skipTime = PlayRange.y;
+                    SkipInterval = new Vector2(0f, playRange.y);
                 }
             }
         }
@@ -146,10 +148,10 @@ namespace EnhancedFramework.Core {
         /// <para/>
         /// (See also <see cref="IsSkippable"/>)
         /// </summary>
-        public double SkipTime {
-            get { return skipTime; }
+        public Vector2 SkipInterval {
+            get { return skipInterval; }
             set {
-                skipTime = Mathm.Clamp(value, playRange.x, playRange.y);
+                skipInterval = new Vector2(Mathf.Clamp(value.x, playRange.x, playRange.y), Mathf.Clamp(value.y, playRange.x, playRange.y));
             }
         }
 
@@ -280,10 +282,14 @@ namespace EnhancedFramework.Core {
             }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
 
         #if UNITY_EDITOR
-        private void OnValidate() {
+        protected override void OnValidate() {
+            base.OnValidate();
+
             if (!videoPlayer) {
                 videoPlayer = GetComponent<VideoPlayer>();
             }
@@ -417,8 +423,8 @@ namespace EnhancedFramework.Core {
         /// <returns>True if this playable could be successfully skipped, false otherwise.</returns>
         [Button("IsSkippable", ConditionType.True, SuperColor.Lavender)]
         public bool Skip() {
-            if (IsSkippable && (Time < SkipTime)) {
-                Time = SkipTime;
+            if (IsSkippable && skipInterval.Contains((float)Time)) {
+                Time = skipInterval.y;
                 return true;
             }
 

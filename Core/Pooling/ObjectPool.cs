@@ -31,32 +31,6 @@ namespace EnhancedFramework.Core {
     }
 
     /// <summary>
-    /// <see cref="EnhancedBehaviour"/>-related <see cref="IPoolableObject"/>.
-    /// </summary>
-    public class EnhancedPoolableObject : EnhancedBehaviour, IPoolableObject {
-        #region Poolable
-        /// <inheritdoc cref="IPoolableObject.OnCreated"/>
-        public virtual void OnCreated() { }
-
-        /// <inheritdoc cref="IPoolableObject.OnRemovedFromPool"/>
-        public virtual void OnRemovedFromPool() {
-            SetActive(true);
-        }
-
-        /// <inheritdoc cref="IPoolableObject.OnSentToPool"/>
-        public virtual void OnSentToPool() {
-            SetActive(false);
-        }
-
-        // -----------------------
-
-        private void SetActive(bool _isActive) {
-            gameObject.SetActive(_isActive);
-        }
-        #endregion
-    }
-
-    /// <summary>
     /// <see cref="ObjectPool{T}"/>-related interface used to create and destroy instances.
     /// </summary>
     /// <typeparam name="T"><see cref="IPoolableObject"/> managed type.</typeparam>
@@ -84,8 +58,8 @@ namespace EnhancedFramework.Core {
     [Serializable]
     public sealed class ObjectPool<T> where T : IPoolableObject {
         #region Global Members
-        [SerializeField] private EnhancedCollection<T> pool      = new EnhancedCollection<T>();
-        private IObjectPoolManager<T> manager   = null;
+        [SerializeField] private EnhancedCollection<T> pool = new EnhancedCollection<T>();
+        private IObjectPoolManager<T> manager = null;
 
         // -------------------------------------------
         // Constructor(s)
@@ -93,7 +67,7 @@ namespace EnhancedFramework.Core {
 
         /// <param name="_capacity">Initial capacity of the pool.</param>
         /// <inheritdoc cref="ObjectPool{T}"/>
-        public ObjectPool(int _capacity = 0) {
+        public ObjectPool(int _capacity = 1) {
             pool = new EnhancedCollection<T>(_capacity);
         }
         #endregion
@@ -105,11 +79,15 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_manager">Manager used to create and destroy pool object instances.</param>
         public void Initialize(IObjectPoolManager<T> _manager) {
+            if (manager == _manager) {
+                return;
+            }
+
             manager = _manager;
 
             for (int i = pool.Count; i < pool.Capacity; i++) {
                 T _instance = _manager.CreateInstance();
-                pool[i] = _instance;
+                pool.Add(_instance);
 
                 _instance.OnCreated();
                 _instance.OnSentToPool();
@@ -121,7 +99,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Get an object instance from this pool.
         /// </summary>
-        /// <returns>The object instance from the pool.</returns>
+        /// <returns>The object instance get from the pool.</returns>
         public T Get() {
             T _instance;
 
@@ -140,7 +118,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Releases a specific instance and sent it to the pool.
         /// </summary>
-        /// <param name="_instance">Instance to release.</param>
+        /// <param name="_instance">Object instance to release and send to the pool.</param>
         /// <returns>True if the instance could be successfully released and sent to the pool, false otherwise.</returns>
         public bool Release(T _instance) {
             // Ignore it if already in the pool.
@@ -157,8 +135,8 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Clears this pool content and destroys all its instances.
         /// </summary>
-        /// <param name="_capcity">New capacity of the pool.</param>
-        public void Clear(int _capcity = 0) {
+        /// <param name="_capacity">New capacity of the pool.</param>
+        public void Clear(int _capacity = 1) {
             // Destroy instances.
             for (int i = pool.Count; i-- > 0;) {
                 T _object = pool[i];
@@ -167,7 +145,7 @@ namespace EnhancedFramework.Core {
 
             // Reset capacity.
             pool.Clear();
-            pool.Capacity = _capcity;
+            pool.Capacity = _capacity;
         }
         #endregion
     }

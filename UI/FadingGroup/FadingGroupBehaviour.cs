@@ -6,9 +6,7 @@
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
-using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace EnhancedFramework.UI {
     /// <summary>
@@ -29,6 +27,10 @@ namespace EnhancedFramework.UI {
 
         // -----------------------
 
+        public T Group {
+            get { return group; }
+        }
+
         public override IFadingObject FadingObject {
             get { return group; }
         }
@@ -36,6 +38,38 @@ namespace EnhancedFramework.UI {
         public override FadingMode InitMode {
             get { return initMode; }
         }
+        #endregion
+
+        #region Enhanced Behaviour
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
+            // Group callback.
+            group.OnDisabled();
+        }
+
+        #if UNITY_EDITOR
+        protected override void OnValidate() {
+            base.OnValidate();
+
+            // References.
+            if (!group.Group) {
+                group.Group = GetComponent<CanvasGroup>();
+            }
+
+            if (group.UseCanvas && !group.Canvas) {
+                group.Canvas = GetComponent<Canvas>();
+            }
+
+            if (group.UseController && !group.Controller) {
+                group.Controller = GetComponent<FadingGroupController>();
+            }
+
+            if (group.UseSelectable && !Application.isPlaying) {
+                group.ActiveSelectable = group.Selectable;
+            }
+        }
+        #endif
         #endregion
     }
 

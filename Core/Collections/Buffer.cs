@@ -19,10 +19,15 @@ namespace EnhancedFramework.Core {
     /// <typeparam name="U">Buffer key type.</typeparam>
     /// <typeparam name="V">Buffer priority value type.</typeparam>
     [Serializable]
-    public abstract class Buffer<T, U, V> : PairCollection<U, V> where U : IComparable<U> {
+    public abstract class Buffer<T, U, V> : PairCollection<U, V> {
         #region Global Members
         [SerializeField, HideInInspector] protected T defaultValue = default;
         [SerializeField, HideInInspector] protected T value = default;
+
+        /// <summary>
+        /// If true, ensures that if two elements are equal when sorting, their order will be preserved.
+        /// </summary>
+        [SerializeField, HideInInspector] protected bool performStableSorting = true;
 
         /// <summary>
         /// Called whenever this buffer active value is changed (new value as first, previous one as second).
@@ -45,12 +50,20 @@ namespace EnhancedFramework.Core {
             get { return value; }
         }
 
+        /// <summary>
+        /// The full current active value of the buffer.
+        /// </summary>
+        public Pair<U, V> FullValue {
+            get { return GetFullValue(); }
+        }
+
         // -----------------------
 
-        /// <inheritdoc cref="Buffer{T, U, V}(int, T, Action{T, T})"/>
-        public Buffer(T _defaultValue = default, Action<T, T> _onValueChanged = null) {
+        /// <inheritdoc cref="Buffer{T, U, V}(int, T, bool, Action{T, T})"/>
+        public Buffer(T _defaultValue, bool _stableSort, Action<T, T> _onValueChanged) {
             defaultValue = _defaultValue;
             value = _defaultValue;
+            performStableSorting = _stableSort;
 
             OnValueChanged = _onValueChanged;
         }
@@ -60,8 +73,9 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_capacity">The initial capacity of this buffer.</param>
         /// <param name="_defaultValue"><inheritdoc cref="defaultValue" path="/summary"/></param>
+        /// <param name="_stableSort"><inheritdoc cref="performStableSorting" path="/summary"/></param>
         /// <param name="_onValueChanged"><inheritdoc cref="OnValueChanged" path="/summary"/></param>
-        public Buffer(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : this(_defaultValue, _onValueChanged) {
+        public Buffer(int _capacity, T _defaultValue, bool _stableSort, Action<T, T> _onValueChanged) : this(_defaultValue, _stableSort, _onValueChanged) {
             collection = new List<Pair<U, V>>(_capacity);
         }
         #endregion
@@ -72,7 +86,7 @@ namespace EnhancedFramework.Core {
 
             if (Count != 0) {
                 // Sort the buffer by priority.
-                Sort(Compare);
+                Sort();
                 _value = First();
             }
 
@@ -84,6 +98,12 @@ namespace EnhancedFramework.Core {
             }
 
             return value;
+        }
+
+        private Pair<U, V> GetFullValue() {
+            return (Count == 0)
+                 ? GetDefaultValue()
+                 : First();
         }
 
         // -----------------------
@@ -161,7 +181,24 @@ namespace EnhancedFramework.Core {
         }
 
         public override void Sort() {
-            collection.Sort((a, b) => a.First.CompareTo(b.First));
+            // Use a helper list to ensure a stable sorting.
+            if (performStableSorting) {
+                List<Pair<U, V>> _sortHelper = new List<Pair<U, V>>(collection);
+
+                collection.Sort((a, b) => {
+
+                    int _compare = Compare(a, b);
+
+                    if (_compare == 0) {
+                        _compare = -_sortHelper.IndexOf(a).CompareTo(_sortHelper.IndexOf(b));
+                    }
+
+                    return _compare;
+                });
+            } else {
+                // Unstable sorting.
+                collection.Sort(Compare);
+            }
         }
         #endregion
     }
@@ -173,13 +210,15 @@ namespace EnhancedFramework.Core {
     /// </summary>
     /// <typeparam name="T">Key / value type.</typeparam>
     [Serializable]
-    public class BufferR<T> : Buffer<T, T, int> where T : IComparable<T> {
+    public class BufferR<T> : Buffer<T, T, int> {
         #region Constructor
-        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, Action{T, T})"/>
-        public BufferR(T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_defaultValue, _onValueChanged) { }
+        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, bool, Action{T, T})"/>
+        public BufferR(T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) :
+               base(_defaultValue, _stableSort, _onValueChanged) { }
 
-        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(int, T, Action{T, T})"/>
-        public BufferR(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_capacity, _defaultValue, _onValueChanged) { }
+        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(int, T, bool, Action{T, T})"/>
+        public BufferR(int _capacity, T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) :
+               base(_capacity, _defaultValue, _stableSort, _onValueChanged) { }
         #endregion
 
         #region Buffer
@@ -206,11 +245,12 @@ namespace EnhancedFramework.Core {
     [Serializable]
     public class BufferI<T> : Buffer<T, int, T> {
         #region Constructor
-        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, Action{T, T})"/>
-        public BufferI(T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_defaultValue, _onValueChanged) { }
+        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, bool, Action{T, T})"/>
+        public BufferI(T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) : base(_defaultValue, _stableSort, _onValueChanged) { }
 
-        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(int, T, Action{T, T})"/>
-        public BufferI(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_capacity, _defaultValue, _onValueChanged) { }
+        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(int, T, bool, Action{T, T})"/>
+        public BufferI(int _capacity, T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) :
+               base(_capacity, _defaultValue, _stableSort, _onValueChanged) { }
         #endregion
 
         #region Buffer
@@ -237,11 +277,13 @@ namespace EnhancedFramework.Core {
     [Serializable]
     public class BufferV<T> : Buffer<T, int, Pair<T, int>> {
         #region Constructor
-        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, Action{T, T})"/>
-        public BufferV(T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_defaultValue, _onValueChanged) { }
+        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, bool, Action{T, T})"/>
+        public BufferV(T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) :
+               base(_defaultValue, _stableSort, _onValueChanged) { }
 
-        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(int, T, Action{T, T})"/>
-        public BufferV(int _capacity, T _defaultValue = default, Action<T, T> _onValueChanged = null) : base(_capacity, _defaultValue, _onValueChanged) { }
+        /// <inheritdoc cref="Buffer{T, U, V}.Buffer(int, T, bool, Action{T, T})"/>
+        public BufferV(int _capacity, T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) : 
+               base(_capacity, _defaultValue, _stableSort, _onValueChanged) { }
         #endregion
 
         #region Buffer

@@ -219,7 +219,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         }
         #endregion
 
-        #region Operators
+        #region Operator
         public override bool Equals(object _object) {
             if ((_object != null) && (_object is DeveloperConsoleCommand _command)) {
                 return (Name == _command.Name) && (Parameters.Length == _command.Parameters.Length);

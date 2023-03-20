@@ -4,15 +4,18 @@
 //
 // ================================================================================== //
 
-using System.ComponentModel;
+using EnhancedFramework.Timeline;
 using UnityEngine.Timeline;
+
+using DisplayName = System.ComponentModel.DisplayNameAttribute;
 
 namespace EnhancedFramework.PlayMaker.Timeline {
     /// <summary>
-    /// <see cref="TrackAsset"/> class for every <see cref="PlayMakerPlayableAsset"/>.
+    /// <see cref="TrackAsset"/> class for every <see cref="IPlayMakerPlayableAsset"/>.
     /// </summary>
     [TrackColor(.863f, .078f, .235f)] // Crimson
-    [TrackClipType(typeof(PlayMakerPlayableAsset))]
+    [TrackClipType(typeof(IPlayMakerPlayableAsset))]
+    [TrackBindingType(typeof(PlayMakerFSM), TrackBindingFlags.None)]
     [DisplayName("PlayMaker/PlayMaker Track")]
-    public class PlayMakerTrack : TrackAsset {  }
+    public class PlayMakerTrack : EnhancedTrack { }
 }

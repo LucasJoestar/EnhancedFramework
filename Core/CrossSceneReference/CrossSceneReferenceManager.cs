@@ -13,6 +13,8 @@ namespace EnhancedFramework.Core {
     /// Singleton manager referencing all active <see cref="CrossSceneObject"/> in the loaded scene(s),
     /// <br/> and used to load the associated <see cref="CrossSceneReference{T}"/>.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Cross Scene Reference Manager"), DisallowMultipleComponent]
     public class CrossSceneReferenceManager : EnhancedSingleton<CrossSceneReferenceManager> {
         #region Global Members
         [Section("Cross Scene Reference Manager")]
@@ -40,18 +42,20 @@ namespace EnhancedFramework.Core {
 
         #region Utility
         /// <summary>
-        /// Retrieves a specific <see cref="CrossSceneObject"/> from its associated guid.
+        /// Retrieves a specific <see cref="CrossSceneObject"/> from its associated id.
         /// </summary>
-        /// <param name="_guid">The guid of the object reference to find.</param>
-        /// <param name="_reference">The <see cref="CrossSceneObject"/> associated with this guid.</param>
+        /// <param name="_id">ID of the object reference to find.</param>
+        /// <param name="_reference">The <see cref="CrossSceneObject"/> associated with this id.</param>
         /// <returns>True if the associated <see cref="CrossSceneObject"/> could be found, false otherwise.</returns>
-        public bool GetReference(int _guid, out CrossSceneObject _reference) {
+        public bool GetReference(EnhancedObjectID _id, out CrossSceneObject _reference) {
             foreach (var _ref in references) {
-                if (_ref.GUID == _guid) {
+                if (_ref.ID == _id) {
                     _reference = _ref;
                     return true;
                 }
             }
+
+            this.LogMessage($"Not Found ({references.Count})");
 
             _reference = null;
             return false;

@@ -48,7 +48,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_transform">This transform instance.</param>
         public static void ResetLocal(this Transform _transform) {
-            _transform.SetLocal(Vector3.zero, Quaternion.identity, Vector3.zero);
+            _transform.SetLocal(Vector3.zero, Quaternion.identity, Vector3.one);
         }
         #endregion
     }

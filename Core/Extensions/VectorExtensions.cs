@@ -99,15 +99,51 @@ namespace EnhancedFramework.Core {
 		public static float AbsSum(this Vector2 _vector) {
 			return Mathf.Abs(_vector.x) + Mathf.Abs(_vector.y);
 		}
-		#endregion
 
-		#region Quaternion
 		/// <summary>
-		/// Converts this vector to a quaternion.
+		/// Get the maximum component of this vector.
 		/// </summary>
-		/// <param name="_euler">Vector to convert.</param>
-		/// <returns>Quaternion created based on this vector.</returns>
-		public static Quaternion ToQuaternion(this Vector3 _euler) {
+		public static float Max(this Vector3 _vector) {
+			return Mathf.Max(_vector.x, _vector.y, _vector.z);
+		}
+
+        /// <inheritdoc cref="Max(Vector3)"/>
+        public static float Max(this Vector2 _vector) {
+            return Mathf.Max(_vector.x, _vector.y);
+        }
+
+        /// <summary>
+        /// Get the minimum component of this vector.
+        /// </summary>
+        public static float Min(this Vector3 _vector) {
+            return Mathf.Min(_vector.x, _vector.y, _vector.z);
+        }
+
+        /// <inheritdoc cref="Min(Vector3)"/>
+        public static float Min(this Vector2 _vector) {
+            return Mathf.Min(_vector.x, _vector.y);
+        }
+
+        /// <summary>
+        /// Divides this vector by another vector.
+        /// </summary>
+        public static Vector3 Divide(this Vector3 _vector, Vector3 _other) {
+			return new Vector3(_vector.x / _other.x, _vector.y / _other.y, _vector.z / _other.z);
+		}
+
+        /// <inheritdoc cref="Divide(Vector3, Vector3)"/>
+        public static Vector2 Divide(this Vector2 _vector, Vector2 _other) {
+            return new Vector2(_vector.x / _other.x, _vector.y / _other.y);
+        }
+        #endregion
+
+        #region Quaternion
+        /// <summary>
+        /// Converts this vector to a quaternion.
+        /// </summary>
+        /// <param name="_euler">Vector to convert.</param>
+        /// <returns>Quaternion created based on this vector.</returns>
+        public static Quaternion ToQuaternion(this Vector3 _euler) {
 			return Quaternion.Euler(_euler);
 		}
 
@@ -158,5 +194,32 @@ namespace EnhancedFramework.Core {
 			return _value.ToString(_builder.ToString());
 		}
 		#endregion
-	}
+
+		#region Utility
+		/// <summary>
+		/// Get if a specific value is contained within the range of this vector.
+		/// </summary>
+		public static bool Contains(this Vector2 _vector, float _value) {
+			return (_value >= _vector.x) && (_value <= _vector.y);
+		}
+
+        /// <summary>
+        /// Get this <see cref="Vector3"/> as a <see cref="Vector2"/>.
+        /// </summary>
+        /// <param name="_vector"><see cref="Vector3"/> to convert.</param>
+        /// <returns><see cref="Vector2"/> converted value.</returns>
+        public static Vector2 ToVector2(this Vector3 _vector) {
+			return new Vector2(_vector.x, _vector.y);
+		}
+
+        /// <summary>
+        /// Get this <see cref="Vector2"/> as a <see cref="Vector3"/>.
+        /// </summary>
+        /// <param name="_vector"><see cref="Vector2"/> to convert.</param>
+        /// <returns><see cref="Vector3"/> converted value.</returns>
+        public static Vector3 ToVector3(this Vector2 _vector) {
+            return new Vector3(_vector.x, _vector.y, 0f);
+        }
+        #endregion
+    }
 }

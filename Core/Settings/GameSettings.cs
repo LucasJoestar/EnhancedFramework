@@ -7,6 +7,15 @@
 using EnhancedEditor;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using UnityEditor;
+
+using ArrayUtility = EnhancedEditor.ArrayUtility;
+using Object = UnityEngine.Object;
+#endif
+
 namespace EnhancedFramework.Core.Settings {
     /// <summary>
     /// Global game settings, referencing each and every <see cref="BaseSettings{T}"/> shared across the game.
@@ -26,7 +35,7 @@ namespace EnhancedFramework.Core.Settings {
         #endregion
 
         #region Initialization
-        internal override void Init() {
+        internal protected override void Init() {
             base.Init();
 
             // Settings and databases assignement.
@@ -37,6 +46,99 @@ namespace EnhancedFramework.Core.Settings {
             BuildSceneDatabase.Database = buildSceneDatabase;
             FlagDatabase.Database = flagDatabase;
             MultiTags.Database = tagDatabase;
+        }
+        #endregion
+
+        #region Editor Tool
+        /// <summary>
+        /// Editor utility, retrieving all inputs assets from the project.
+        /// </summary>
+        [Button(ActivationMode.Editor, SuperColor.Green, IsDrawnOnTop = false)]
+        private void Setup() {
+            #if UNITY_EDITOR
+
+            // Databases.
+            if (!buildSceneDatabase) {
+                buildSceneDatabase = LoadAsset<BuildSceneDatabase>();
+            }
+
+            if (!flagDatabase) {
+                flagDatabase = LoadAsset<FlagDatabase>();
+            }
+
+            if (!tagDatabase) {
+                tagDatabase = LoadAsset<TagDatabase>();
+            }
+
+            // Settings.
+            var _types = TypeCache.GetTypesDerivedFrom<BaseSettings>();
+            ArrayUtility.RemoveNulls(ref settings);
+
+            foreach (Type _type in _types) {
+
+                if (_type.IsAbstract || _type.IsGenericType || (_type == GetType())) {
+                    continue;
+                }
+
+                if (Array.Find(settings, s => s.GetType() == _type)) {
+                    continue;
+                }
+
+                Object _asset = LoadObject(_type);
+                if (_asset == null) {
+
+                    // Create setting.
+                    string _prefix = _type.IsSubclassOfGeneric(typeof(BaseDatabase<>)) ? "DT_" : "GS_";
+                    string _path = Path.Combine(GetProjectFolder(), $"{_prefix}{_type.Name}.asset");
+
+                    _path = AssetDatabase.GenerateUniqueAssetPath(_path);
+                    _asset = CreateInstance(_type);
+
+                    AssetDatabase.CreateAsset(_asset, _path);
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
+
+                ArrayUtility.Add(ref settings, _asset as BaseSettings);
+            }
+
+            EditorUtility.SetDirty(this);
+
+            // ----- Local Method ----- \\
+
+            T LoadAsset<T>() where T : Object {
+                return LoadObject(typeof(T)) as T;
+            }
+
+            Object LoadObject(Type _type) {
+                if (AssetDatabase.FindAssets($"t:{_type.Name}").SafeFirst(out string _path)) {
+                    return AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(_path), _type);
+                }
+
+                return null;
+            }
+
+            string GetProjectFolder() {
+
+                foreach (Object _object in Selection.GetFiltered<Object>(SelectionMode.Assets)) {
+                    string _path = AssetDatabase.GetAssetPath(_object);
+
+                    if (string.IsNullOrEmpty(_path)) {
+                        continue;
+                    }
+
+                    if (Directory.Exists(_path)) {
+                        return _path;
+                    }
+                    
+                    if (File.Exists(_path)) {
+                        return Path.GetDirectoryName(_path);
+                    }
+                }
+
+                return UnityEditorInternal.InternalEditorUtility.GetAssetsFolder();
+            }
+            #endif
         }
         #endregion
     }

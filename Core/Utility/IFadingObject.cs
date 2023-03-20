@@ -28,7 +28,19 @@ namespace EnhancedFramework.Core {
         /// </summary>
         bool IsVisible { get; }
 
-        // -----------------------
+        /// <summary>
+        /// Duration used to fade in this object.
+        /// </summary>
+        float ShowDuration { get; }
+
+        /// <summary>
+        /// Duration used to fade out this object.
+        /// </summary>
+        float HideDuration { get; }
+
+        // -------------------------------------------
+        // General
+        // -------------------------------------------
 
         /// <summary>
         /// Fades in this object and show it.
@@ -72,7 +84,9 @@ namespace EnhancedFramework.Core {
         /// <param name="_onComplete"><inheritdoc cref="Show(Action)" path="/param[@name='_onComplete']"/></param>
         void SetVisibility(bool _isVisible, Action _onComplete = null);
 
-        // -----------------------
+        // -------------------------------------------
+        // Instant
+        // -------------------------------------------
 
         /// <param name="_isInstant">If true, instantly fades this object.</param>
         /// <inheritdoc cref="Show(Action)"/>
@@ -93,6 +107,24 @@ namespace EnhancedFramework.Core {
         /// <param name="_isInstant"><inheritdoc cref="Show(bool, Action)" path="/param[@name='_isInstant']"/></param>
         /// <inheritdoc cref="SetVisibility(bool, Action)"/>
         void SetVisibility(bool _isVisible, bool _isInstant, Action _onComplete = null);
+
+        // -------------------------------------------
+        // Utility
+        // -------------------------------------------
+
+        /// <summary>
+        /// Evaluates this fading object at a specific time.
+        /// </summary>
+        /// <param name="_time">Time to evaluate this fade object at.</param>
+        /// <param name="_show">Whether to show or hide this object.</param>
+        void Evaluate(float _time, bool _show);
+
+        /// <summary>
+        /// Sets the fade value of this oject.
+        /// </summary>
+        /// <param name="_value">Normalized fade value (between 0 and 1).</param>
+        /// <param name="_show">Whether to show or hide this object.</param>
+        void SetFadeValue(float _value, bool _show);
         #endregion
     }
 
@@ -117,6 +149,14 @@ namespace EnhancedFramework.Core {
 
         public virtual bool IsVisible {
             get { return FadingObject.IsVisible; }
+        }
+
+        public virtual float ShowDuration {
+            get { return FadingObject.ShowDuration; }
+        }
+
+        public virtual float HideDuration {
+            get { return FadingObject.HideDuration; }
         }
 
         // -------------------------------------------
@@ -191,16 +231,34 @@ namespace EnhancedFramework.Core {
         }
 
         // -------------------------------------------
+        // Utility
+        // -------------------------------------------
+
+        public virtual void Evaluate(float _time, bool _show) {
+            FadingObject.Evaluate(_time, _show);
+        }
+
+        public virtual void SetFadeValue(float _value, bool _show) {
+            FadingObject.SetFadeValue(_value, _show);
+        }
+
+        // -------------------------------------------
         // Inspector
         // -------------------------------------------
 
+        /// <summary>
+        /// Shows this object on screen.
+        /// </summary>
         [Button(SuperColor.Green)]
-        protected void ShowGroup() {
+        public void ShowGroup() {
             Show();
         }
 
+        /// <summary>
+        /// Hides this object from screen.
+        /// </summary>
         [Button(SuperColor.Crimson)]
-        protected void HideGroup() {
+        public void HideGroup() {
             Hide();
         }
         #endregion

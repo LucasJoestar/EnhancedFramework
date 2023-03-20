@@ -3,6 +3,7 @@
     "rootNamespace": "EnhancedFramework.UI",
     "references": [
         "DOTween.Modules",
+        "DOTweenPro.Scripts",
         "EnhancedEditor",
         "EnhancedFramework.Core",
         "Unity.EditorCoroutines.Editor",

@@ -422,7 +422,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 12/01/2023 20:46:44
+  lastModifiedDate: 04/02/2023 03:00:14
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -507,13 +507,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   group:
     Canvas: {fileID: 5943324380421694051}
     Group: {fileID: 3992014736998197705}
     FadeAlpha: {x: 0, y: 1}
     GroupParameters: -2147483647
     Selectable: {fileID: 0}
-  visibleOnStart: 0
+  initMode: 2
 --- !u!114 &7481627015127981310
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,7 +538,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5943324380421694062}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}

@@ -5,7 +5,16 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using System.Diagnostics;
 using UnityEngine;
+
+using Object = UnityEngine.Object;
+
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Experimental.SceneManagement;
+using UnityEditor.SceneManagement;
+#endif
 
 namespace EnhancedFramework.Core {
     /// <summary>
@@ -23,7 +32,7 @@ namespace EnhancedFramework.Core {
     /// <br/> You can use the OnPaused callback to implement specific behaviours when the object gets paused/unpaused,
     /// which happens when its local time scale factor reach 0.
     /// </summary>
-    public class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate, IPlayUpdate, IMessageLogger {
+    public abstract class EnhancedBehaviour : MonoBehaviour, IBaseUpdate, IInitUpdate, IPlayUpdate, ISaveable, IMessageLogger {
         #region Update Registration
         /// <summary>
         /// Override this to specify this object update registration.
@@ -39,9 +48,16 @@ namespace EnhancedFramework.Core {
         public virtual bool IsLoadingProcessor => false;
 
         /// <summary>
+        /// Override this to specify if this object data should be automatically saved.
+        /// <para/>
+        /// Use <see cref="OnSerialize(Core.SaveData)"/> and <see cref="OnDeserialize(Core.SaveData)"/> to save and load data.
+        /// </summary>
+        public virtual bool SaveData => false;
+
+        /// <summary>
         /// Object used for console logging, using <see cref="UpdateManager"/> update system.
         /// </summary>
-         public Object LogObject {
+        public Object LogObject {
             get { return this; }
         }
 
@@ -57,7 +73,9 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Global Members
+        [PropertyOrder(int.MinValue + 999)]
         [SerializeField, Enhanced, ReadOnly] protected float chronos = 1f;
+        [SerializeField, HideInInspector] private EnhancedObjectID objectID = EnhancedObjectID.None;
 
         /// <summary>
         /// This object local time scale factor.
@@ -108,8 +126,33 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// The unique identifier of this object.
         /// </summary>
-        public int ID {
+        public EnhancedObjectID ID {
+            get { return objectID; }
+        }
+
+        /// <summary>
+        /// The instance id of this object.
+        /// </summary>
+        public int InstanceID {
             get { return GetInstanceID(); }
+        }
+        #endregion
+
+        #region Operator
+        public static implicit operator EnhancedObjectID(EnhancedBehaviour _behaviour) {
+            return _behaviour.ID;
+        }
+
+        public override bool Equals(object _object) {
+            if (_object is EnhancedBehaviour _behaviour) {
+                return Equals(_behaviour);
+            }
+
+            return base.Equals(_object);
+        }
+
+        public override int GetHashCode() {
+            return base.GetHashCode();
         }
         #endregion
 
@@ -152,6 +195,9 @@ namespace EnhancedFramework.Core {
             }
             #endif
 
+            // Assign ID for new instantiated objects.
+            GetObjectID();
+
             // Registration.
             if (UpdateRegistration != 0) {
                 UpdateManager.Instance.Register(this, UpdateRegistration);
@@ -159,6 +205,10 @@ namespace EnhancedFramework.Core {
 
             if (IsLoadingProcessor && (this is ILoadingProcessor _processor)) {
                 EnhancedSceneManager.Instance.RegisterProcessor(_processor);
+            }
+
+            if (SaveData) {
+                SaveManager.Instance.Register(this);
             }
         }
 
@@ -205,10 +255,102 @@ namespace EnhancedFramework.Core {
             if (IsLoadingProcessor && (this is ILoadingProcessor _processor)) {
                 EnhancedSceneManager.Instance.UnregisterProcessor(_processor);
             }
+
+            if (SaveData) {
+                SaveManager.Instance.Unregister(this);
+            }
+        }
+
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
+        [Conditional("UNITY_EDITOR")]
+        protected virtual void OnValidate() {
+            #if UNITY_EDITOR
+            if (!EditorApplication.isPlayingOrWillChangePlaymode) {
+                GetObjectID();
+            }
+            #endif
+        }
+
+        /// <summary>
+        /// Override this method to draw your own Handles when the object is selected (only in editor).
+        /// </summary>
+        [Conditional("UNITY_EDITOR")]
+        internal protected virtual void OnDrawHandles() { }
+        #endregion
+
+        #region Object ID
+        /// <summary>
+        /// Get this object unique ID.
+        /// </summary>
+        [ContextMenu("Get Object ID", false, 10)]
+        private void GetObjectID() {
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                // Prefab objects always have a null id.
+                if (!gameObject.scene.IsValid() || (StageUtility.GetCurrentStage() is PrefabStage)) {
+
+                    if (objectID.IsValid()) {
+                        SetID(EnhancedObjectID.None);
+                    }
+
+                    return;
+                }
+
+                EnhancedObjectID _objectID =  new EnhancedObjectID(this);
+
+                if (!objectID.IsValid()) {
+
+                    //this.LogMessage($"Assigning ID:\n{_objectID.ToString().Bold()}   |   {gameObject.scene.name}");
+                    SetID(_objectID);
+                } else if (objectID != _objectID) {
+
+                    this.LogMessage($"Assigning new ID:\n{objectID.ToString().Bold()}   [OLD]   |   {_objectID.ToString().Bold()}   [NEW]");
+                    SetID(_objectID);
+                }
+
+                return;
+            }
+
+            // ----- Local Method ----- \\
+
+            void SetID(EnhancedObjectID _id) {
+                Undo.RecordObject(this, "Assigning ID");
+                PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+
+                objectID = _id;
+                EditorUtility.SetDirty(this);
+            }
+            #endif
+
+            // Runtime assignement.
+            if (!objectID.IsValid()) {
+                objectID = new EnhancedObjectID(this);
+            }
         }
         #endregion
 
-        #region Animation
+        #region Saveable
+        void ISaveable.Serialize(SaveData _data) {
+            OnSerialize(_data);
+        }
+
+        void ISaveable.Deserialize(SaveData _data) {
+            OnDeserialize(_data);
+        }
+
+        // -----------------------
+
+        /// <inheritdoc cref="ISaveable.Serialize(SaveData)"/>
+        protected virtual void OnSerialize(SaveData _data) { }
+
+        /// <inheritdoc cref="ISaveable.Deserialize(SaveData)"/>
+        protected virtual void OnDeserialize(SaveData _data) { }
+        #endregion
+
+        #region Events
         /// <summary>
         /// Calls an <see cref="EnhancedAnimationEvent"/> on this behaviour.
         /// <br/> This is an alternative to direct method calls from animation events,
@@ -222,17 +364,19 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        #region Comparison
+        #region Utility
         /// <summary>
-        /// Compare two objects using their instance id.
+        /// Compare two <see cref="EnhancedBehaviour"/> instances.
         /// </summary>
         /// <returns>True if they are the same, false otherwise.</returns>
-        public bool Compare(EnhancedBehaviour _other) {
-            return GetInstanceID() == _other.GetInstanceID();
+        public bool Equals(EnhancedBehaviour _other) {
+            return _other.IsValid() && (ID == _other.ID);
         }
-        #endregion
 
-        #region Utility
+        // -------------------------------------------
+        // Vector
+        // -------------------------------------------
+
         /// <inheritdoc cref="TransformExtensions.RelativeVector(Transform, Vector3)"/>
         public Vector3 GetRelativeVector(Vector3 _vector) {
             return Transform.RelativeVector(_vector);

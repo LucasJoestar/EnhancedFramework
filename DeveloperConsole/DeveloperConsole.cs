@@ -144,7 +144,9 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// <summary>
     /// Runtime developer console.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [ScriptingDefineSymbol("DEVELOPER_CONSOLE", "Developer Console")]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Developer Console/Developer Console"), DisallowMultipleComponent]
     public class DeveloperConsole : EnhancedSingleton<DeveloperConsole>, IPermanentUpdate, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
 
@@ -699,7 +701,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
 
                 // Class and struct default values.
                 if ((_type.IsValueType || _type.IsClass) && ((_parameter == NoneKeyword) || (_parameter.ToLower() == DefaultKeyword))) {
-                    _parsedParameter = Activator.CreateInstance(_type);
+                    _parsedParameter = System.Activator.CreateInstance(_type);
                     return true;
                 }
 
@@ -2335,6 +2337,25 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                         LogSuccess($"Loading SceneBundle {s.Bold()}");
                     },
                     new DeveloperConsoleCommandParameter("sceneBundleName", "Name of the SceneBundle to unload")
+                ));
+            }
+
+            // List.
+            {
+                AddBuiltInCommand(Command.Create(
+                    "scenebundles",
+                    "scenebundlelist,scenebundle_list",
+                    "Get a list of all SceneBundle in the project",
+                    () => {
+                        var _database = BuildSceneDatabase.Database;
+                        SceneBundle[] _bundles = new SceneBundle[_database.SceneBundleCount];
+
+                        for (int i = 0; i < _bundles.Length; i++) {
+                            _bundles[i] = _database.GetSceneBundleAt(i);
+                        }
+
+                        LogCollection("Scene Bundles", _bundles, List, string.Empty, (s) => s.name);
+                    }
                 ));
             }
             #endregion

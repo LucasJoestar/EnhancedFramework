@@ -1,0 +1,26 @@
+{
+    "name": "EnhancedFramework.Rendering",
+    "rootNamespace": "EnhancedFramework.Rendering",
+    "references": [
+        "EnhancedEditor",
+        "EnhancedFramework.Core",
+        "EnhancedFramework.UI",
+        "Unity.EditorCoroutines.Editor",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.editorcoroutines",
+            "expression": "",
+            "define": "EDITOR_COROUTINE_ENABLED"
+        }
+    ],
+    "noEngineReferences": false
+}

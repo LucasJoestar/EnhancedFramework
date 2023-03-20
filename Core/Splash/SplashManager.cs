@@ -16,6 +16,8 @@ namespace EnhancedFramework.Core {
     /// <para/>
     /// Should be loaded after and in a different Splash specific scene than Core.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Splash Manager"), DisallowMultipleComponent]
     public class SplashManager : EnhancedSingleton<SplashManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 

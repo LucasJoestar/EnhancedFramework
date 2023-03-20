@@ -16,7 +16,9 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Enhanced behaviour used to manage a <see cref="PlayableDirector"/>.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [RequireComponent(typeof(PlayableDirector))]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Playable Player"), DisallowMultipleComponent]
     #pragma warning disable 0414
     public class EnhancedPlayablePlayer : EnhancedBehaviour, ISkippableElement {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
@@ -34,7 +36,7 @@ namespace EnhancedFramework.Core {
         [SerializeField] private bool isSkippable = false;
 
         [Tooltip("The time (in seconds) where to advance the Playable to when being skipped.")]
-        [SerializeField, Enhanced, ShowIf("isSkippable"), Range("TimeRange")] private double skipTime = 0d;
+        [SerializeField, Enhanced, ShowIf("isSkippable"), MinMax("TimeRange")] private Vector2 skipInterval = new Vector2();
 
         [Space(10f)]
 
@@ -71,7 +73,7 @@ namespace EnhancedFramework.Core {
                 playableDirector.playableAsset = value;
 
                 if (isSkippable) {
-                    skipTime = Duration;
+                    SkipInterval = new Vector2(0f, (float)Duration);
                 }
             }
         }
@@ -95,10 +97,11 @@ namespace EnhancedFramework.Core {
         /// <para/>
         /// (See also <see cref="IsSkippable"/>)
         /// </summary>
-        public double SkipTime {
-            get { return skipTime; }
+        public Vector2 SkipInterval {
+            get { return skipInterval; }
             set {
-                skipTime = Mathm.Clamp(value, 0d, Duration);
+                Vector2 _range = TimeRange;
+                skipInterval = new Vector2(Mathf.Clamp(value.x, _range.x, _range.y), Mathf.Clamp(value.y, _range.x, _range.y));
             }
         }
 
@@ -178,10 +181,14 @@ namespace EnhancedFramework.Core {
             Stop();
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
 
         #if UNITY_EDITOR
-        private void OnValidate() {
+        protected override void OnValidate() {
+            base.OnValidate();
+
             if (!playableDirector) {
                 playableDirector = GetComponent<PlayableDirector>();
             }
@@ -280,8 +287,8 @@ namespace EnhancedFramework.Core {
         /// <returns>True if this playable could be successfully skipped, false otherwise.</returns>
         [Button("IsSkippable", ConditionType.True, SuperColor.Lavender)]
         public bool Skip() {
-            if (IsSkippable && (Time < skipTime)) {
-                Time = skipTime;
+            if (IsSkippable && skipInterval.Contains((float)Time)) {
+                Time = skipInterval.y;
                 return true;
             }
 

@@ -91,7 +91,7 @@ namespace EnhancedFramework.Core {
 
             // Pauses the game when entering in a loading state.
             if (pauseGameOnLoading) {
-                ChronosManager.Instance.ApplyOverride(chronosID, 0f, ChronosPriority);
+                ChronosManager.Instance.PushOverride(chronosID, 0f, ChronosPriority);
             }
         }
 
@@ -100,7 +100,7 @@ namespace EnhancedFramework.Core {
 
             // Unpause when exiting the loading state.
             if (pauseGameOnLoading) {
-                ChronosManager.Instance.RemoveOverride(chronosID);
+                ChronosManager.Instance.PopOverride(chronosID);
             }
         }
         #endregion
@@ -115,6 +115,9 @@ namespace EnhancedFramework.Core {
     /// <br/> Then, get access to it using the <see cref="Behaviour"/>
     /// property to call your own functions and receive multiple callbacks.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-95)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Scene Manager"), DisallowMultipleComponent]
     public class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager>, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 

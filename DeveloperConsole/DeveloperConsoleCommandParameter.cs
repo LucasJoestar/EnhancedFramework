@@ -48,7 +48,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         }
         #endregion
 
-        #region Operators
+        #region Operator
         public static implicit operator Type(DeveloperConsoleCommandParameter _parameter) {
             return _parameter.Type;
         }

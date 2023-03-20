@@ -4,76 +4,303 @@
 // 
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
 using UnityEngine;
-
-using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
+using Object = UnityEngine.Object;
+
 namespace EnhancedFramework.Core {
+    /// <summary>
+    /// <see cref="DelayedCall"/>-related wrapper for a single call operation.
+    /// </summary>
+    public struct DelayHandler : IHandler<DelayedCall> {
+        #region Global Members
+        private Handler<DelayedCall> handler;
+
+        // -----------------------
+
+        public int ID {
+            get { return handler.ID; }
+        }
+
+        public bool IsValid {
+            get { return GetHandle(out _); }
+        }
+
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <inheritdoc cref="DelayHandler(DelayedCall, int)"/>
+        public DelayHandler(DelayedCall _tween) {
+            handler = new Handler<DelayedCall>(_tween);
+        }
+
+        /// <param name="_call"><see cref="DelayedCall"/> to handle.</param>
+        /// <param name="_id">ID of the associated call operation.</param>
+        /// <inheritdoc cref="DelayHandler"/>
+        public DelayHandler(DelayedCall _call, int _id) {
+            handler = new Handler<DelayedCall>(_call, _id);
+        }
+        #endregion
+
+        #region Utility
+        /// <inheritdoc cref="IHandler{T}.GetHandle(out T)"/>
+        public bool GetHandle(out DelayedCall _call) {
+            return handler.GetHandle(out _call) && (_call.Status != DelayedCall.State.Inactive);
+        }
+
+        /// <summary>
+        /// Pauses this handler associated call.
+        /// </summary>
+        public bool Pause() {
+            if (GetHandle(out DelayedCall _call)) {
+                _call.Pause();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Resumes this handler associated call.
+        /// </summary>
+        public bool Resume() {
+            if (GetHandle(out DelayedCall _call)) {
+                _call.Resume();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Completes this handler associated call.
+        /// </summary>
+        public bool Complete() {
+            if (GetHandle(out DelayedCall _call)) {
+                _call.Complete();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Cancels this handler associated call.
+        /// </summary>
+        public bool Cancel() {
+            if (GetHandle(out DelayedCall _call)) {
+                _call.Cancel();
+                return true;
+            }
+
+            return false;
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Utility class used to delay method calls both during editor and runtime.
+    /// </summary>
+    [Serializable]
+    public class DelayedCall : IHandle, IPoolableObject {
+        #region State
+        /// <summary>
+        /// References all available states of this object.
+        /// </summary>
+        public enum State {
+            Inactive,
+            Active,
+            Paused,
+        }
+        #endregion
+
+        #region Global Members
+        private int id = 0;
+        private State state = State.Inactive;
+
+        private float delay = 0f;
+        private bool useRealTime = true;
+
+        /// <summary>
+        /// Callback delay within this object.
+        /// </summary>
+        public Action OnComplete = null;
+
+        // -----------------------
+
+        /// <inheritdoc cref="IHandle.ID"/>
+        public int ID {
+            get { return id; }
+        }
+
+        /// <summary>
+        /// Current state of this call.
+        /// </summary>
+        public State Status {
+            get { return state; }
+        }
+
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <summary>
+        /// Prevents from instanciating new instances without using the <see cref="Delayer"/> class.
+        /// </summary>
+        internal DelayedCall() { }
+        #endregion
+
+        #region Delay
+        private static int lastID = 0;
+
+        // -----------------------
+
+        /// <summary>
+        /// Initializes this object for a new delayed call operation.
+        /// </summary>
+        /// <param name="_delay">Call delay (in seconds).</param>
+        /// <param name="_callback">Callback to call on completion.</param>
+        /// <param name="_realTime">If true, time scale will be ignored.</param>
+        /// <returns><see cref="DelayHandler"/> of this call operation.</returns>
+        internal DelayHandler DelayCall(float _delay, Action _callback, bool _realTime = false) {
+            // Cancel current operation.
+            Cancel();
+
+            // Prepare.
+            SetState(State.Active);
+
+            delay = _delay;
+            useRealTime = _realTime;
+            OnComplete = _callback;
+
+            id = ++lastID;
+            return new DelayHandler(this, id);
+        }
+
+        // -------------------------------------------
+        // Behaviour
+        // -------------------------------------------
+
+        /// <summary>
+        /// Pauses this call.
+        /// </summary>
+        public void Pause() {
+
+            // Ignore if not active.
+            if (state != State.Active) {
+                return;
+            }
+
+            SetState(State.Paused);
+        }
+
+        /// <summary>
+        /// Resumes this call.
+        /// </summary>
+        public void Resume() {
+
+            // Ignore if not paused.
+            if (state != State.Paused) {
+                return;
+            }
+
+            SetState(State.Active);
+        }
+
+        /// <summary>
+        /// Completes this call.
+        /// </summary>
+        public void Complete() {
+            Stop(true);
+        }
+
+        /// <summary>
+        /// Cancels this call.
+        /// </summary>
+        public void Cancel() {
+            Stop(false);
+        }
+
+        // -------------------------------------------
+        // Utility
+        // -------------------------------------------
+
+        internal bool Update() {
+
+            // Ignore if not active.
+            if (state != State.Active) {
+                return false;
+            }
+
+            delay -= ChronosUtility.GetDeltaTime(useRealTime);
+
+            // Complete.
+            if (delay <= 0f) {
+                Stop(true);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void Stop(bool _isCompleted) {
+
+            // Ignore if already inactive.
+            if (state == State.Inactive) {
+                return;
+            }
+
+            // State.
+            SetState(State.Inactive);
+            id = 0;
+
+            // Callback.
+            if (_isCompleted) {
+                OnComplete.Invoke();
+            }
+
+            OnComplete = null;
+            Delayer.ReleaseCall(this);
+        }
+        #endregion
+
+        #region Pool
+        void IPoolableObject.OnCreated() { }
+
+        void IPoolableObject.OnRemovedFromPool() { }
+
+        void IPoolableObject.OnSentToPool() {
+
+            // Make sure the call is not active.
+            Cancel();
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Sets the state of this object.
+        /// </summary>
+        /// <param name="_state">New state of this object.</param>
+        private void SetState(State _state) {
+            state = _state;
+        }
+        #endregion
+    }
+
     /// <summary>
     /// Utility class used to dynamically delay a specific method call.
     /// </summary>
     #if UNITY_EDITOR
     [InitializeOnLoad]
     #endif
-    public class Delayer : IPermanentUpdate {
-        /// <summary>
-        /// Delayed call struct wrapper.
-        /// </summary>
-        private struct DelayedCall {
-            #region Global Members
-            public int ID;
-
-            public float Delay;
-            public Action Callback;
-            public bool UseUnscaledTime;
-
-            // -----------------------
-
-            public DelayedCall(int _id, float _delay, Action _callback, bool _useUnscaledTime = false) {
-                ID = _id;
-                Delay = _delay;
-                Callback = _callback;
-                UseUnscaledTime = _useUnscaledTime;
-            }
-            #endregion
-
-            #region Behaviour
-            public bool Update() {
-                Delay -= GetDeltaTime();
-
-                if (Delay <= 0f) {
-                    Invoke();
-                    return true;
-                }
-
-                return false;
-            }
-
-            private float GetDeltaTime() {
-                #if UNITY_EDITOR
-                if (!Application.isPlaying) {
-                    // Editor behaviour.
-                    return EditorDeltaTime;
-                }
-                #endif
-
-                // Runtime.
-                return UseUnscaledTime
-                      ? Time.unscaledDeltaTime
-                      : Time.deltaTime;
-            }
-
-            public void Invoke() {
-                Callback?.Invoke();
-            }
-            #endregion
-        }
-
+    public class Delayer : IObjectPoolManager<DelayedCall>, IPermanentUpdate {
         #region Global Members
         public Object LogObject {
             get { return GameManager.Instance; }
@@ -84,23 +311,6 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private static readonly Delayer instance = new Delayer();
 
-        /// <summary>
-        /// All currently active delayed calls.
-        /// </summary>
-        private static readonly EnhancedCollection<DelayedCall> calls = new EnhancedCollection<DelayedCall>();
-
-        // -------------------------------------------
-        // Editor Delta Time
-        // -------------------------------------------
-
-        #if UNITY_EDITOR
-        private static double lastUpdateTime = 0d;
-
-        private static float EditorDeltaTime {
-            get { return (float)(EditorApplication.timeSinceStartup - lastUpdateTime); }
-        }
-        #endif
-
         // -------------------------------------------
         // Initialization
         // -------------------------------------------
@@ -108,136 +318,102 @@ namespace EnhancedFramework.Core {
         // Called after the first scene Awake.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void Initialize() {
+            pool.Initialize(instance);
             UpdateManager.Instance.Register(instance, UpdateRegistration.Permanent);
         }
 
         #if UNITY_EDITOR
         // Editor constructor.
         static Delayer() {
+            calls.Clear();
+            pool.Initialize(instance);
+
             EditorApplication.update += EditorUpdate;
         }
         
         private static void EditorUpdate() {
             if (!Application.isPlaying) {
                 instance.Update();
-
-                // Editor deltaTime.
-                lastUpdateTime = EditorApplication.timeSinceStartup;
             }
         }
         #endif
         #endregion
 
-        #region Delayer
-        public const int DefaultCallID = 0;
+        #region Behaviour
+        private static readonly EnhancedCollection<DelayedCall> calls = new EnhancedCollection<DelayedCall>();
 
         // -----------------------
 
-        /// <inheritdoc cref="Call(int, float, Action, bool)"/>
-        public static void Call(float _delay, Action _callback, bool _useUnscaledTime = false) {
-            Call(DefaultCallID, _delay, _callback, _useUnscaledTime);
+        /// <summary>
+        /// Calls a given callback after a specific delay.
+        /// </summary>
+        /// <inheritdoc cref="DelayedCall.DelayCall(float, Action, bool)"/>
+        public static DelayHandler Call(float _delay, Action _callback, bool _realTime = false) {
+            DelayedCall _call = GetCall();
+            calls.Add(_call);
+
+            return _call.DelayCall(_delay, _callback, _realTime);
         }
 
-        /// <summary>
-        /// Calls a given callback after a certain delay.
-        /// </summary>
-        /// <param name="_id">The id of this delayed call. You can use the same id to cancel it using <see cref="Cancel(int)"/></param>
-        /// <param name="_delay">The time (in seconds) to wait for this callback to be called.</param>
-        /// <param name="_callback">The delayed callback delegate.</param>
-        /// <param name="_useUnscaledTime">If true, this callback delay will not be affected by the game time scale.
-        /// <br/> Has no effect in edit mode.</param>
-        public static void Call(int _id, float _delay, Action _callback, bool _useUnscaledTime = false) {
-            calls.Add(new DelayedCall(_id, _delay, _callback, _useUnscaledTime));
-        }
+        // -----------------------
 
-        /// <summary>
-        /// Cancels a previously registered delayed call.
-        /// </summary>
-        /// <param name="_id">The id of the call to cancel.</param>
-        /// <returns>True if the call with the given id could be found and successfully canceled, false otherwise.</returns>
-        public static bool Cancel(int _id) {
-            if ((_id == DefaultCallID) || (_id == currentID)) {
-                return false;
-            }
-
-            int _index = calls.FindIndex(p => p.ID == _id);
-            if (_index != -1) {
-                calls.RemoveAt(_index);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Cancels all previously registered call matching a specific id.
-        /// </summary>
-        /// <param name="_id">Id to cancel the associated calls.</param>
-        public static void CancelAll(int _id) {
-            for (int i = calls.Count; i-- > 0;) {
-                if (calls[i].ID == _id) {
-                    calls.RemoveAt(i);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Completes a previously registered delayed call.
-        /// </summary>
-        /// <param name="_id">The id of the call to complete.</param>
-        /// <returns>True if the call with the given id could be found and successfully completed, false otherwise.</returns>
-        public static bool Complete(int _id) {
-            if ((_id == DefaultCallID) || (_id == currentID)) {
-                return false;
-            }
-
-            int _index = calls.FindIndex(p => p.ID == _id);
-
-            if (_index != -1) {
-                calls[_index].Invoke();
-                calls.RemoveAt(_index);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Completes all previously registered call matching a specific id.
-        /// </summary>
-        /// <param name="_id">Id to complete the associated calls.</param>
-        public static void CompleteAll(int _id) {
+        public void Update() {
+            // Execute calls in registered order.
             for (int i = 0; i < calls.Count; i++) {
 
-                if (calls[i].ID == _id) {
-                    calls[i].Invoke();
-                    calls.RemoveAt(i);
+                DelayedCall _call = calls[i];
 
+                // Index management.
+                if (_call.Update()) {
                     i--;
                 }
             }
         }
         #endregion
 
-        #region Behaviour
-        private static int currentID = DefaultCallID;
+        #region Pool
+        private static readonly ObjectPool<DelayedCall> pool = new ObjectPool<DelayedCall>(3);
 
         // -----------------------
 
-        public void Update() {
-            for (int i = 0; i < calls.Count; i++) {
-                var _call = calls[i];
-                currentID = _call.ID;
+        /// <summary>
+        /// Get a <see cref="DelayedCall"/> instance from the pool.
+        /// </summary>
+        /// <inheritdoc cref="ObjectPool{T}.Get"/>
+        private static DelayedCall GetCall() {
+            return pool.Get();
+        }
 
-                if (_call.Update()) {
-                    calls.RemoveAt(i);
-                    i--;
-                } else {
-                    calls[i] = _call;
-                }
-            }
+        /// <summary>
+        /// Releases a specific <see cref="DelayedCall"/> instance and sent it back to the pool.
+        /// </summary>
+        /// <inheritdoc cref="ObjectPool{T}.Release(T)"/>
+        internal static bool ReleaseCall(DelayedCall _call) {
 
-            currentID = DefaultCallID;
+            calls.Remove(_call);
+            return pool.Release(_call);
+        }
+
+        /// <summary>
+        /// Clears the <see cref="DelayedCall"/> pool content.
+        /// </summary>
+        /// <inheritdoc cref="ObjectPool{T}.Clear(int)"/>
+        public static void ClearPool(int _capacity = 1) {
+            pool.Clear(_capacity);
+        }
+
+        // -------------------------------------------
+        // Manager
+        // -------------------------------------------
+
+        /// <inheritdoc cref="IObjectPoolManager{DelayedCall}.CreateInstance"/>
+        DelayedCall IObjectPoolManager<DelayedCall>.CreateInstance() {
+            return new DelayedCall();
+        }
+
+        /// <inheritdoc cref="IObjectPoolManager{DelayedCall}.DestroyInstance(DelayedCall)"/>
+        void IObjectPoolManager<DelayedCall>.DestroyInstance(DelayedCall _call) {
+            // Cannot destroy the instance, so simply ignore the object and wait for the garbage collector to pick it up.
         }
         #endregion
     }

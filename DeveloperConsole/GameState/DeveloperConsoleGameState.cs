@@ -19,7 +19,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem.GameStates {
         /// <summary>
         /// Don't need a high priority, just enough to remain above the default state.
         /// </summary>
-        public const int PriorityConst = 0;
+        public const int PriorityConst = 99999;
 
         public override int Priority {
             get { return PriorityConst; }

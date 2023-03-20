@@ -13,6 +13,8 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// <see cref="Component"/> wrapper for a <see cref="TagGroup"/>.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Tag/Multi Tags")]
     public class MultiTagsBehaviour : EnhancedBehaviour, IEnumerable<Tag> {
         #region Global Members
         [Section("Mutli-Tags")]
@@ -29,7 +31,7 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        #region Operators
+        #region Operator
         public static implicit operator TagGroup(MultiTagsBehaviour _behaviour) {
             return _behaviour.Tags;
         }

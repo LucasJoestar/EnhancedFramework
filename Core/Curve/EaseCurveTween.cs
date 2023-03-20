@@ -48,9 +48,9 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Transform
-        public Tween Move(Transform _transform, bool snapping = false) {
+        public Tween Move(Transform _transform, bool _snapping = false) {
             if (Value is Vector3 _value) {
-                return SetEase(_transform.DOMove(_value, Duration, snapping).SetDelay(Delay));
+                return SetEase(_transform.DOMove(_value, Duration, _snapping).SetDelay(Delay));
             }
 
             throw new InvalidTweenException("\"Move\" action can only be performed on Vector3 type tween objects.");
@@ -79,7 +79,35 @@ namespace EnhancedFramework.Core {
                 return SetEase(_transform.DOScale(_scalef, Duration).SetDelay(Delay));
             }
 
-            throw new InvalidTweenException("\"Move\" action can only be performed on Vector3 type tween objects.");
+            throw new InvalidTweenException("\"Scale\" action can only be performed on Vector3 type tween objects.");
+        }
+
+        // -------------------------------------------
+        // Local
+        // -------------------------------------------
+
+        public Tween LocalMove(Transform _transform, bool _snapping = false) {
+            if (Value is Vector3 _value) {
+                return SetEase(_transform.DOLocalMove(_value, Duration, _snapping).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"Local Move\" action can only be performed on Vector3 type tween objects.");
+        }
+
+        public Tween LocalRotate(Transform _transform, RotateMode _mode = RotateMode.Fast) {
+            if (Value is Vector3 _euler) {
+                return SetEase(_transform.DOLocalRotate(_euler, Duration, _mode).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"Local Rotate\" action can only be performed on Vector3 type tween objects.");
+        }
+
+        public Tween LocalRotateQuaternion(Transform _transform) {
+            if (Value is Quaternion _quaternion) {
+                return SetEase(_transform.DOLocalRotateQuaternion(_quaternion, Duration).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"Local Rotate Quaternion\" action can only be performed on Quaternion type tween objects.");
         }
         #endregion
 

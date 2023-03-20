@@ -31,6 +31,7 @@ namespace EnhancedFramework.Localization {
 
             void OnLocaleChanged(Locale _locale) {
                 LocalizationManager.OnSelectLocale -= OnLocaleChanged;
+
                 _isWaiting = false;
             }
         }

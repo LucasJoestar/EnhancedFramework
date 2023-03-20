@@ -5,13 +5,14 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using EnhancedFramework.Core;
 using UnityEngine;
 
 namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Base class for any Enhanced input <see cref="ScriptableObject"/> asset.
     /// </summary>
-    public abstract class InputEnhancedAsset : ScriptableObject {
+    public abstract class InputEnhancedAsset : EnhancedScriptableObject {
         #region Global Members
         public const string MenuPath    = FrameworkUtility.MenuPath + "Input/";
         public const int MenuOrder      = FrameworkUtility.MenuOrder - 50;

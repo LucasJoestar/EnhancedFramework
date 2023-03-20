@@ -33,8 +33,14 @@ namespace EnhancedFramework.UI {
             initialPosition = GetPosition();
         }
 
-         #if UNITY_EDITOR
-        private void OnValidate() {
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
+        #if UNITY_EDITOR
+        protected override void OnValidate() {
+            base.OnValidate();
+
             // RectTransform reference initialization.
             if (!rectTransform) {
                 rectTransform = transform.parent.GetComponent<RectTransform>();

@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c43c75ba9c2c6b4ebe11bc8f613f3e9, type: 3}
   m_Name: IPO_Chronos_Pause
   m_EditorClassIdentifier: 
+  objectID:
+    type: 3
+    assetGUID: 53c7d3f2a3b12c34b83f273f1cb8d5b0
+    objectID: 11400000
+    prefabID: 0
   enableOnInit: 1
   isOrphan: 1
   map: {fileID: 0}

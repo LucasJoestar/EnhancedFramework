@@ -119,6 +119,13 @@ namespace EnhancedFramework.Core.GameStates {
         }
 
         /// <summary>
+        /// If true, pops this state on the next frame.
+        /// </summary>
+        public virtual bool PopOnNextFrame {
+            get { return false; }
+        }
+
+        /// <summary>
         /// Callback receiver for whenever this <see cref="GameState"/> is being pushed or removed from the stack.
         /// </summary>
         public virtual IGameStateLifetimeCallback LifetimeCallback {
@@ -206,7 +213,12 @@ namespace EnhancedFramework.Core.GameStates {
         /// </summary>
         public void RemoveState() {
             if (LifeState != Lifetime.Inactive) {
-                GameStateManager.Instance.PopState(this);
+
+                if (PopOnNextFrame) {
+                    GameStateManager.Instance.PopStateOnNextFrame(this);
+                } else {
+                    GameStateManager.Instance.PopState(this);
+                }
             }
         }
 

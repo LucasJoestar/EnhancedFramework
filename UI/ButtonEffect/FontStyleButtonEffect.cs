@@ -17,17 +17,16 @@ namespace EnhancedFramework.UI {
         #region Global Members
         [Section("Font Style Effect")]
 
+        [SerializeField, Enhanced, Required] private TextMeshProUGUI text = null;
+
+        [Space(5f)]
+
         [SerializeField] private EnumValues<SelectableState, FontStyles> styles = new EnumValues<SelectableState, FontStyles>(FontStyles.Normal);
         #endregion
 
         #region Behaviour
         public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
-            // Issue management.
-            if (!(_button.targetGraphic is TextMeshProUGUI _text)) {
-                return;
-            }
-
-            _text.fontStyle = styles[_state];
+            text.fontStyle = styles[_state];
         }
         #endregion
     }

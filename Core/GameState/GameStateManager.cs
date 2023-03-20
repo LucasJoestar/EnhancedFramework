@@ -35,21 +35,19 @@ namespace EnhancedFramework.Core.GameStates {
         /// <summary>
         /// Whether the player has control of their character or not.
         /// </summary>
+        [Tooltip("Whether the player has control of their character or not")]
         [Space(5f)] public bool HasControl = true;
 
         /// <summary>
         /// Whether the game can be paused or not.
         /// </summary>
+        [Tooltip("Whether the game can be paused or not")]
         [Space(5f)] public bool CanPause = true;
-
-        /// <summary>
-        /// Is the game currently paused?
-        /// </summary>
-        public bool IsPaused = false;
 
         /// <summary>
         /// Whether the black bars on top and bottom of the screen should be visible or not.
         /// </summary>
+        [Tooltip("Whether the black bars on top and bottom of the screen should be visible or not")]
         [Space(5f)] public bool ShowBlackBars = false;
         #endregion
 
@@ -63,7 +61,6 @@ namespace EnhancedFramework.Core.GameStates {
             HasControl = true;
 
             CanPause = false;
-            IsPaused = false;
 
             ShowBlackBars = false;
 
@@ -76,6 +73,9 @@ namespace EnhancedFramework.Core.GameStates {
     /// Global <see cref="GameState"/> manager instance,
     /// used to dynamically push and pop states on the stack of the game.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-97)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Game State Manager"), DisallowMultipleComponent]
     public class GameStateManager : EnhancedSingleton<GameStateManager>, IPermanentUpdate {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
 
@@ -145,8 +145,8 @@ namespace EnhancedFramework.Core.GameStates {
 
             void ManagePendingStates(List<GameState> _states, Action<GameState, bool, bool> _action) {
                 if (_states.Count != 0) {
-                    foreach (GameState _state in _states) {
-                        _action(_state, false, false);
+                    for (int i = 0; i < _states.Count; i++) {
+                        _action(_states[i], false, false);
                     }
 
                     _states.Clear();
@@ -220,7 +220,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// <returns>True if a state of this type could be found and was removed, false otherwise.</returns>
         public bool PopState<T>() where T : GameState {
             for (int i = 0; i < states.Count; i++) {
-                if (states.GetKeyAt(i) is T) {
+                if (states.GetKeyAt(i).Value is T) {
                     PopStateAt(i, true);
                     return true;
                 }
@@ -238,7 +238,7 @@ namespace EnhancedFramework.Core.GameStates {
             }
 
             for (int i = 0; i < states.Count; i++) {
-                if (states.GetKeyAt(i).GetType() == _stateType) {
+                if (states.GetKeyAt(i).Value.GetType() == _stateType) {
                     PopStateAt(i, true);
                     return true;
                 }
@@ -364,7 +364,7 @@ namespace EnhancedFramework.Core.GameStates {
                 }
             }
 
-            ChronosManager.Instance.ApplyOverride(chronosID, _chronos, _priority);
+            ChronosManager.Instance.PushOverride(chronosID, _chronos, _priority);
             _override.Apply();
 
             foreach (IGameStateOverrideCallback _callback in overrideCallbacks) {

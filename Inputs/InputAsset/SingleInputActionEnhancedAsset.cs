@@ -106,7 +106,7 @@ namespace EnhancedFramework.Inputs {
         public override bool Holding() {
             #if NEW_INPUT_SYSTEM
             InputActionPhase _phase = input.phase;
-            return (_phase != InputActionPhase.Waiting) && (_phase != InputActionPhase.Started) && (_phase != InputActionPhase.Performed);
+            return (_phase != InputActionPhase.Waiting) && (_phase != InputActionPhase.Started);
             #else
             return InputSystem.GetButton(input);
             #endif

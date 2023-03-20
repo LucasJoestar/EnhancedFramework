@@ -4,15 +4,36 @@
 //
 // ================================================================================== //
 
-using System.ComponentModel;
+using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.Timeline;
+
+using Object = UnityEngine.Object;
 
 namespace EnhancedFramework.Timeline {
     /// <summary>
-    /// <see cref="TrackAsset"/> class for every <see cref="EnhancedPlayableAsset"/>.
+    /// Base <see cref="TrackAsset"/> class for every <see cref="EnhancedPlayableAsset"/>.
     /// </summary>
-    [TrackColor(.710f, .494f, .863f)] // Lavender
-    [TrackClipType(typeof(EnhancedPlayableAsset))]
-    [DisplayName("Enhanced Framework/Enhanced Track")]
-    public class EnhancedTrack : TrackAsset {  }
+    public abstract class EnhancedTrack : TrackAsset {
+        #region Behaviour
+        public override Playable CreateTrackMixer(PlayableGraph _graph, GameObject _go, int _inputCount) {
+
+            #if UNITY_EDITOR
+            if (!Application.isPlaying && _go.TryGetComponent(out PlayableDirector _playable)) {
+
+                // Get binding object.
+                Object _binding = _playable.GetGenericBinding(this);
+
+                foreach (TimelineClip _clip in GetClips()) {
+                    if (_clip.asset is IBindingPlayableAsset _asset) {
+                        _asset.BindingObject = _binding;
+                    }
+                }
+            }
+            #endif
+
+            return base.CreateTrackMixer(_graph, _go, _inputCount);
+        }
+        #endregion
+    }
 }

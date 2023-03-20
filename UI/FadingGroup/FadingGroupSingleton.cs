@@ -11,31 +11,37 @@ using UnityEngine;
 
 namespace EnhancedFramework.UI {
     /// <summary>
-    /// Inherit from this to quickly implement <see cref="EnhancedSingleton{T}"/>-encapsulated <see cref="FadingGroup"/>.
+    /// Inherit from this to quickly implement <see cref="EnhancedSingleton{T}"/>-encapsulated <see cref="FadingObjectBehaviour"/>.
     /// </summary>
     /// <typeparam name="T"><inheritdoc cref="EnhancedSingleton{T}" path="/typeparam[@name='T']"/></typeparam>
-    /// <typeparam name="U"><inheritdoc cref="FadingGroupBehaviour{T}{T}" path="/typeparam[@name='T']"/>.</typeparam>
-    public abstract class FadingGroupSingleton<T, U> : EnhancedSingleton<T>, IFadingObject where T : FadingGroupSingleton<T, U> where U : FadingGroup, new() {
+    public abstract class FadingObjectSingleton<T> : EnhancedSingleton<T>, IFadingObject where T : FadingObjectSingleton<T> {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
         [Section("Fading Group")]
 
-        [SerializeField, Enhanced, Block] protected U group = default;
-
-        [Space(10f)]
-
+        [SerializeField, Enhanced, Required] protected FadingObjectBehaviour fadingObject = null;
         [SerializeField] protected FadingMode initMode = FadingMode.Hide;
-
-        /// <inheritdoc cref="FadingGroup.Group"/>
-        public CanvasGroup Group {
-            get { return group.Group; }
-        }
 
         // -----------------------
 
         public virtual bool IsVisible {
-            get { return group.IsVisible; }
+            get { return fadingObject.IsVisible; }
+        }
+
+        public virtual float ShowDuration {
+            get { return fadingObject.ShowDuration; }
+        }
+
+        public virtual float HideDuration {
+            get { return fadingObject.HideDuration; }
+        }
+
+        /// <summary>
+        /// The <see cref="FadingObjectBehaviour"/> of this singleton.
+        /// </summary>
+        public FadingObjectBehaviour FadingObject {
+            get { return fadingObject; }
         }
         #endregion
 
@@ -43,17 +49,8 @@ namespace EnhancedFramework.UI {
         protected override void OnInit() {
             base.OnInit();
 
-            group.Fade(initMode);
+            fadingObject.Fade(initMode);
         }
-
-        #if UNITY_EDITOR
-        private void OnValidate() {
-            // Initialization.
-            if ((group != null) && !group.Group) {
-                group.Group = GetComponent<CanvasGroup>();
-            }
-        }
-        #endif
         #endregion
 
         #region Visiblity
@@ -62,27 +59,27 @@ namespace EnhancedFramework.UI {
         // -------------------------------------------
 
         public virtual void Show(Action _onComplete = null) {
-            group.Show(_onComplete);
+            fadingObject.Show(_onComplete);
         }
 
         public virtual void Hide(Action _onComplete = null) {
-            group.Hide(_onComplete);
+            fadingObject.Hide(_onComplete);
         }
 
         public virtual void FadeInOut(float _duration, Action _onAfterFadeIn = null, Action _onBeforeFadeOut = null, Action _onComplete = null) {
-            group.FadeInOut(_duration, _onAfterFadeIn, _onBeforeFadeOut, _onComplete);
+            fadingObject.FadeInOut(_duration, _onAfterFadeIn, _onBeforeFadeOut, _onComplete);
         }
 
         public virtual void Fade(FadingMode _mode, Action _onComplete = null, float _inOutWaitDuration = .5f) {
-            group.Fade(_mode, _onComplete, _inOutWaitDuration);
+            fadingObject.Fade(_mode, _onComplete, _inOutWaitDuration);
         }
 
         public virtual void Invert(Action _onComplete = null) {
-            group.Invert(_onComplete);
+            fadingObject.Invert(_onComplete);
         }
 
         public virtual void SetVisibility(bool _isVisible, Action _onComplete = null) {
-            group.SetVisibility(_isVisible, _onComplete);
+            fadingObject.SetVisibility(_isVisible, _onComplete);
         }
 
         // -------------------------------------------
@@ -90,23 +87,35 @@ namespace EnhancedFramework.UI {
         // -------------------------------------------
 
         public virtual void Show(bool _isInstant, Action _onComplete = null) {
-            group.Show(_isInstant, _onComplete);
+            fadingObject.Show(_isInstant, _onComplete);
         }
 
         public virtual void Hide(bool _isInstant, Action _onComplete = null) {
-            group.Hide(_isInstant, _onComplete);
+            fadingObject.Hide(_isInstant, _onComplete);
         }
 
         public virtual void Fade(FadingMode _mode, bool _isInstant, Action _onComplete = null, float _inOutWaitDuration = .5f) {
-            group.Fade(_mode, _isInstant, _onComplete, _inOutWaitDuration);
+            fadingObject.Fade(_mode, _isInstant, _onComplete, _inOutWaitDuration);
         }
 
         public virtual void Invert(bool _isInstant, Action _onComplete = null) {
-            group.Invert(_isInstant, _onComplete);
+            fadingObject.Invert(_isInstant, _onComplete);
         }
 
         public virtual void SetVisibility(bool _isVisible, bool _isInstant, Action _onComplete = null) {
-            group.SetVisibility(_isVisible, _isInstant, _onComplete);
+            fadingObject.SetVisibility(_isVisible, _isInstant, _onComplete);
+        }
+
+        // -------------------------------------------
+        // Utility
+        // -------------------------------------------
+
+        public virtual void Evaluate(float _time, bool _show) {
+            fadingObject.Evaluate(_time, _show);
+        }
+
+        public virtual void SetFadeValue(float _value, bool _show) {
+            fadingObject.SetFadeValue(_value, _show);
         }
 
         // -------------------------------------------

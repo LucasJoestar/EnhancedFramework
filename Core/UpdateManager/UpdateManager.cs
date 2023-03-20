@@ -68,6 +68,9 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Special instance managing all enhanced behaviour updates from a single object.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-100)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Update Manager"), DisallowMultipleComponent]
     public class UpdateManager : EnhancedSingleton<UpdateManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => UpdateRegistration.Init;
 
@@ -333,7 +336,7 @@ namespace EnhancedFramework.Core {
                 } catch (Exception _exception) {
                     // Log the exception on error.
                     Object _object = _base.LogObject;
-                    if (_object != null) {
+                    if (_object.IsNull()) {
                         _object = this;
                     }
 

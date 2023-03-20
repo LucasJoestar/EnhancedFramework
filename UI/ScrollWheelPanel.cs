@@ -26,7 +26,9 @@ namespace EnhancedFramework.UI {
 
         #region Enhanced Behaviour
         #if UNITY_EDITOR
-        private void OnValidate() {
+        protected override void OnValidate() {
+            base.OnValidate();
+
             // Reference initialization.
             if (!scroll) {
                 scroll = transform.GetComponentInChildren<Scrollbar>();

@@ -13,6 +13,8 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// <see cref="Component"/> wrapper for a <see cref="FlagValueGroup"/>.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag Group")]
     public class FlagGroupBehaviour : EnhancedBehaviour, IEnumerable<Flag> {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
@@ -44,7 +46,7 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        #region Operators
+        #region Operator
         public static implicit operator FlagValueGroup(FlagGroupBehaviour _behaviour) {
             return _behaviour.Flags;
         }

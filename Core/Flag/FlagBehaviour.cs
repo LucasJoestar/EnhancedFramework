@@ -11,6 +11,8 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// <see cref="Component"/> wrapper for a <see cref="FlagReference"/>.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag")]
     public class FlagBehaviour : EnhancedBehaviour {
         #region Global Members
         [Section("Flag")]

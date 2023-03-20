@@ -17,17 +17,16 @@ namespace EnhancedFramework.UI {
         #region Global Members
         [Section("Size Effect")]
 
+        [SerializeField, Enhanced, Required] private TextMeshProUGUI text = null;
+
+        [Space(5f)]
+
         [SerializeField] private EnumValues<SelectableState, float> size = new EnumValues<SelectableState, float>(1f);
         #endregion
 
         #region Behaviour
         public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
-            // Issue management.
-            if (!(_button.targetGraphic is TextMeshProUGUI _text)) {
-                return;
-            }
-
-            _text.fontSize = size[_state];
+            text.fontSize = size[_state];
         }
         #endregion
     }

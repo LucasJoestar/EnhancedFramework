@@ -63,7 +63,7 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        #region Operators
+        #region Operator
         public virtual T this[int _index] {
             get {
                 return collection[_index];
@@ -110,6 +110,27 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The element element to insert.</param>
         public virtual void Insert(int _index, T _element) {
             collection.Insert(_index, _element);
+        }
+
+        /// <summary>
+        /// Moves an element in this collection to a new index.
+        /// </summary>
+        /// <param name="_oldIndex">Index of the element to move.</param>
+        /// <param name="_newIndex">New index where to move the element.</param>
+        public virtual void Move(int _oldIndex, int _newIndex) {
+            if (_oldIndex == _newIndex) {
+                return;
+            }
+
+            T _element = collection[_oldIndex];
+
+            collection.RemoveAt(_oldIndex);
+
+            if (_newIndex > _oldIndex) {
+                _newIndex--;
+            }
+
+            collection.Insert(_newIndex, _element);
         }
 
         /// <summary>
@@ -229,7 +250,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public virtual void RemoveNull() {
             for (int i = Count; i-- > 0;) {
-                if (collection[i] == null) {
+                if ((collection[i] == null) || collection[i].Equals(null)) {
                     RemoveAt(i);
                 }
             }

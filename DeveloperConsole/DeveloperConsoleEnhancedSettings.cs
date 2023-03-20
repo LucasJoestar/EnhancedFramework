@@ -20,6 +20,8 @@ using UnityEditor;
 namespace EnhancedFramework.DeveloperConsoleSystem {
     /// <summary>
     /// <see cref="DeveloperConsole"/>-related settings.
+    /// <para/>
+    /// Cannot inherit from EnhancedSettings, as it needs to be accessible at runtime.
     /// </summary>
     [Serializable]
     public class DeveloperConsoleSettings : ScriptableObject {
@@ -67,12 +69,13 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         public const string UndoRecordTitle     = "Developer Console Preferences change";
         public const string PreferencesKey      = "EnhancedFramework.DeveloperConsole";
 
-        public const string PreferencesPath     = "Preferences/Enhanced Framework/Developer Console";
+        public const string PreferencesPath     = "Preferences/Enhanced Engine/Developer Console";
         public const string PreferencesLabel    = "Developer Console";
 
         public static readonly string[] PreferencesKeywords = new string[] {
                                                                 "Enhanced",
                                                                 "Framework",
+                                                                "Engine",
                                                                 "Developer",
                                                                 "Console",
                                                                 "Log",

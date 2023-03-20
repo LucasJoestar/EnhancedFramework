@@ -59,19 +59,24 @@ namespace EnhancedFramework.PlayMaker {
         public override void OnEnter() {
             base.OnEnter();
 
+            Fade();
+            Finish();
+        }
+
+        // -----------------------
+
+        private void Fade() {
             var _fadingObject = FadingObject;
 
             if (_fadingObject != null) {
                 _fadingObject.Fade((FadingMode)FadingMode.Value, Instant.Value, OnComplete, WaitDuration.Value);
             }
 
-            Finish();
-        }
+            // ----- Local Method ----- \\
 
-        // -----------------------
-
-        private void OnComplete() {
-            Fsm.Event(CompletedEvent);
+            void OnComplete() {
+                Fsm.Event(CompletedEvent);
+            }
         }
         #endregion
     }

@@ -117,6 +117,7 @@ namespace EnhancedFramework.Localization {
     /// <summary>
     /// Localization singleton class, managing all localization-related operations (like tables loading and selected locale).
     /// </summary>
+    [DefaultExecutionOrder(-20)]
     public class LocalizationManager : EnhancedSingleton<LocalizationManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
@@ -137,8 +138,6 @@ namespace EnhancedFramework.Localization {
         #region Enhanced Behaviour
         protected override void OnInit() {
             base.OnInit();
-
-            LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
 
             // Initialize the localization system.
             // Tables can't be preloaded while not initialized.
@@ -172,7 +171,17 @@ namespace EnhancedFramework.Localization {
             }
         }
 
-        private void OnDestroy() {
+        protected override void OnBehaviourEnabled() {
+            base.OnBehaviourEnabled();
+
+            // Locale callback.
+            LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
+        }
+
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
+            // Locale callback.
             LocalizationSettings.SelectedLocaleChanged -= OnLocaleChanged;
         }
         #endregion

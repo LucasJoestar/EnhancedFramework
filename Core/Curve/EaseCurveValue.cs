@@ -26,11 +26,13 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Range of the curve (minimum and maximum values).
         /// </summary>
+        [Tooltip("Minimum and maximum values of this curve")]
         public Vector2 Range = new Vector2(0f, 1f);
 
         /// <summary>
         /// Duration of the curve.
         /// </summary>
+        [Tooltip("Total duration of this curve")]
         [Enhanced, Min(.001f)] public float Duration = 1f;
 
         protected readonly Dictionary<int, float> timeWrapper = new Dictionary<int, float>();
@@ -142,6 +144,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Ease used to evaluate this value.
         /// </summary>
+        [Tooltip("Ease used to evaluate values")]
         public Ease Ease = Ease.OutSine;
 
         // -----------------------
@@ -170,6 +173,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Animation curve used to evaluate this value.
         /// </summary>
+        [Tooltip("Curve used to evaluate values")]
         [Enhanced, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Lime)] public AnimationCurve Curve = AnimationCurve.Constant(0f, 1f, 0f);
 
         // -----------------------
@@ -223,11 +227,13 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Duration of the decrease curve.
         /// </summary>
+        [Tooltip("Total duration of the decrease curve")]
         [Space(10f), Enhanced, Min(.001f)] public float DecreaseDuration = .1f;
 
         /// <summary>
         /// Animation curve used to decrease this value current time.
         /// </summary>
+        [Tooltip("Curve used to decrease values")]
         [Enhanced, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Crimson)] public AnimationCurve DecreaseCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
 
         private readonly Dictionary<int, DecreaseWrapper> decreaseWrapper = new Dictionary<int, DecreaseWrapper>();

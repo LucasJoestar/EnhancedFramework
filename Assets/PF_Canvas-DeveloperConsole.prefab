@@ -55,7 +55,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 25/12/2022 19:24:29
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -178,6 +178,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   rectTransform: {fileID: 2489987185365583107}
   initialPosition: {x: 0, y: 0}
 --- !u!1 &69030175
@@ -220,8 +225,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 4.000069, y: -0.00024414062}
-  m_SizeDelta: {x: -4, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &3322304209986726750
 MonoBehaviour:
@@ -239,7 +244,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 12/01/2023 12:30:37
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -332,6 +337,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   scroll: {fileID: 1306818543}
   sensitivity: 0.025
 --- !u!114 &69030177
@@ -2067,7 +2077,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 02/01/2023 23:38:33
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -2152,13 +2162,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   group:
     Canvas: {fileID: 1295070065}
+    Controller: {fileID: 0}
     Group: {fileID: 5615797627326827167}
     FadeAlpha: {x: 0, y: 1}
-    GroupParameters: -2147483646
+    GroupParameters: -2147483645
     Selectable: {fileID: 0}
-  visibleOnStart: 0
+    ActiveSelectable: {fileID: 0}
+  initMode: 2
 --- !u!225 &5615797627326827167
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2168,7 +2185,7 @@ CanvasGroup:
   m_GameObject: {fileID: 1295070061}
   m_Enabled: 1
   m_Alpha: 0
-  m_Interactable: 1
+  m_Interactable: 0
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!223 &1295070065
@@ -2331,7 +2348,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 329448452}
   m_HandleRect: {fileID: 329448451}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2532,7 +2549,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1132208444}
   m_HandleRect: {fileID: 1132208443}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -3230,7 +3247,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 05/01/2023 03:19:20
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -3315,6 +3332,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   OpenConsoleInput: {fileID: 11400000, guid: ce7520f7796d66948a9a8f313609b341, type: 2}
   group: {fileID: 1794798634323898723}
   resizePanel: {fileID: 1141391961}
@@ -4008,7 +4030,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 28/12/2022 01:05:22
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -4093,13 +4115,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   group:
     Canvas: {fileID: 633415317231889579}
+    Controller: {fileID: 0}
     Group: {fileID: 2489987185365583116}
     FadeAlpha: {x: 0, y: 0.9}
     GroupParameters: -2147483645
     Selectable: {fileID: 0}
-  visibleOnStart: 0
+    ActiveSelectable: {fileID: 0}
+  initMode: 2
 --- !u!225 &2489987185365583116
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -4109,7 +4138,7 @@ CanvasGroup:
   m_GameObject: {fileID: 2489987185365583104}
   m_Enabled: 1
   m_Alpha: 0
-  m_Interactable: 1
+  m_Interactable: 0
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!223 &633415317231889579
@@ -4522,7 +4551,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1893783616
@@ -5093,7 +5122,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 25/12/2022 19:28:13
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -5260,6 +5289,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   rectTransform: {fileID: 2222658545639720390}
   minSize: {x: 650, y: 200}
   maxSize: {x: 1600, y: 1080}
@@ -6203,7 +6237,7 @@ MonoBehaviour:
   Tags:
     Tags: []
   lastModifiedBy: Lucas
-  lastModifiedDate: 27/12/2022 04:05:52
+  lastModifiedDate: 08/03/2023 03:13:48
   IsEditorPreview: 0
   isHeader: 0
   overrideHierarchyStyle: 0
@@ -6369,6 +6403,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chronos: 1
+  objectID:
+    type: 0
+    assetGUID: 
+    objectID: 0
+    prefabID: 0
   scroll: {fileID: 2489987185405181367}
   sensitivity: 0.025
 --- !u!1 &2489987186048162878
@@ -7644,7 +7683,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2489987186893040348}
   m_HandleRect: {fileID: 2489987186893040349}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:

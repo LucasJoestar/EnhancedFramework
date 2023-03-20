@@ -103,8 +103,10 @@ namespace EnhancedFramework.Core {
         /// Updates this cooldown value.
         /// </summary>
         /// <param name="_deltaTime">Time increase.</param>
-        public void Update(float _deltaTime) {
+        /// <returns>True if this cooldown is now valid, false otherwise.</returns>
+        public bool Update(float _deltaTime) {
             time += _deltaTime;
+            return IsValid;
         }
 
         public override void Reload() {

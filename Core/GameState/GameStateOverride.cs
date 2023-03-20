@@ -35,6 +35,11 @@ namespace EnhancedFramework.Core.GameStates {
         public bool IsUnloading = false;
 
         /// <summary>
+        /// Is the game currently in a pause state?
+        /// </summary>
+        [Space(5f)] public bool IsPaused = false;
+
+        /// <summary>
         /// Is the game application currently being quit?
         /// </summary>
         [Space(5f)] public bool IsQuitting = false;
@@ -48,10 +53,11 @@ namespace EnhancedFramework.Core.GameStates {
             IsCursorVisible = true;
             CursorLockMode = CursorLockMode.None;
 
-            IsQuitting = false;
-
             IsLoading = false;
             IsUnloading = false;
+
+            IsPaused = false;
+            IsQuitting = false;
 
             return this;
         }

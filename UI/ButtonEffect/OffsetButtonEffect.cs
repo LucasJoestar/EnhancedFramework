@@ -17,18 +17,17 @@ namespace EnhancedFramework.UI {
         #region Global Members
         [Section("Offset Effect")]
 
+        [SerializeField, Enhanced, Required] private TextMeshProUGUI text = null;
+
+        [Space(5f)]
+
         [SerializeField] private EnumValues<SelectableState, Vector2> offset = new EnumValues<SelectableState, Vector2>(Vector2.zero);
         #endregion
 
         #region Behaviour
         public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
-            // Issue management.
-            if (!(_button.targetGraphic is TextMeshProUGUI _text)) {
-                return;
-            }
-
             Vector2 _offset = offset[_state];
-            _text.margin = new Vector4(_offset.x, _offset.y, _text.margin.y, _text.margin.z);
+            text.margin = new Vector4(_offset.x, _offset.y, text.margin.y, text.margin.z);
         }
         #endregion
     }

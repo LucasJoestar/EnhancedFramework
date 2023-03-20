@@ -9,6 +9,7 @@
 #endif
 
 using EnhancedEditor;
+using EnhancedFramework.Core;
 using UnityEngine;
 
 #if NEW_INPUT_SYSTEM
@@ -20,7 +21,7 @@ namespace EnhancedFramework.Inputs {
     /// Base class for any Enhanced input <see cref="ScriptableObject"/> asset.
     /// </summary>
     [CreateAssetMenu(fileName = FileName, menuName = InputEnhancedAsset.MenuPath + "Database", order = InputEnhancedAsset.MenuOrder)]
-    public class InputDatabase : ScriptableObject {
+    public class InputDatabase : EnhancedScriptableObject {
         public const string FileName = "IPD_InputDatabase";
 
         #region Global Members

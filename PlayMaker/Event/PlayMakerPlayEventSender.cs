@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 
         #region Global Members
-        [Section("Play Event Sender")]
+        [Section("Play - Event Sender")]
 
         [SerializeField, Enhanced, Required] private PlayMakerFSM fsm = null;
         #endregion
