@@ -36,6 +36,14 @@ namespace EnhancedFramework.Timeline {
             get { return string.Empty; }
         }
 
+        /// <summary>
+        /// If true, automatically serializes this asset binding object
+        /// in a <see cref="EnhancedPlayableBindingData"/> instance, on the same <see cref="PlayableDirector"/> <see cref="GameObject"/>.
+        /// </summary>
+        public virtual bool SerializeBindingInComponent {
+            get { return false; }
+        }
+
         // -----------------------
 
         /// <summary>

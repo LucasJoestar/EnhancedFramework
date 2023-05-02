@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
+using System;
 using UnityEngine;
 
 namespace EnhancedFramework.UI {
@@ -53,6 +54,10 @@ namespace EnhancedFramework.UI {
             base.OnValidate();
 
             // References.
+            if (group == null) {
+                group = Activator.CreateInstance<T>();
+            }
+
             if (!group.Group) {
                 group.Group = GetComponent<CanvasGroup>();
             }
@@ -69,7 +74,36 @@ namespace EnhancedFramework.UI {
                 group.ActiveSelectable = group.Selectable;
             }
         }
-        #endif
+#endif
+        #endregion
+
+        #region Play Mode Data
+        public override bool CanSavePlayModeData {
+            get { return true; }
+        }
+
+        // -----------------------
+
+        public override void SavePlayModeData(PlayModeEnhancedObjectData _data) {
+
+            // Save as json.
+            _data.Strings.Add(JsonUtility.ToJson(group));
+        }
+
+        public override void LoadPlayModeData(PlayModeEnhancedObjectData _data) {
+
+            // Load from json.
+            T _group = JsonUtility.FromJson<T>(_data.Strings[0]);
+
+            _group.Canvas = group.Canvas;
+            _group.Controller = group.Controller;
+            _group.Group = group.Group;
+
+            _group.Selectable = group.Selectable;
+            _group.ActiveSelectable = group.ActiveSelectable;
+
+            group = _group;
+        }
         #endregion
     }
 
@@ -77,5 +111,7 @@ namespace EnhancedFramework.UI {
     /// Ready-to-use <see cref="EnhancedBehaviour"/>-encapsulated <see cref="FadingGroup"/>.
     /// <br/> Use this to quickly implement instantly fading <see cref="CanvasGroup"/> objects.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Fading Group/Fading Group"), DisallowMultipleComponent]
     public class FadingGroupBehaviour : FadingGroupBehaviour<FadingGroup> { }
 }

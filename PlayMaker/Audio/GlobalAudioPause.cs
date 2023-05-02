@@ -60,7 +60,7 @@ namespace EnhancedFramework.PlayMaker {
         // -------------------------------------------
 
         private void DoPause() {
-            wasPaused = AudioManager.Instance.IsPaused;
+            wasPaused = AudioManager.IsPaused;
             AudioManager.Instance.Pause(Pause.Value);
         }
 

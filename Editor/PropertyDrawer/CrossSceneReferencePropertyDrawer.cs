@@ -111,7 +111,7 @@ namespace EnhancedFramework.Editor {
 
                 using (var _indent = EnhancedEditorGUI.ZeroIndentScope()) {
 
-                    if (_isLock && _id.IsValid() && (_pair.Second == null)) {
+                    if (_isLock && _id.IsValid && (_pair.Second == null)) {
                         // When the reference could not be found, display an informative help box.
                         GUIContent _gui;
 
@@ -140,7 +140,7 @@ namespace EnhancedFramework.Editor {
                                 if (_component == null) {
 
                                     // Null reference.
-                                    _pair = new Pair<EnhancedObjectID, CrossSceneObject>(EnhancedObjectID.None, null);
+                                    _pair = new Pair<EnhancedObjectID, CrossSceneObject>(EnhancedObjectID.Default, null);
                                 } else {
 
                                     // Valid reference.
@@ -210,7 +210,7 @@ namespace EnhancedFramework.Editor {
             _idProperty.Next(true);
 
             // Copy ID to clipboard.
-            if (GetMemberValue(_idProperty).GetValue(_idProperty, out EnhancedObjectID _id) && _id.IsValid()) {
+            if (GetMemberValue(_idProperty).GetValue(_idProperty, out EnhancedObjectID _id) && _id.IsValid) {
 
                 _menu.AddItem(copyIDGUI, false, () => {
 

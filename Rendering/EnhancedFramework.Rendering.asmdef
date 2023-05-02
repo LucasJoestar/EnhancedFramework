@@ -14,12 +14,19 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "RENDER_PIPELINE"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.editorcoroutines",
             "expression": "",
             "define": "EDITOR_COROUTINE_ENABLED"
+        },
+        {
+            "name": "com.unity.render-pipelines.core",
+            "expression": "",
+            "define": "RENDER_PIPELINE"
         }
     ],
     "noEngineReferences": false

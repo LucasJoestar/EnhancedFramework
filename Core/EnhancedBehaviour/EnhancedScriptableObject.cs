@@ -4,7 +4,6 @@
 //
 // ================================================================================== //
 
-using EnhancedEditor;
 using System.Diagnostics;
 using UnityEngine;
 
@@ -19,7 +18,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public abstract class EnhancedScriptableObject : ScriptableObject {
         #region Global Members
-        [SerializeField, HideInInspector] private EnhancedObjectID objectID = EnhancedObjectID.None;
+        [SerializeField, HideInInspector] private EnhancedObjectID objectID = EnhancedObjectID.Default;
 
         /// <summary>
         /// The unique identifier of this object.
@@ -79,36 +78,22 @@ namespace EnhancedFramework.Core {
         /// </summary>
         [ContextMenu("Get Object ID", false, 10)]
         private void GetObjectID() {
+
             #if UNITY_EDITOR
             // Editor behaviour.
-            if (!Application.isPlaying) {
-                EnhancedObjectID _objectID = new EnhancedObjectID(this);
+            if (!Application.isPlaying && !objectID.IsValid) {
 
-                if (!objectID.IsValid()) {
+                Undo.RecordObject(this, "Assigning ID");
 
-                    //this.LogMessage($"Assigning ID:\n{_objectID.ToString().Bold()}");
-                    SetID(_objectID);
-                } else if (objectID != _objectID) {
-
-                    this.LogMessage($"Assigning new ID:\n{objectID.ToString().Bold()}   [OLD]   |   {_objectID.ToString().Bold()}   [NEW]");
-                    SetID(_objectID);
-                }
-
-                // ----- Local Method ----- \\
-
-                void SetID(EnhancedObjectID _id) {
-                    Undo.RecordObject(this, "Assigning ID");
-
-                    objectID = _id;
-                    EditorUtility.SetDirty(this);
-                }
+                objectID = new EnhancedObjectID(this);
+                EditorUtility.SetDirty(this);
 
                 return;
             }
             #endif
 
             // Runtime assignement.
-            if (!objectID.IsValid()) {
+            if (!objectID.IsValid) {
                 objectID = new EnhancedObjectID(this);
             }
         }

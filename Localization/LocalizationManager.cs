@@ -117,7 +117,9 @@ namespace EnhancedFramework.Localization {
     /// <summary>
     /// Localization singleton class, managing all localization-related operations (like tables loading and selected locale).
     /// </summary>
-    [DefaultExecutionOrder(-20)]
+    [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-200)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Localization/Localization Manager"), DisallowMultipleComponent]
     public class LocalizationManager : EnhancedSingleton<LocalizationManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
@@ -131,7 +133,7 @@ namespace EnhancedFramework.Localization {
         #endregion
 
         #region Global Members
-        private readonly List<ILocalizer> localizables = new List<ILocalizer>();
+        private readonly EnhancedCollection<ILocalizer> localizables = new EnhancedCollection<ILocalizer>();
         private readonly List<AsyncOperationHandle> operations = new List<AsyncOperationHandle>();
         #endregion
 
@@ -209,6 +211,13 @@ namespace EnhancedFramework.Localization {
         /// Called whenever selecting a locale (even if it has not changed).
         /// </summary>
         public static Action<Locale> OnSelectLocale = null;
+
+        /// <summary>
+        /// The active selected locale of the game.
+        /// </summary>
+        public Locale SelectedLocale {
+            get { return LocalizationSettings.SelectedLocale; }
+        }
 
         // -----------------------
 

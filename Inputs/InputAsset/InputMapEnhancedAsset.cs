@@ -40,6 +40,16 @@ namespace EnhancedFramework.Inputs {
                 #else
                 return false;
                 #endif
+            } set {
+                if (value == IsEnabled) {
+                    return;
+                }
+
+                if (value) {
+                    Enable();
+                } else {
+                    Disable();
+                }
             }
         }
         #endregion

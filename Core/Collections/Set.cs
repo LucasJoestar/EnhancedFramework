@@ -27,7 +27,7 @@ namespace EnhancedFramework.Core {
 
         #region Collection
         public override void Add(T _element) {
-            if (!collection.Contains(_element)) {
+            if (!Contains(_element)) {
                 base.Add(_element);
             }
         }
@@ -39,8 +39,39 @@ namespace EnhancedFramework.Core {
         }
 
         public override void Insert(int _index, T _element) {
-            if (!collection.Contains(_element)) {
+            if (!Contains(_element)) {
                 base.Insert(_index, _element);
+            }
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Contains <see cref="EnhancedCollection{T}"/>-related extension methods.
+    /// </summary>
+    public static class SetExtensions {
+        #region Reference
+        /// <inheritdoc cref="Set{T}.Add(T)"/>
+        public static void AddInstance<T>(this Set<T> _collection, T _element) where T : class {
+
+            if (!_collection.Contains(_element)) {
+                _collection.Add(_element);
+            }
+        }
+
+        /// <inheritdoc cref="Set{T}.AddRange(IEnumerable{T})"/>
+        public static void AddRangeInstance<T>(this Set<T> _set, IEnumerable<T> _collection) where T : class {
+
+            foreach (T _element in _collection) {
+                AddInstance(_set, _element);
+            }
+        }
+
+        /// <inheritdoc cref="Set{T}.Insert(int, T)"/>
+        public static void InsertInstance<T>(this Set<T> _collection, int _index, T _element) where T : class {
+
+            if (!_collection.Contains(_element)) {
+                _collection.Insert(_index, _element);
             }
         }
         #endregion

@@ -17,6 +17,8 @@ using UnityEngine.Timeline;
 
 using AudioAssetSettings = EnhancedFramework.Core.AudioAssetSettings;
 using DisplayName = System.ComponentModel.DisplayNameAttribute;
+using Object = UnityEngine.Object;
+using Range = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Timeline {
     /// <summary>
@@ -30,13 +32,16 @@ namespace EnhancedFramework.Timeline {
         [Tooltip("Audio asset to play")]
         [Enhanced, Required] public AudioAsset Audio = null;
 
-        [Tooltip("Override audio settings used to play this asset")]
-        [Enhanced, ShowIf("OverrideSettings"), Required] public AudioAssetSettings Settings = null;
+        [Tooltip("Volume multiplier of this audio")]
+        [Enhanced, Range(0f, 10f)] public float Volume = 1f;
 
-        [Space(5f)]
+        [Space(10f)]
 
         [Tooltip("Whether to override or not the audio settings used to play this asset")]
         public bool OverrideSettings = false;
+
+        [Tooltip("Override audio settings used to play this asset")]
+        [Enhanced, ShowIf("OverrideSettings"), Required] public AudioAssetSettings Settings = null;
 
         // -----------------------
 
@@ -78,13 +83,22 @@ namespace EnhancedFramework.Timeline {
             }
 
             // Audio Source setup.
-            if (audioSource != null) {
+            if (_go.TryGetComponent(out EnhancedPlayableBindingData _data) && _data.GetBinding(this, out Object _binding)) {
+
+                audioSource = _binding as AudioSource;
 
                 if (OverrideSettings) {
                     Audio.SetupAudioSource(audioSource, Settings);
                 } else {
                     Audio.SetupAudioSource(audioSource);
                 }
+
+                audioSource.volume *= Volume;
+                audioSource.ignoreListenerPause = _go.TryGetComponent(out PlayableDirector _playable) && (_playable.timeUpdateMode == DirectorUpdateMode.UnscaledGameTime);
+
+            } else {
+
+                this.LogWarningMessage("Audio clip has no Audio Source bound to it");
             }
 
             // To properly play an audio clip in Timeline, we use the built-in Audio Track which can access internal and other non accessible members.
@@ -93,7 +107,7 @@ namespace EnhancedFramework.Timeline {
 
             if (setScritInstanceParameters.Length == 0) {
 
-                object _properties = System.Activator.CreateInstance(propertiesType);
+                object _properties = Activator.CreateInstance(propertiesType);
                 setScritInstanceParameters = new object[] { _properties };
             }
 
@@ -107,6 +121,10 @@ namespace EnhancedFramework.Timeline {
         #region Utility
         public override string ClipDefaultName {
             get { return "Audio Clip"; }
+        }
+
+        public override bool SerializeBindingInComponent {
+            get { return true; }
         }
 
         // -----------------------

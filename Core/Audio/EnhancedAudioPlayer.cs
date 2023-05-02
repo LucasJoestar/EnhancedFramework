@@ -113,7 +113,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Audio Player"), DisallowMultipleComponent]
-    #pragma warning disable 0414
+    #pragma warning disable
     public class EnhancedAudioPlayer : EnhancedPoolableObject, IHandle {
         #region State
         /// <summary>
@@ -155,6 +155,13 @@ namespace EnhancedFramework.Core {
         [SerializeField, HideInInspector] private AudioSource audioSource = null;
 
         // -----------------------
+
+        /// <summary>
+        /// Get if this audio is currently affected by the game general audio pause.
+        /// </summary>
+        public bool IsAudioPaused {
+            get { return !IgnorePause && AudioManager.IsPaused; }
+        }
 
         /// <summary>
         /// Current state of this player.
@@ -283,14 +290,27 @@ namespace EnhancedFramework.Core {
         /// Called from the <see cref="AudioManager"/> to update this player.
         /// </summary>
         internal void AudioUpdate() {
+
             // State update.
             switch (state) {
 
                 // Stop detection.
                 case State.Playing:
 
-                    if (!audioSource.isPlaying) {
+                    float _time = Time;
+
+                    // Instant.
+                    if (!audioSource.isPlaying && !IsAudioPaused) {
                         Stop(true);
+                        return;
+                    }
+
+                    // Play range end.
+                    if (_time >= (audioAsset.PlayRange.y - audioAsset.FadeOutDuration)) {
+
+                        bool _instant = _time >= audioAsset.PlayRange.y;
+                        Stop(_instant, null, true, false);
+
                         return;
                     }
 
@@ -303,6 +323,12 @@ namespace EnhancedFramework.Core {
                 default:
                     return;
             }
+
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                return;
+            }
+            #endif
 
             // Follow.
             UpdateFollow();
@@ -338,8 +364,10 @@ namespace EnhancedFramework.Core {
         #region Behaviour
         private static int lastPlayID = 0;
 
-        private TweenHandler tween = default;
+        private TweenHandler volumeTween = default;
         private DelayHandler delay = default;
+
+        private bool isFadingOut = false;
 
         // -----------------------
 
@@ -415,7 +443,7 @@ namespace EnhancedFramework.Core {
             void OnPlay() {
 
                 // Fade.
-                FadeVolume(0f, 1f, audioAsset.FadeInDuration, audioAsset.FadeInCurve);
+                FadeVolume(0f, 1f, audioAsset.FadeInDuration, audioAsset.FadeInCurve, false);
 
                 // Play.
                 SetState(State.Playing);
@@ -434,6 +462,11 @@ namespace EnhancedFramework.Core {
         [Button(SuperColor.Green)]
         public bool Play() {
 
+            // Don't play while paused.
+            if (IsAudioPaused) {
+                return true;
+            }
+
             #if UNITY_EDITOR
             if (!Application.isPlaying && (state == State.Playing)) {
                 Stop(true);
@@ -446,13 +479,13 @@ namespace EnhancedFramework.Core {
 
                 // Fade in.
                 case State.Playing:
-                    FadeVolume(GetVolumeModifier(AudioPlayerModifier.Fade, 0f), 1f, audioAsset.FadeInDuration, audioAsset.FadeInCurve);
+                    FadeVolume(GetVolumeModifier(AudioPlayerModifier.Fade, 0f), 1f, audioAsset.FadeInDuration, audioAsset.FadeInCurve, false);
                     return true;
 
                 // Resume.
                 case State.Paused:
 
-                    FadeVolume(GetVolumeModifier(AudioPlayerModifier.Fade, 0f), 1f, audioAsset.FadeInDuration, audioAsset.FadeInCurve);
+                    FadeVolume(GetVolumeModifier(AudioPlayerModifier.Fade, 0f), 1f, audioAsset.FadeInDuration, audioAsset.FadeInCurve, false);
                     SetState(State.Playing);
 
                     audioSource.Play();
@@ -482,6 +515,7 @@ namespace EnhancedFramework.Core {
         /// <returns>True if this player could be successfully paused, false otherwise.</returns>
         [Button(SuperColor.Orange)]
         public bool Pause(bool _instant = false, Action _onComplete = null) {
+
             switch (state) {
 
                 // Ignore.
@@ -500,11 +534,13 @@ namespace EnhancedFramework.Core {
 
             // Stop.
             if (_instant) {
+
                 OnPause();
-            } else {
+
+            } else if (!isFadingOut) {
 
                 // Fade out.
-                FadeVolume(0f, GetVolumeModifier(AudioPlayerModifier.Fade, 1f), audioAsset.FadeOutDuration, audioAsset.FadeOutCurve, OnPause);
+                FadeVolume(0f, GetVolumeModifier(AudioPlayerModifier.Fade, 1f), audioAsset.FadeOutDuration, audioAsset.FadeOutCurve, true, OnPause);
             }
 
             return true;
@@ -528,9 +564,10 @@ namespace EnhancedFramework.Core {
         /// <param name="_instant">If true, instantly stops this player, ignoring any fade.</param>
         /// <param name="_onComplete">Called once the player is stopped.</param>
         /// <param name="_sendToPool">Whether to send the object back to the pool or not (you should ignore this parameter).</param>
+        /// <param name="_stopLoop">If true, do not replay the audio once stopped if it is looping.</param>
         /// <returns>True if this player could be successfully stopped, false otherwise.</returns>
         [Button(SuperColor.Crimson)]
-        public bool Stop(bool _instant = false, Action _onComplete = null, bool _sendToPool = true) {
+        public bool Stop(bool _instant = false, Action _onComplete = null, bool _sendToPool = true, bool _stopLoop = true) {
 
             switch (state) {
 
@@ -556,11 +593,13 @@ namespace EnhancedFramework.Core {
 
             // Stop.
             if (_instant) {
+
                 OnStop();
-            } else {
+
+            } else if (!isFadingOut || (_onComplete != null)) {
 
                 // Fade out.
-                FadeVolume(0f, GetVolumeModifier(AudioPlayerModifier.Fade, 1f), audioAsset.FadeOutDuration, audioAsset.FadeOutCurve, OnStop);
+                FadeVolume(0f, GetVolumeModifier(AudioPlayerModifier.Fade, 1f), audioAsset.FadeOutDuration, audioAsset.FadeOutCurve, true, OnStop);
             }
 
             return true;
@@ -569,11 +608,21 @@ namespace EnhancedFramework.Core {
 
             void OnStop() {
 
+                // Restart loop.
+                if (!_stopLoop && audioAsset.Loop) {
+
+                    _onComplete?.Invoke();
+                    Play();
+
+                    return;
+                }
+
                 // Stop.
                 StopFadeVolume();
-                StopFollowTransform();
 
                 audioSource.Stop();
+
+                StopFollowTransform();
                 SetState(State.Inactive);
 
                 // Send back to pool.
@@ -589,11 +638,13 @@ namespace EnhancedFramework.Core {
         // Utility
         // -------------------------------------------
 
-        private void FadeVolume(float _min, float _max, float _duration, AnimationCurve _curve, Action _onComplete = null) {
+        private void FadeVolume(float _min, float _max, float _duration, AnimationCurve _curve, bool _fadeOut = false, Action _onComplete = null) {
 
             // Tween.
             StopFadeVolume(false);
-            tween = Tweener.Tween(_min, _max, Set, _duration, _curve, true, OnComplete);
+
+            isFadingOut = _fadeOut;
+            volumeTween = Tweener.Tween(_min, _max, Set, _duration, _curve, true, OnComplete);
 
             // ----- Local Methods ----- \\
 
@@ -603,6 +654,8 @@ namespace EnhancedFramework.Core {
 
             void OnComplete(bool _completed) {
 
+                isFadingOut = false;
+
                 if (_completed) {
                     _onComplete?.Invoke();
                 }
@@ -610,7 +663,8 @@ namespace EnhancedFramework.Core {
         }
 
         private void StopFadeVolume(bool _resetModifier = true) {
-            tween.Stop();
+
+            volumeTween.Stop();
 
             // Pop modifier.
             if (_resetModifier) {

@@ -31,7 +31,7 @@ namespace EnhancedFramework.Editor {
 
         // -----------------------
 
-        [MenuItem(FrameworkUtility.MenuItemPath + "Refresh Input Assets", false, 20)]
+        [MenuItem(FrameworkUtility.MenuItemPath + "Refresh Input Assets", false, 11)]
         private static void RefreshInputAssets() {
             if (!EnhancedEditorUtility.LoadMainAsset(out UnityInputActionAsset _inputAsset)){
                 return;
@@ -106,7 +106,7 @@ namespace EnhancedFramework.Editor {
 
             // Delete obsolete assets.
             foreach (SingleInputActionEnhancedAsset _input in _inputs) {
-                if (_input.isOrphan) {
+                if (_input.IsOrphan) {
                     continue;
                 }
 

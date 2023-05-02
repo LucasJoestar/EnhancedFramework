@@ -18,9 +18,9 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [RequireComponent(typeof(PlayableDirector))]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Playable Player"), DisallowMultipleComponent]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Enhanced Playable Player"), DisallowMultipleComponent]
     #pragma warning disable 0414
-    public class EnhancedPlayablePlayer : EnhancedBehaviour, ISkippableElement {
+    public class EnhancedPlayablePlayer : EnhancedPlayer, ISkippableElement {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 
         #region Global Members
@@ -189,14 +189,16 @@ namespace EnhancedFramework.Core {
         protected override void OnValidate() {
             base.OnValidate();
 
+            // Reference.
             if (!playableDirector) {
                 playableDirector = GetComponent<PlayableDirector>();
+                playableDirector.playOnAwake = false;
             }
         }
         #endif
         #endregion
 
-        #region Behaviour
+        #region Player
         private GameState gameState = null;
         private bool isActive       = false;
 
@@ -206,8 +208,7 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="PlayableDirector.Play"/>
         /// (From <see cref="PlayableDirector.Play"/>)
         /// </summary>
-        [Button(SuperColor.Green)]
-        public void Play() {
+        public override void Play() {
             // Do not execute if already playing.
             if (IsPlaying) {
                 return;
@@ -262,8 +263,7 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="PlayableDirector.Pause"/>
         /// (From <see cref="PlayableDirector.Pause"/>)
         /// </summary>
-        [Button(SuperColor.Orange)]
-        public void Pause() {
+        public override void Pause() {
             playableDirector.Pause();
         }
 
@@ -271,8 +271,7 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="PlayableDirector.Stop"/>
         /// (From <see cref="PlayableDirector.Stop"/>)
         /// </summary>
-        [Button(SuperColor.Crimson)]
-        public void Stop() {
+        public override void Stop() {
             playableDirector.Stop();
 
             // Might happen if PlayMode changed while the isActive value was true.
@@ -298,12 +297,13 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         private void OnStop(PlayableDirector _playable) {
+
             // As strange as it seems, the stopped event of the playable
             // is not called when it reaches its end point in editor,
             // but works perfectly fine on play.
 
             // Not active if never being played or already stopped.
-            if (!isActive) {
+            if (!isActive || GameManager.IsQuittingApplication) {
                 return;
             }
 
@@ -319,6 +319,7 @@ namespace EnhancedFramework.Core {
 
             // Game State.
             if (gameState.IsActive()) {
+
                 gameState.RemoveState();
                 gameState = null;
             }

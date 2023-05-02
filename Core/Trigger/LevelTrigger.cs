@@ -12,16 +12,19 @@ using UnityEngine;
 
 namespace EnhancedFramework.Core {
     /// <summary>
-    /// 
+    /// Enum used to select one or multiple portal identifier(s).
+    /// <br/> Uses cardinal directions.
+    /// <para/>
+    /// North - South - East - West
     /// </summary>
     [Flags]
-    public enum CardinalDirection {
+    public enum PortalIdentifier {
         [Separator(SeparatorPosition.Bottom)]
         None        = 0,
 
         North       = 1 << 0,
         South       = 1 << 1,
-        Ease        = 1 << 2,
+        East        = 1 << 2,
         West        = 1 << 3,
 
         NorthEast   = 1 << 4,
@@ -36,38 +39,37 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Trigger/Level Trigger"), DisallowMultipleComponent]
     public class LevelTrigger : EnhancedTrigger {
-
         /// <summary>
-        /// Wrapper for a <see cref="LevelTrigger"/> activation direction range.
+        /// Wrapper for a <see cref="LevelTrigger"/> entrance / exit portal.
         /// </summary>
         [Serializable]
-        public class ActivationDirection {
+        public class Portal {
             #region Global Members
-            [Tooltip("Name identifier of this direction")]
-            [SerializeField, Enhanced, FlagField(false), Duo("inverse", 95f)] private CardinalDirection identifier = CardinalDirection.None;
+            [Tooltip("Identifier of this portal")]
+            [SerializeField, Enhanced, FlagField(false), Duo("inverse", 95f)] private PortalIdentifier identifier = PortalIdentifier.None;
 
-            [Tooltip("When true, inverses the direction angle forward vector")]
+            [Tooltip("If true, inverses this portal forward direction")]
             [SerializeField, HideInInspector, Enhanced, Duo("color", 75f)] private bool inverse = false;
 
             #if UNITY_EDITOR
-            [Tooltip("Previsualisation color of this direction")]
+            [Tooltip("Previsualisation color of this portal")]
             [SerializeField, HideInInspector] internal Color color = Color.red;
             #endif
 
-            [Tooltip("Angle detection range of this direction")]
+            [Tooltip("Angle range of this portal")]
             [SerializeField, Enhanced, MinMax(-180f, 180f)] private Vector2Int angle = new Vector2Int(-15, 15);
 
             // -----------------------
 
             /// <summary>
-            /// Identifier of this direction.
+            /// Identifier of this portal.
             /// </summary>
-            public CardinalDirection Identifier {
+            public PortalIdentifier Identifier {
                 get { return identifier; }
             }
 
             /// <summary>
-            /// Angle detection range of this direction.
+            /// Angle detection range of this portal.
             /// </summary>
             public Vector2Int DirectionAngle {
                 get {
@@ -82,6 +84,23 @@ namespace EnhancedFramework.Core {
                 }
             }
             #endregion
+
+            #region Utility
+            /// <summary>
+            /// Get if a specific angle is in the range of this portal.
+            /// </summary>
+            /// <param name="_angle">Angle to check (relative to this trigger forward direction).</param>
+            /// <returns>True if the given angle is in this portal range, false otherwise.</returns>
+            public bool IsInRange(float _angle) {
+                Vector2Int _range = DirectionAngle;
+
+                if (inverse && (_angle > 0f)) {
+                    _angle -= 360f;
+                }
+
+                return _range.Contains(_angle);
+            }
+            #endregion
         }
 
         /// <summary>
@@ -93,11 +112,11 @@ namespace EnhancedFramework.Core {
             [Tooltip("Callback object connected with this trigger")]
             [SerializeField] private SerializedInterface<ITrigger> trigger = null;
 
-            [Tooltip("Requied trigger enter direction to call this callback")]
-            [SerializeField] private CardinalDirection enter = CardinalDirection.None;
+            [Tooltip("Identifier of all interacting portal(s) when entering this trigger")]
+            [SerializeField] private PortalIdentifier enter = PortalIdentifier.None;
 
-            [Tooltip("Requied trigger exit direction to call this callback")]
-            [SerializeField] private CardinalDirection exit = CardinalDirection.None;
+            [Tooltip("Identifier of all interacting portal(s) when exiting this trigger")]
+            [SerializeField] private PortalIdentifier exit = PortalIdentifier.None;
 
             /// <summary>
             /// <see cref="ITrigger"/> callback object.
@@ -107,16 +126,16 @@ namespace EnhancedFramework.Core {
             }
 
             /// <summary>
-            /// Requied trigger enter direction to call this callback.
+            /// Identifier of all interacting portal(s) when entering this trigger.
             /// </summary>
-            public CardinalDirection Enter {
+            public PortalIdentifier Enter {
                 get { return enter; }
             }
 
             /// <summary>
-            /// Requied trigger exit direction to call this callback.
+            /// Identifier of all interacting portal(s) when exiting this trigger.
             /// </summary>
-            public CardinalDirection Exit {
+            public PortalIdentifier Exit {
                 get { return exit; }
             }
 
@@ -124,11 +143,14 @@ namespace EnhancedFramework.Core {
             // Constructor(s)
             // -------------------------------------------
 
+            /// <inheritdoc cref="Callback(ITrigger, PortalIdentifier, PortalIdentifier)"/>
+            public Callback() { }
+
             /// <param name="_trigger"><inheritdoc cref="Trigger" path="/summary"/></param>
             /// <param name="_enter"><inheritdoc cref="Enter" path="/summary"/></param>
             /// <param name="_exit"><inheritdoc cref="Exit" path="/summary"/></param>
             /// <inheritdoc cref="Callback"/>
-            public Callback(ITrigger _trigger, CardinalDirection _enter, CardinalDirection _exit) {
+            public Callback(ITrigger _trigger, PortalIdentifier _enter, PortalIdentifier _exit) {
                 trigger = new SerializedInterface<ITrigger>(_trigger);
                 enter = _enter;
                 exit = _exit;
@@ -136,45 +158,59 @@ namespace EnhancedFramework.Core {
             #endregion
 
             #region Trigger
-            /// <param name="_direction">Identifier of the associated <see cref="LevelTrigger"/> entered direction.</param>
-            /// <inheritdoc cref="ITrigger.OnEnterTrigger(Component)"/>
-            public void OnEnterTrigger(Component _component, CardinalDirection _direction) {
+            /// <param name="_portal">Identifier of the associated <see cref="LevelTrigger"/> entered portal.</param>
+            /// <inheritdoc cref="ITrigger.OnEnterTrigger(ITriggerActor)"/>
+            public void OnEnterTrigger(ITriggerActor _actor, PortalIdentifier _portal) {
 
                 // Trigger activation.
-                if ((enter != CardinalDirection.None) && !enter.HasFlag(_direction)) {
+                if (!TestIdentifier(enter, _portal)) {
                     return;
                 }
 
-                trigger.Interface.OnEnterTrigger(_component);
+                trigger.Interface.OnEnterTrigger(_actor);
             }
 
-            /// <param name="_direction">Identifier of the associated <see cref="LevelTrigger"/> exit direction.</param>
-            /// <inheritdoc cref="ITrigger.OnExitTrigger(Component)"/>
-            public void OnExitTrigger(Component _component, CardinalDirection _direction) {
+            /// <param name="_portal">Identifier of the associated <see cref="LevelTrigger"/> exit portal.</param>
+            /// <inheritdoc cref="ITrigger.OnEnterTrigger(ITriggerActor)"/>
+            public void OnExitTrigger(ITriggerActor _actor, PortalIdentifier _portal) {
 
                 // Trigger activation.
-                if ((exit != CardinalDirection.None) && !exit.HasFlag(_direction)) {
+                if (!TestIdentifier(exit, _portal)) {
                     return;
                 }
 
-                trigger.Interface.OnExitTrigger(_component);
+                trigger.Interface.OnExitTrigger(_actor);
+            }
+
+            // -----------------------
+
+            private bool TestIdentifier(PortalIdentifier _trigger, PortalIdentifier _portal) {
+                return (_trigger == PortalIdentifier.None) || ((_portal != PortalIdentifier.None) && _trigger.HasFlag(_portal));
             }
             #endregion
         }
 
         #region Global Members
-        [Section("Level Trigger")]
+        [Section("Level Trigger"), PropertyOrder(0)]
 
-        [Tooltip("Required tags on objects to interact with this Trigger")]
-        [SerializeField] private TagGroup requiredTags = new TagGroup();
+        [Tooltip("Required tags for other objects to interact with this trigger")]
+        [SerializeField] protected TagGroup requiredTags = new TagGroup();
 
-        [Space(5f)]
-
-        [SerializeField] private BlockList<Callback> callbacks = new BlockList<Callback>();
+        [SerializeField] protected FlagValueGroup requiredFlags = new FlagValueGroup();
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeField] internal BlockArray<ActivationDirection> directions = new BlockArray<ActivationDirection>();
+        [Tooltip("All registered callbacks for this trigger")]
+        [SerializeField] protected BlockList<Callback> callbacks = new BlockList<Callback>();
+
+        [Space(10f)]
+
+        [Tooltip("Entrance / exit portals used to detect how actor should interact with this trigger")]
+        [SerializeField] protected BlockArray<Portal> portals = new BlockArray<Portal>();
+
+        [Space(10f), HorizontalLine(SuperColor.Green, 1f), Space(10f)]
+
+        [SerializeField, Enhanced, Required] protected new Collider collider = null;
         #endregion
 
         #region Enhanced Behaviour
@@ -183,41 +219,84 @@ namespace EnhancedFramework.Core {
         // Editor
         // -------------------------------------------
 
-        private const int RaycastInterval   = 2;
-        private const float HandlesAlpha    = .5f;
+        private const int RaycastInterval           = 2;
+        private const float InactiveHandlesAlpha    = .5f;
+        private const float ActiveHandlesAlpha      = .7f;
+        private const float ExitHandleDuration      = 5f;
 
         private static readonly RaycastHit[] hitBuffer = new RaycastHit[16];
+        private EnhancedBehaviour actor = null;
+
+        private float exitActorTime = 0f;
+        private float exitAngle = 0f;
 
         // -----------------------
 
         protected override void OnValidate() {
             base.OnValidate();
 
-            if (!Application.isPlaying && (callbacks.Count == 0)) {
-                GetObjectCallbacks();
+            if (Application.isPlaying) {
+                return;
+            }
+
+            // References.
+            if (collider == null) {
+                collider = GetComponent<Collider>();
             }
         }
 
         protected internal override void OnDrawHandles() {
             base.OnDrawHandles();
 
-            Collider _collider = GetComponent<Collider>();
-
-            if ((directions.Count == 0) || !_collider) {
+            if ((portals.Count == 0) || !collider) {
                 return;
             }
 
-            Vector3 _center = _collider.bounds.center;
+            // Area and cast.
+            Vector3 _center = collider.bounds.center;
             List<Vector3> _area = new List<Vector3>();
 
-            for (int i = directions.Count; i-- > 0;) {
+            const float noActorAngle = 720f;
+            const float noExitTime = 2f;
+            const float fadeExitCoef = 2f;
 
-                ActivationDirection _direction = directions[i];
+            // Actor portal.
+            float _exitTime = (exitActorTime != 0f) ? ((Time.time - exitActorTime) / ExitHandleDuration) : noExitTime;
+            float _actorAngle = (actor != null) ? GetActorAngle(actor) : noActorAngle;
 
-                using (var _scope = EnhancedGUI.HandlesColor.Scope(_direction.color.SetAlpha(HandlesAlpha))) {
+            Portal _actorPortal = Array.Find(portals.Array, p => p.IsInRange(_actorAngle));
+            bool _drawActorPortal = !Application.isPlaying;
 
-                    int _maxAngle = _direction.DirectionAngle.y;
-                    float _angle = _direction.DirectionAngle.x;
+            // Inverse loop to draw first portals on top.
+            for (int i = portals.Count; i-- > 0;) {
+
+                Portal _portal = portals[i];
+                float _alpha = InactiveHandlesAlpha;
+
+                // Actor portal.
+                if (!_drawActorPortal) {
+
+                    if (_portal == _actorPortal) {
+
+                        // Highlight current actor portal.
+                        _alpha = ActiveHandlesAlpha;
+                        _drawActorPortal = true;
+
+                    } else if ((_actorPortal == null) && (_exitTime < 1f) && _portal.IsInRange(exitAngle)) {
+
+                        // Highlight last actor exit portal.
+                        float _percent = (1f - _exitTime) * fadeExitCoef; // Fade after half time elapsed.
+                        _alpha = Mathf.Lerp(_alpha, ActiveHandlesAlpha, _percent);
+
+                        _drawActorPortal = true;
+                    }
+                }
+
+                // Portal preview.
+                using (var _scope = EnhancedGUI.HandlesColor.Scope(_portal.color.SetAlpha(_alpha))) {
+
+                    int _maxAngle = _portal.DirectionAngle.y;
+                    float _angle = _portal.DirectionAngle.x;
 
                     _area.Clear();
                     _area.Add(_center);
@@ -237,19 +316,25 @@ namespace EnhancedFramework.Core {
                     }
 
                     _area.Add(_center);
-                    Handles.DrawAAConvexPolygon(_area.ToArray());
+                    Vector3[] _vertices = _area.ToArray();
+
+                    Handles.DrawAAConvexPolygon(_vertices);
+
+                    using (var _wireframeScope = EnhancedGUI.HandlesColor.Scope(SuperColor.Black.Get())) {
+                        Handles.DrawAAPolyLine(_vertices);
+                    }
 
                     // ----- Local Method ----- \\
 
                     Vector3 GetPoint(float _angle) {
 
-                        Vector3 _direction = Quaternion.AngleAxis(_angle, _collider.transform.up) * _collider.transform.forward;
-                        float _length = _collider.bounds.max.SetY(0f).sqrMagnitude;
+                        Vector3 _direction = Quaternion.AngleAxis(_angle, collider.transform.up) * collider.transform.forward;
+                        float _length = collider.bounds.max.SetY(0f).sqrMagnitude;
 
                         int _count = Physics.RaycastNonAlloc(_center + _direction * _length, -_direction, hitBuffer, _length);
                         for (int i = 0; i < _count; i++) {
 
-                            if (hitBuffer[i].collider == _collider) {
+                            if (hitBuffer[i].collider == collider) {
                                 return hitBuffer[i].point;
                             }
                         }
@@ -259,21 +344,21 @@ namespace EnhancedFramework.Core {
                 }
             }
         }
-#endif
+        #endif
         #endregion
 
         #region Registration
         /// <summary>
-        /// Registers a specific <see cref="ITrigger"/> callback instance on this trigger.
+        /// Registers a specific <see cref="ITrigger"/> callback on this trigger.
         /// </summary>
         /// <param name="_callback"><see cref="ITrigger"/> instance to register.</param>
-        /// <inheritdoc cref="Callback(ITrigger, CardinalDirection, CardinalDirection)"/>
-        public void RegisterCallback(ITrigger _callback, CardinalDirection _enter = CardinalDirection.None, CardinalDirection _exit = CardinalDirection.None) {
+        /// <inheritdoc cref="Callback(ITrigger, PortalIdentifier, PortalIdentifier)"/>
+        public void RegisterCallback(ITrigger _callback, PortalIdentifier _enter = PortalIdentifier.None, PortalIdentifier _exit = PortalIdentifier.None) {
             callbacks.Add(new Callback(_callback, _enter, _exit));
         }
 
         /// <summary>
-        /// Unregisters a specific <see cref="ITrigger"/> callback instance from this trigger.
+        /// Unregisters a specific <see cref="ITrigger"/> callback from this trigger.
         /// </summary>
         /// <param name="_callback"><see cref="ITrigger"/> instance to unregister.</param>
         public void UnregisterCallback(ITrigger _callback) {
@@ -284,12 +369,13 @@ namespace EnhancedFramework.Core {
             }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Utility
+        // -------------------------------------------
 
         /// <summary>
         /// Get trigger callbacks from this object and all its parents.
         /// </summary>
-        [Button(SuperColor.Green, IsDrawnOnTop = false)]
         [ContextMenu("Get Callbacks", false, 100)]
         protected void GetObjectCallbacks() {
 
@@ -315,32 +401,89 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Trigger
-        protected override void OnEnterTrigger(Component _component) {
-            base.OnEnterTrigger(_component);
+        protected override void OnEnterTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
+            base.OnEnterTrigger(_actor, _behaviour);
 
             // Callbacks.
-            CardinalDirection _direction = CardinalDirection.None;
+            PortalIdentifier _portal = GetInteractionPortal(_behaviour);
 
             foreach (Callback _callback in callbacks) {
-                _callback.OnEnterTrigger(_component, _direction);
+                _callback.OnEnterTrigger(_actor, _portal);
             }
+
+            #if UNITY_EDITOR
+            // Editor utility.
+            actor = _behaviour;
+            #endif
         }
 
-        protected override void OnExitTrigger(Component _component) {
-            base.OnExitTrigger(_component);
+        protected override void OnExitTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
+            base.OnExitTrigger(_actor, _behaviour);
 
             // Callbacks.
-            CardinalDirection _direction = CardinalDirection.None;
+            PortalIdentifier _portal = GetInteractionPortal(_behaviour);
 
             foreach (Callback _callback in callbacks) {
-                _callback.OnExitTrigger(_component, _direction);
+                _callback.OnExitTrigger(_actor, _portal);
             }
+
+            #if UNITY_EDITOR
+            // Editor utility.
+            if (actor == _behaviour) {
+
+                exitActorTime = Time.time;
+                exitAngle = GetActorAngle(_behaviour);
+                actor = null;
+            }
+            #endif
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Interaction
+        // -------------------------------------------
 
-        protected override bool InteractWithTrigger(Component _component) {
-            return base.InteractWithTrigger(_component) && _component.HasTags(requiredTags);
+        protected override bool InteractWithTrigger(EnhancedBehaviour _behaviour) {
+            return base.InteractWithTrigger(_behaviour) && _behaviour.HasTags(requiredTags) && requiredFlags.Valid;
+        }
+
+        /// <summary>
+        /// Get this trigger interaction portal for this actor to interact with.
+        /// </summary>
+        /// <param name="_behaviour">Actor interacting with this trigger.</param>
+        /// <returns><see cref="PortalIdentifier"/> identifier of the actor associated interaction portal.</returns>
+        private PortalIdentifier GetInteractionPortal(EnhancedBehaviour _behaviour) {
+
+            PortalIdentifier _direction = PortalIdentifier.None;
+
+            // Interacting portal.
+            if (portals.Count != 0) {
+
+                float _angle = GetActorAngle(_behaviour);
+                for (int i = 0; i < portals.Count; i++) {
+
+                    if (portals[i].IsInRange(_angle)) {
+                        _direction = portals[i].Identifier;
+                        break;
+                    }
+                }
+            }
+
+            return _direction;
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Get the angle between this trigger forward and its interacting actor.
+        /// </summary>
+        /// <param name="_behaviour">Actor interacting with this trigger.</param>
+        /// <returns>Signed angle between this trigger forward and the actor.</returns>
+        private float GetActorAngle(EnhancedBehaviour _behaviour) {
+            Transform _transform = collider.transform;
+
+            // Vector normalization not required - produces the same result.
+            Vector3 _direction = _behaviour.transform.position - collider.bounds.center;
+            return Vector3.SignedAngle(_transform.forward, _direction, _transform.up);
         }
         #endregion
     }

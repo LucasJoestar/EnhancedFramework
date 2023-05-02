@@ -16,33 +16,18 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag Group")]
     public class FlagGroupBehaviour : EnhancedBehaviour, IEnumerable<Flag> {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
-
         #region Global Members
         [Section("Flag Group")]
 
         public FlagValueGroup Flags = new FlagValueGroup();
 
-        [Tooltip("Set the flag values on initialization")]
-        [SerializeField] private bool setFlagsOnInit = false;
-
         // -----------------------
 
         /// <summary>
-        /// The total amount of flags in this object.
+        /// The total amount of flag in this object group.
         /// </summary>
         public int Count {
             get { return Flags.Count; }
-        }
-        #endregion
-
-        #region Enhanced Behaviour
-        protected override void OnInit() {
-            base.OnInit();
-
-            if (setFlagsOnInit) {
-                SetValues();
-            }
         }
         #endregion
 
@@ -91,10 +76,10 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Utility
-        /// <inheritdoc cref="FlagValueGroup.IsValid"/>
-        [Button(ActivationMode.Always, SuperColor.Green)]
-        public bool IsValid() {
-            bool _value = Flags.IsValid();
+        /// <inheritdoc cref="FlagValueGroup.Valid"/>
+        [Button(ActivationMode.Always, SuperColor.Green, IsDrawnOnTop = false)]
+        public bool GetValue() {
+            bool _value = Flags.Valid;
 
             #if DEVELOPMENT
             this.Log($"{name.Bold()} flags valid: {_value.ToString().Bold()}");
@@ -104,8 +89,8 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="FlagValueGroup.SetValues"/>
-        [Button(ActivationMode.Play, SuperColor.Orange)]
-        public void SetValues() {
+        [Button(ActivationMode.Play, SuperColor.Orange, IsDrawnOnTop = false)]
+        public void SetFlags() {
             Flags.SetValues();
         }
         #endregion

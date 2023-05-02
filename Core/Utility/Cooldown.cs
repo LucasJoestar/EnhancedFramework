@@ -28,7 +28,12 @@ namespace EnhancedFramework.Core {
             get { return (Time.time - time) > Duration; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <inheritdoc cref="Cooldown(float)"/>
+        public Cooldown() { }
 
         /// <param name="_duration"><inheritdoc cref="Duration" path="/summary"/></param>
         /// <inheritdoc cref="Cooldown"/>
@@ -50,6 +55,13 @@ namespace EnhancedFramework.Core {
         public virtual void Reload() {
             time = Time.time;
         }
+
+        /// <param name="_duration"><inheritdoc cref="Duration" path="/summary"/></param>
+        /// <inheritdoc cref="Reload"/>
+        public virtual void Reload(float _duration) {
+            Duration = _duration;
+            Reload();
+        }
         #endregion
     }
 
@@ -63,7 +75,12 @@ namespace EnhancedFramework.Core {
             get { return (Time.unscaledTime - time) > Duration; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <inheritdoc cref="UnscaledCooldown(float)"/>
+        public UnscaledCooldown() { }
 
         /// <summary>
         /// <inheritdoc cref="UnscaledCooldown"/>
@@ -89,7 +106,12 @@ namespace EnhancedFramework.Core {
             get { return time > Duration; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <inheritdoc cref="ManualCooldown(float)"/>
+        public ManualCooldown() { }
 
         /// <summary>
         /// <inheritdoc cref="ManualCooldown"/>

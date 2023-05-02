@@ -18,8 +18,7 @@ namespace EnhancedFramework.Timeline {
         #region Behaviour
         public override Playable CreateTrackMixer(PlayableGraph _graph, GameObject _go, int _inputCount) {
 
-            #if UNITY_EDITOR
-            if (!Application.isPlaying && _go.TryGetComponent(out PlayableDirector _playable)) {
+            if (_go.TryGetComponent(out PlayableDirector _playable)) {
 
                 // Get binding object.
                 Object _binding = _playable.GetGenericBinding(this);
@@ -30,7 +29,6 @@ namespace EnhancedFramework.Timeline {
                     }
                 }
             }
-            #endif
 
             return base.CreateTrackMixer(_graph, _go, _inputCount);
         }

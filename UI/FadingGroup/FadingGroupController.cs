@@ -8,9 +8,9 @@ using EnhancedFramework.Core;
 
 namespace EnhancedFramework.UI {
     /// <summary>
-    /// <see cref="FadingGroup"/>-related event receiver.
+    /// <see cref="FadingGroup"/>-related base event receiver.
     /// </summary>
-    public class FadingGroupController : EnhancedBehaviour {
+    public abstract class FadingGroupController : EnhancedBehaviour {
         #region Global Members
         /// <summary>
         /// If true, executes this controller event in edit mode.

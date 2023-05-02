@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
 using UnityEngine;
 
@@ -40,12 +41,22 @@ namespace EnhancedFramework.Core.GameStates {
         [Space(5f)] public bool IsPaused = false;
 
         /// <summary>
+        /// If true, freezes the game set its chronos value to 0.
+        /// </summary>
+        public bool FreezeChronos = false;
+
+        /// <summary>
         /// Is the game application currently being quit?
         /// </summary>
         [Space(5f)] public bool IsQuitting = false;
         #endregion
 
-        #region Behaviour        
+        #region Behaviour   
+        public const int ChronosPriority = 999;
+        private readonly int chronosID = EnhancedUtility.GenerateGUID();
+
+        // -----------------------
+
         /// <summary>
         /// Resets the values back to default.
         /// </summary>
@@ -57,6 +68,7 @@ namespace EnhancedFramework.Core.GameStates {
             IsUnloading = false;
 
             IsPaused = false;
+            FreezeChronos = false;
             IsQuitting = false;
 
             return this;
@@ -65,10 +77,17 @@ namespace EnhancedFramework.Core.GameStates {
         /// <summary>
         /// Applies the modifications made to this <see cref="GameStateOverride"/>.
         /// </summary>
-        internal protected void Apply() {
+        internal protected virtual void Apply() {
             // Cursor overrides.
             Cursor.visible = IsCursorVisible;
             Cursor.lockState = CursorLockMode;
+
+            // Freeze.
+            if (FreezeChronos) {
+                ChronosManager.Instance.PushOverride(chronosID, 0f, ChronosPriority);
+            } else {
+                ChronosManager.Instance.PopOverride(chronosID);
+            }
         }
         #endregion
     }

@@ -14,6 +14,8 @@ namespace EnhancedFramework.Localization {
     /// <summary>
     /// Utility component used to select a specific <see cref="Locale"/>.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Localization/Locale Selector"), DisallowMultipleComponent]
     public class LocaleSelector : EnhancedBehaviour {
         #region Global Members
         [Tooltip("Locale to select")]

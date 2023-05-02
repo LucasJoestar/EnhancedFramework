@@ -156,7 +156,7 @@ namespace EnhancedFramework.Core {
     /// <br/> all resources associated with it following its lifetime.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Scene Resource Manager"), DisallowMultipleComponent]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "General/Scene Resource Manager"), DisallowMultipleComponent]
     public class SceneResourceManager : EnhancedBehaviour, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 

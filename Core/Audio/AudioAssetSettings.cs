@@ -70,7 +70,9 @@ namespace EnhancedFramework.Core {
         [Button(SuperColor.Green, IsDrawnOnTop = false)]
         public void ApplyValues(AudioSource _audio) {
             #if UNITY_EDITOR
-            Undo.RecordObject(_audio, "Apply audio settings values");
+            if (!Application.isPlaying) {
+                //Undo.RecordObject(_audio, "Apply audio settings values");
+            }
             #endif
 
             _audio.SetCustomCurve(AudioSourceCurveType.CustomRolloff, customRolloffCurve);

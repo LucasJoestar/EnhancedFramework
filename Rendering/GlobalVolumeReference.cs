@@ -14,7 +14,9 @@ namespace EnhancedFramework.Rendering {
     /// <see cref="Component"/> to attach to every <see cref="Volume"/> of the game,
     /// <br/> used to reference the currently active one with the highest priority.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [RequireComponent(typeof(Volume))]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Rendering/Global Volume Reference"), DisallowMultipleComponent]
     public class GlobalVolumeReference : EnhancedBehaviour {
         #region Global Members
         /// <summary>

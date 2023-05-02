@@ -221,7 +221,7 @@ namespace EnhancedFramework.Core {
                 _sound.Activate(false);
             }
 
-            mainHandler = ambient.MainAudio.PlayAudio(transform.position);
+            mainHandler = ambient.MainAudio.PlayAudio(transform);
 
             // Activation and initial weight,
             // then registration and ambient weight setup.
@@ -245,6 +245,11 @@ namespace EnhancedFramework.Core {
 
             sounds.Clear();
             mainHandler.Stop(false);
+
+            // In case object is being destroyed.
+            if (!isActiveAndEnabled && mainHandler.GetHandle(out EnhancedAudioPlayer _player)) {
+                _player.StopFollowTransform();
+            }
         }
 
         // -------------------------------------------

@@ -14,26 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectID:
     type: 3
-    assetGUID: 53c7d3f2a3b12c34b83f273f1cb8d5b0
+    assetGUID: c2f72c4fc2d26ba4b82ae4053da63291
     objectID: 11400000
     prefabID: 0
   enableOnInit: 1
   isOrphan: 1
   map: {fileID: 0}
   input:
-    m_Name: Input
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 46b5ef85-fdac-4950-9a90-d35bd43248d1
+    m_Name: PauseChronos
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: e2fbbbd8-55ba-44f6-882a-e0ba0b7f9c97
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings:
     - m_Name: 
-      m_Id: badbfab4-b0b3-4802-a5fb-83214b25e2da
+      m_Id: 3fe94a8d-fa3b-4b46-8e95-42b636385b49
       m_Path: <Keyboard>/numpadDivide
       m_Interactions: 
       m_Processors: 
       m_Groups: 
-      m_Action: Input
+      m_Action: PauseChronos
       m_Flags: 0
     m_Flags: 0

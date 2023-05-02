@@ -76,6 +76,23 @@ namespace EnhancedFramework.Core {
 
             return _value;
         }
+
+        /// <summary>
+        /// Clamps a given angle value, so that is remains clamped betweed -360 and 360.
+        /// </summary>
+        /// <param name="_angle">Angle value to clamp.</param>
+        /// <returns>Calmped angle value.</returns>
+        public static float ClampAngle(float _angle) {
+
+            const float MaxAngle = 360f;
+            float _value = Mathf.Abs(_angle);
+
+            while (_value > MaxAngle) {
+                _value -= MaxAngle;
+            }
+
+            return _angle * Mathf.Abs(_angle);
+        }
         #endregion
 
         #region Decimal
@@ -193,6 +210,15 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="VectorExtensions.IsNull(Vector3)"/>
         public static bool IsVectorNull(Vector3 _value) {
             return _value.IsNull();
+        }
+
+        /// <summary>
+        /// Get if a specific <see cref="float"/> values approximately equals 0.
+        /// </summary>
+        /// <param name="_value">Value to check.</param>
+        /// <returns>True if the given value is approximately equal to 0, false otherwise.</returns>
+        public static bool ApproximatelyZero(float _value) {
+            return Mathf.Approximately(_value, 0f);
         }
         #endregion
 

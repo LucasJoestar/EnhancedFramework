@@ -13,6 +13,7 @@ using EnhancedFramework.Core;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 #if TWEENING
 using DG.Tweening;
@@ -31,7 +32,7 @@ namespace EnhancedFramework.UI {
         /// <summary>
         /// Lists all different <see cref="FadingGroupController"/> events to call.
         /// </summary>
-        protected enum ControllerEvent {
+        public enum ControllerEvent {
             ShowStarted     = 1 << 0,
             ShowPerformed   = 1 << 1,
             ShowCompleted   = 1 << 2,
@@ -45,6 +46,21 @@ namespace EnhancedFramework.UI {
 
             FullShow = ShowStarted | ShowPerformed  | ShowCompleted,
             FullHide = HideStarted | HidePerformed | CompleteHide,
+        }
+        #endregion
+
+        #region State
+        /// <summary>
+        /// State used for a group event.
+        /// </summary>
+        public enum StateEvent {
+            None        = 0,
+
+            Show        = 1,
+            Hide        = 2,
+
+            ShowInstant = 3,
+            HideInstant = 4,
         }
         #endregion
 
@@ -101,7 +117,10 @@ namespace EnhancedFramework.UI {
         [Tooltip("Parameters of this group")]
         [Enhanced, DisplayName("Parameters")] public Parameters GroupParameters = Parameters.Interactable | Parameters.UnscaledTime;
 
-        [Space(5f)]
+        [Space(10f)]
+
+        [Tooltip("If true, disables all Selectable components in children when this group is not interactable")]
+        [Enhanced, ShowIf("IsInteractable")] public bool EnableSelectable = false;
 
         [Tooltip("Object to first select when visible")]
         [Enhanced, ShowIf("UseSelectable"), Required] public Selectable Selectable = null;
@@ -152,7 +171,7 @@ namespace EnhancedFramework.UI {
         /// <summary>
         /// If true, fading will not be affected by time scale.
         /// </summary>
-        public bool UseUnscaledTime {
+        public bool RealTime {
             get { return HasParameter(Parameters.UnscaledTime); }
         }
 
@@ -165,6 +184,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
+        private static readonly List<Selectable> selectableBuffer = new List<Selectable>();
         protected DelayHandler delay = default;
 
         // -------------------------------------------
@@ -178,6 +198,7 @@ namespace EnhancedFramework.UI {
             ToggleCanvas(true);
             CallControllerEvent(ControllerEvent.FullShow, true);
 
+            OnSetVisibility(true, false);
             _onComplete?.Invoke();
         }
 
@@ -188,6 +209,7 @@ namespace EnhancedFramework.UI {
             ToggleCanvas(false);
             CallControllerEvent(ControllerEvent.FullHide, true);
 
+            OnSetVisibility(false, false);
             _onComplete?.Invoke();
         }
 
@@ -198,7 +220,7 @@ namespace EnhancedFramework.UI {
 
             void OnShow() {
                 _onAfterFadeIn?.Invoke();
-                delay = Delayer.Call(_duration, OnWaitComplete, UseUnscaledTime);
+                delay = Delayer.Call(_duration, OnWaitComplete, RealTime);
             }
 
             void OnWaitComplete() {
@@ -346,12 +368,19 @@ namespace EnhancedFramework.UI {
         }
 
         public void SetInteractable(bool _isInteractable) {
+
             if (IsInteractable && (Group.interactable != _isInteractable)) {
                 Group.interactable = _isInteractable;
 
-                /*foreach (var _selectable in Group.GetComponentsInChildren<Selectable>()) {
-                    _selectable.interactable = _isInteractable;
-                }*/
+                // Disable all children selectable.
+                if (EnableSelectable) {
+
+                    Group.GetComponentsInChildren(selectableBuffer);
+
+                    foreach (Selectable _selectable in selectableBuffer) {
+                        _selectable.enabled = _isInteractable;
+                    }
+                }
             }
         }
 
@@ -400,6 +429,38 @@ namespace EnhancedFramework.UI {
             bool HasEvent(ControllerEvent _eventType) {
                 return _event.HasFlag(_eventType);
             }
+        }
+
+        protected void OnSetVisibility(bool _visible, bool _instant) {
+
+            // Effects.
+            for (int i = 0; i < effects.Count; i++) {
+
+                FadingGroupEffect _effect = effects[i];
+                _effect.OnSetVisibility(_visible, _instant);
+            }
+        }
+        #endregion
+
+        #region Effect
+        private readonly List<FadingGroupEffect> effects = new List<FadingGroupEffect>();
+
+        // -----------------------
+
+        /// <summary>
+        /// Registers a specific <see cref="FadingGroupEffect"/> for this group.
+        /// </summary>
+        /// <param name="_effect"><see cref="FadingGroupEffect"/> to register.</param>
+        public void RegisterEffect(FadingGroupEffect _effect) {
+            effects.Add(_effect);
+        }
+
+        /// <summary>
+        /// Unregisters a specific <see cref="FadingGroupEffect"/> from this group.
+        /// </summary>
+        /// <param name="_effect"><see cref="FadingGroupEffect"/> to unregister.</param>
+        public void UnregisterEffect(FadingGroupEffect _effect) {
+            effects.Remove(_effect);
         }
         #endregion
 
@@ -461,6 +522,12 @@ namespace EnhancedFramework.UI {
 
         #region Behaviour
         public override void Show(Action _onComplete = null) {
+
+            if (IsVisible) {
+                OnComplete();
+                return;
+            }
+
             CallControllerEvent(ControllerEvent.ShowStarted);
             TransitionGroup.FadeInOut(ShowDelay, OnTransitionFaded, null, OnComplete);
 
@@ -481,6 +548,12 @@ namespace EnhancedFramework.UI {
         }
 
         public override void Hide(Action _onComplete = null) {
+
+            if (!IsVisible) {
+                OnComplete();
+                return;
+            }
+
             CallControllerEvent(ControllerEvent.HideStarted);
             TransitionGroup.FadeInOut(HideDelay, OnTransitionFaded, null, OnComplete);
 
@@ -546,7 +619,7 @@ namespace EnhancedFramework.UI {
 
                 _onFaded?.Invoke();
 
-                delay = Delayer.Call(ShowDelay, OnWaitComplete, UseUnscaledTime);
+                delay = Delayer.Call(ShowDelay, OnWaitComplete, RealTime);
             }
 
             void OnWaitComplete() {
@@ -574,7 +647,7 @@ namespace EnhancedFramework.UI {
 
                 _onFaded?.Invoke();
 
-                delay = Delayer.Call(ShowDelay, OnWaitComplete, UseUnscaledTime);
+                delay = Delayer.Call(ShowDelay, OnWaitComplete, RealTime);
             }
 
             void OnWaitComplete() {
@@ -612,7 +685,7 @@ namespace EnhancedFramework.UI {
         // -----------------------
 
         public override IFadingObject TransitionGroup {
-            get { return transitionGroup.Interface; }
+            get { return transitionGroup.Interface;  }
         }
         #endregion
     }
@@ -654,6 +727,7 @@ namespace EnhancedFramework.UI {
 
         #region Behaviour
         private TweenHandler tween = default;
+        private float targetAlpha = 0f;
 
         // -------------------------------------------
         // General
@@ -665,6 +739,8 @@ namespace EnhancedFramework.UI {
             #else
             Fade(FadeAlpha.y, fadeInDuration, _onComplete);
             #endif
+
+            OnSetVisibility(true, false);
         }
 
         public override void Hide(Action _onComplete = null) {
@@ -673,11 +749,14 @@ namespace EnhancedFramework.UI {
             #else
             Fade(FadeAlpha.x, fadeOutDuration, _onComplete);
             #endif
+
+            OnSetVisibility(false, false);
         }
 
         public override void Show(bool _isInstant, Action _onComplete = null) {
             if (_isInstant) {
                 Fade(FadeAlpha.y, _onComplete);
+                OnSetVisibility(true, true);
             } else {
                 Show(_onComplete);
             }
@@ -686,6 +765,7 @@ namespace EnhancedFramework.UI {
         public override void Hide(bool _isInstant, Action _onComplete = null) {
             if (_isInstant) {
                 Fade(FadeAlpha.x, _onComplete);
+                OnSetVisibility(false, true);
             } else {
                 Hide(_onComplete);
             }
@@ -717,6 +797,8 @@ namespace EnhancedFramework.UI {
             } else {
                 _alpha = DOVirtual.EasedValue(1f, 0f, _value, fadeOutEase);
             }
+            #else
+            _alpha = _value;
             #endif
 
             if (Group.alpha == _alpha) {
@@ -746,6 +828,7 @@ namespace EnhancedFramework.UI {
         /// <inheritdoc cref="Show(Action)"/>
         public void Show(float _duration, Ease _ease, Action _onComplete = null) {
             Fade(FadeAlpha.y, _duration, _ease, _onComplete);
+            OnSetVisibility(true, false);
         }
 
         /// <param name="_duration">Fade duration (in seconds).</param>
@@ -753,6 +836,7 @@ namespace EnhancedFramework.UI {
         /// <inheritdoc cref="Hide(Action)"/>
         public void Hide(float _duration, Ease _ease, Action _onComplete = null) {
             Fade(FadeAlpha.x, _duration, _ease, _onComplete);
+            OnSetVisibility(false, false);
         }
         #endif
 
@@ -776,7 +860,7 @@ namespace EnhancedFramework.UI {
             // ----- Local Method ----- \\
 
             TweenHandler CreateTween(Action<float> _setter, Action<bool> _onStopped) {
-                return Core.Tweener.Tween(Group.alpha, _alpha, _setter, _duration, UseUnscaledTime, _onStopped);
+                return Core.Tweener.Tween(Group.alpha, _alpha, _setter, _duration, RealTime, _onStopped);
             }
         }
 
@@ -787,7 +871,7 @@ namespace EnhancedFramework.UI {
             // ----- Local Method ----- \\
 
             TweenHandler CreateTween(Action<float> _setter, Action<bool> _onStopped) {
-                return Core.Tweener.Tween(Group.alpha, _alpha, _setter, _duration, _ease, UseUnscaledTime, _onStopped);
+                return Core.Tweener.Tween(Group.alpha, _alpha, _setter, _duration, _ease, RealTime, _onStopped);
             }
         }
         #endif
@@ -795,6 +879,14 @@ namespace EnhancedFramework.UI {
         // -----------------------
 
         private void DoFade(float _alpha, Func<Action<float>, Action<bool>, TweenHandler> _tweener, Action _onComplete) {
+
+            // Register callback if targetting to same alpha.
+            if ((targetAlpha == _alpha) && tween.GetHandle(out EnhancedTween _tween)) {
+
+                _tween.OnStopped += (b) => _onComplete?.Invoke();
+                return;
+            }
+
             CancelCurrentFade();
 
             EnableCanvas(true, _alpha != FadeAlpha.x);
@@ -808,6 +900,7 @@ namespace EnhancedFramework.UI {
             CallControllerEvent((_alpha == FadeAlpha.y) ? ControllerEvent.ShowStarted : ControllerEvent.HideStarted);
 
             // Tween.
+            targetAlpha = _alpha;
             tween = _tweener(Set, OnStopped);
 
             // ----- Local Method ----- \\

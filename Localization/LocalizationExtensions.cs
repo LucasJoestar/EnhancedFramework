@@ -36,6 +36,13 @@ namespace EnhancedFramework.Localization {
 			}
 
 			_value = _string.GetLocalizedString();
+
+			#if DEVELOPMENT
+			if (string.IsNullOrEmpty(_value)) {
+				_value = "MISSING LOCALIZATION";
+			}
+			#endif
+
 			return true;
 		}
 

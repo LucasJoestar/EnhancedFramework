@@ -2,6 +2,7 @@
     "name": "EnhancedFramework.Core",
     "rootNamespace": "EnhancedFramework.Core",
     "references": [
+        "DOTween.Modules",
         "EnhancedEditor",
         "Unity.EditorCoroutines.Editor",
         "Unity.TextMeshPro"
@@ -23,6 +24,11 @@
             "name": "com.unity.editorcoroutines",
             "expression": "",
             "define": "EDITOR_COROUTINE_ENABLED"
+        },
+        {
+            "name": "com.unity.nuget.newtonsoft-json",
+            "expression": "",
+            "define": "NEWTONSOFT"
         }
     ],
     "noEngineReferences": false

@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using UnityEngine;
@@ -72,5 +73,7 @@ namespace EnhancedFramework.UI {
     /// Ready-to-use <see cref="EnhancedBehaviour"/>-encapsulated <see cref="TransitionFadingGroup"/>.
     /// <br/> Use this to quickly implement fading <see cref="CanvasGroup"/> using another transition group.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Fading Group/Transition Fading Group"), DisallowMultipleComponent]
     public class TransitionFadingGroupBehaviour : FadingObjectTransitionFadingGroupBehaviour<TransitionFadingGroup> { }
 }

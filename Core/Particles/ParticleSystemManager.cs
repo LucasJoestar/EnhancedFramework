@@ -14,9 +14,9 @@ namespace EnhancedFramework.Core {
     /// Singleton class managing various <see cref="ParticleSystem"/>-related elements, and all associated <see cref="EnhancedParticleSystemPlayer"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Particle System Manager"), DisallowMultipleComponent]
-    public class ParticleSystemManager : EnhancedSingleton<ParticleSystemManager>, IPermanentUpdate, IGameStateOverrideCallback{
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Particles/Particle System Manager"), DisallowMultipleComponent]
+    public class ParticleSystemManager : EnhancedSingleton<ParticleSystemManager>, IStableUpdate, IGameStateOverrideCallback{
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
         [Section("Particle Manager")]
@@ -56,7 +56,7 @@ namespace EnhancedFramework.Core {
             EnhancedSceneManager.OnStartLoading += OnStartLoading;
         }
 
-        void IPermanentUpdate.Update() {
+        void IStableUpdate.Update() {
 
             // Particles update.
             for (int i = particles.Count; i-- > 0;) {

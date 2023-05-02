@@ -147,8 +147,8 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     [ScriptGizmos(false, true)]
     [ScriptingDefineSymbol("DEVELOPER_CONSOLE", "Developer Console")]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Developer Console/Developer Console"), DisallowMultipleComponent]
-    public class DeveloperConsole : EnhancedSingleton<DeveloperConsole>, IPermanentUpdate, IGameStateLifetimeCallback {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
+    public class DeveloperConsole : EnhancedSingleton<DeveloperConsole>, IStableUpdate, IGameStateLifetimeCallback {
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
         [Section("Developer Console")]
@@ -281,7 +281,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             Clear();
         }
 
-        void IPermanentUpdate.Update() {
+        void IStableUpdate.Update() {
             // Binding commands.
             if (EnableBindings) {
                 foreach (var _binding in Bindings) {

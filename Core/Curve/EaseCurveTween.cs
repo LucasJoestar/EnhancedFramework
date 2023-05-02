@@ -53,7 +53,7 @@ namespace EnhancedFramework.Core {
                 return SetEase(_transform.DOMove(_value, Duration, _snapping).SetDelay(Delay));
             }
 
-            throw new InvalidTweenException("\"Move\" action can only be performed on Vector3 type tween objects.");
+            throw new InvalidTweenException("\"Move\" action can only be performed on Vector3 type tween objects");
         }
 
         public Tween Rotate(Transform _transform, RotateMode _mode = RotateMode.Fast) {
@@ -108,6 +108,44 @@ namespace EnhancedFramework.Core {
             }
 
             throw new InvalidTweenException("\"Local Rotate Quaternion\" action can only be performed on Quaternion type tween objects.");
+        }
+        #endregion
+
+        #region Rect Transform
+        public Tween AnchorPosition(RectTransform _rectTransform, bool _snapping = false) {
+            if (Value is Vector3 _vector3) {
+                return SetEase(_rectTransform.DOAnchorPos3D(_vector3, Duration, _snapping).SetDelay(Delay));
+            }
+
+            if (Value is Vector2 _vector2) {
+                return SetEase(_rectTransform.DOAnchorPos(_vector2, Duration, _snapping).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"AnchorPosition\" action can only be performed on Vector3 or Vector2 type tween objects");
+        }
+
+        public Tween AnchorMin(RectTransform _rectTransform) {
+            if (Value is Vector2 _vector2) {
+                return SetEase(_rectTransform.DOAnchorMin(_vector2, Duration).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"AnchorMin\" action can only be performed or Vector2 type tween objects");
+        }
+
+        public Tween AnchorMax(RectTransform _rectTransform) {
+            if (Value is Vector2 _vector2) {
+                return SetEase(_rectTransform.DOAnchorMax(_vector2, Duration).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"AnchorMax\" action can only be performed or Vector2 type tween objects");
+        }
+
+        public Tween SizeDelta(RectTransform _rectTransform, bool _snapping = false) {
+            if (Value is Vector2 _value) {
+                return SetEase(_rectTransform.DOSizeDelta(_value, Duration, _snapping).SetDelay(Delay));
+            }
+
+            throw new InvalidTweenException("\"SizeDelta\" action can only be performed or Vector2 type tween objects");
         }
         #endregion
 

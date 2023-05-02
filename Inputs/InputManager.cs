@@ -17,6 +17,9 @@ namespace EnhancedFramework.Inputs {
     /// <summary>
     /// Input-managing singleton class used for the whole game.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-970)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Input/Input Manager"), DisallowMultipleComponent]
     public class InputManager : EnhancedSingleton<InputManager> {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 

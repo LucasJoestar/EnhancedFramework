@@ -26,6 +26,17 @@ namespace EnhancedFramework.Inputs {
 
         public override bool IsEnabled {
             get { return Array.TrueForAll(inputs, i => i.IsEnabled); }
+            set {
+                if (value == IsEnabled) {
+                    return;
+                }
+
+                if (value) {
+                    Enable();
+                } else {
+                    Disable();
+                }
+            }
         }
         #endregion
 

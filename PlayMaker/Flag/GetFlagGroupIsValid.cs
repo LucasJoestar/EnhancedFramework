@@ -60,7 +60,7 @@ namespace EnhancedFramework.PlayMaker {
             bool _isValid = false;
 
             if (FlagGroup.Value is FlagGroupBehaviour _behaviour) {
-                _isValid = _behaviour.IsValid();
+                _isValid = _behaviour.GetValue();
             }
 
             StoreValue.Value = _isValid;

@@ -60,12 +60,19 @@ namespace EnhancedFramework.Core {
             get { return assetGUID; }
         }
 
+        /// <summary>
+        /// Indicates if this id is valid.
+        /// </summary>
+        public bool IsValid {
+            get { return (type != Type.Null) && (objectID != 0L) && !string.IsNullOrEmpty(assetGUID); }
+        }
+
         // -----------------------
 
         /// <summary>
         /// Default null <see cref="EnhancedObjectID"/>.
         /// </summary>
-        public static EnhancedObjectID None {
+        public static EnhancedObjectID Default {
             get {
                 return new EnhancedObjectID() {
                     type = Type.Null,
@@ -163,6 +170,31 @@ namespace EnhancedFramework.Core {
 
         #region Utility
         /// <summary>
+        /// Intializes this object id for a scene object.
+        /// </summary>
+        internal void InitSceneObject() {
+
+            switch (type) {
+
+                case Type.Null:
+                case Type.ImportedAsset:
+                case Type.SourceAsset:
+                case Type.Unknown:
+
+                    // Generate new id for instantiated or non initialized objects.
+                    type = Type.SceneObject;
+                    objectID = Guid.NewGuid().ToString().GetLongStableHashCode();
+
+                    break;
+
+                case Type.SceneObject:
+                case Type.DynamicObject:
+                default:
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Copies the values of another <see cref="EnhancedObjectID"/>.
         /// </summary>
         /// <param name="_id"><see cref="EnhancedObjectID"/> to copy values.</param>
@@ -184,16 +216,6 @@ namespace EnhancedFramework.Core {
                    (objectID == _id.objectID) &&
                    (prefabID == _id.prefabID) &&
                     assetGUID.Equals(_id.assetGUID, StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// Get if this id is valid.
-        /// </summary>
-        /// <returns>True if this id is valid, false otherwise.</returns>
-        public bool IsValid() {
-            return (type != Type.Null) &&
-                   (objectID != 0L) &&
-                    !string.IsNullOrEmpty(assetGUID);
         }
 
         /// <summary>

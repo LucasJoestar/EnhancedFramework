@@ -45,7 +45,7 @@ namespace EnhancedFramework.PlayMaker {
 
         private void SetGroupValues() {
             if (FlagGroup.Value is FlagGroupBehaviour _behaviour) {
-                _behaviour.SetValues();
+                _behaviour.SetFlags();
             }
         }
         #endregion

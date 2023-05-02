@@ -141,9 +141,18 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         public override int Set(U _key, V _value) {
-            base.Set(_key, _value);
-            RefreshBuffer();
 
+            Pair<U, V> _pair = new Pair<U, V>(_key, _value);
+            int _index = IndexOfKey(_key);
+
+            // Insert element at index 0 instead of adding it at the end.
+            if (_index != -1) {
+                collection[_index] = _pair;
+            } else {
+                collection.Insert(0, _pair);
+            }
+
+            RefreshBuffer();
             return IndexOfKey(_key);
         }
 
@@ -181,6 +190,7 @@ namespace EnhancedFramework.Core {
         }
 
         public override void Sort() {
+
             // Use a helper list to ensure a stable sorting.
             if (performStableSorting) {
                 List<Pair<U, V>> _sortHelper = new List<Pair<U, V>>(collection);
@@ -190,7 +200,22 @@ namespace EnhancedFramework.Core {
                     int _compare = Compare(a, b);
 
                     if (_compare == 0) {
-                        _compare = -_sortHelper.IndexOf(a).CompareTo(_sortHelper.IndexOf(b));
+
+                        int _aIndex = _sortHelper.IndexOf(a);
+                        int _bIndex = _sortHelper.IndexOf(b);
+
+                        if (_aIndex == -1) {
+
+                            _compare = -1;
+
+                        } else if (_bIndex == -1) {
+
+                            _compare = 1;
+
+                        } else {
+
+                            _compare = _aIndex.CompareTo(_bIndex);
+                        }
                     }
 
                     return _compare;

@@ -46,7 +46,7 @@ namespace EnhancedFramework.Timeline {
             // Register object properties.
             IFadingObject _bindingObject = Template.FadingObject;
 
-            if ((_bindingObject != null) && (_bindingObject is Component _component)) {
+            if ((_bindingObject != null) && !ReferenceEquals(_bindingObject, null) && (_bindingObject is Component _component) && (_component != null)) {
                 _driver.AddFromComponent(_component.gameObject, _component);
 
                 CanvasGroup _group = _component.GetComponentInChildren<CanvasGroup>();
@@ -59,9 +59,11 @@ namespace EnhancedFramework.Timeline {
                     _driver.AddFromComponent(_canvas.gameObject, _canvas);
                 }
 
+                #if RENDER_PIPELINE
                 if (_component.TryGetComponent(out Volume _volume)) {
                     _driver.AddFromComponent(_volume.gameObject, _volume);
                 }
+                #endif
             }
         }
         #endregion
@@ -104,7 +106,8 @@ namespace EnhancedFramework.Timeline {
             // Cache setup.
             IFadingObject _object = FadingObject;
 
-            if (hasFromVisibility && (_object != null)) {
+            if (!hasFromVisibility && (_object != null)) {
+
                 fromVisibility = _object.IsVisible;
                 hasFromVisibility = true;
             }

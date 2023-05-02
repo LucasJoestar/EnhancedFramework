@@ -34,7 +34,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="ObjectPool{T}"/>-related interface used to create and destroy instances.
     /// </summary>
     /// <typeparam name="T"><see cref="IPoolableObject"/> managed type.</typeparam>
-    public interface IObjectPoolManager<T> where T : IPoolableObject {
+    public interface IObjectPoolManager<T> where T : class, IPoolableObject {
         #region Content
         /// <summary>
         /// Creates a new object instance.
@@ -56,7 +56,7 @@ namespace EnhancedFramework.Core {
     /// Keep in mind to initialize it as soon as possible using <see cref="Initialize(IObjectPoolManager{T})"/>.
     /// </summary>
     [Serializable]
-    public sealed class ObjectPool<T> where T : IPoolableObject {
+    public sealed class ObjectPool<T> where T : class, IPoolableObject  {
         #region Global Members
         [SerializeField] private EnhancedCollection<T> pool = new EnhancedCollection<T>();
         private IObjectPoolManager<T> manager = null;

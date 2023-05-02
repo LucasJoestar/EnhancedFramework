@@ -31,6 +31,10 @@ namespace EnhancedFramework.Editor {
             }
 
             Transform _transform = _collider.transform;
+            Quaternion _rotation = _transform.rotation;
+
+            _transform.rotation = Quaternion.identity;
+
             Bounds _bounds = new Bounds(_transform.position, Vector3.zero);
 
             foreach (MeshRenderer _renderer in _collider.GetComponentsInChildren<MeshRenderer>()) {
@@ -45,14 +49,22 @@ namespace EnhancedFramework.Editor {
                 }
             }
 
-            Vector3 _scale = _transform.lossyScale;
-            _bounds.center -= _transform.position;
-            _bounds.extents = _transform.rotation * _bounds.extents;
+            Vector3 _scale      = _transform.lossyScale;
+            Vector3 _center     = _bounds.center - _transform.position;
+            Vector3 _extents    = _bounds.extents;
 
             if (!_scale.IsNull()) {
-                _bounds.center  = _bounds.center.Divide(_scale);
-                _bounds.extents = _bounds.extents.Divide(_scale);
+
+                _center     = _center.Divide(_scale);
+                _extents    = _extents.Divide(_scale);
             }
+
+            _bounds.center  = _center;
+            _bounds.extents = new Vector3(Mathf.Abs(_extents.x), Mathf.Abs(_extents.y), Mathf.Abs(_extents.z));
+
+            _transform.rotation = _rotation;
+
+            Undo.RecordObject(_collider, "Setup Collider");
 
             switch (_collider) {
                 case CapsuleCollider _caspule:
@@ -84,6 +96,8 @@ namespace EnhancedFramework.Editor {
             if (!(_menu.context is Collider _collider)) {
                 return;
             }
+
+            Undo.RecordObject(_collider, "Adjust Collider");
 
             switch (_collider) {
                 case CapsuleCollider _caspule:

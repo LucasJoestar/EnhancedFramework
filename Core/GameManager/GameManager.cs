@@ -9,21 +9,38 @@ using EnhancedFramework.Core.Settings;
 using System;
 using UnityEngine;
 
+using Random = UnityEngine.Random;
+
 namespace EnhancedFramework.Core {
     /// <summary>
     /// This application global game manager.
     /// <para/> Inherit from this to implement your own spin in it.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [DefaultExecutionOrder(-98)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Game Manager"), DisallowMultipleComponent]
+    [DefaultExecutionOrder(-980)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "General/Game Manager"), DisallowMultipleComponent]
     public class GameManager : EnhancedSingleton<GameManager> {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
         [Section("Game Manager")]
 
+        [Tooltip("Settings of the game")]
         [SerializeField, Enhanced, Required] protected GameSettings settings = null;
+
+        [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
+
+        [Tooltip("This game random generation seed")]
+        [SerializeField, Enhanced, ReadOnly] private int seed = 0;
+
+        // -----------------------
+
+        /// <summary>
+        /// This game random generation seed.
+        /// </summary>
+        public int Seed {
+            get { return seed; }
+        }
 
         // -----------------------
 
@@ -44,8 +61,21 @@ namespace EnhancedFramework.Core {
         protected override void OnInit() {
             base.OnInit();
 
-            // Settings initialization.
+            // Initialization.
             settings.Init();
+            SetSeed(EnhancedUtility.GenerateGUID());
+        }
+        #endregion
+
+        #region Scripting Symbols
+        /// <inheritdoc cref="GameSettings.GetScriptingSymbols"/>
+        public string[] GetScriptingSymbols() {
+            return settings.GetScriptingSymbols();
+        }
+
+        /// <inheritdoc cref="GameSettings.IsScriptingSymbolDefined"/>
+        public bool IsScriptingSymbolDefined(string _symbol) {
+            return settings.IsScriptingSymbolDefined(_symbol);
         }
         #endregion
 
@@ -77,6 +107,24 @@ namespace EnhancedFramework.Core {
 
             _player = null;
             return false;
+        }
+
+        /// <summary>
+        /// Sets this game random generation seed.
+        /// </summary>
+        /// <param name="_seed">This game generation seed.</param>
+        public void SetSeed(int _seed) {
+
+            seed = _seed;
+            Random.InitState(_seed);
+
+            this.LogMessage($"Seed - {_seed}");
+        }
+        #endregion
+
+        #region Logger
+        public override Color GetLogMessageColor(LogType _type) {
+            return SuperColor.Raspberry.Get();
         }
         #endregion
     }

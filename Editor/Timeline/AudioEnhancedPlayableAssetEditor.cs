@@ -12,7 +12,6 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 using Object = UnityEngine.Object;
@@ -161,20 +160,6 @@ namespace EnhancedFramework.Editor {
             }
 
             return (bool)windowStateShowAudioWaveformField.GetValue(_state);
-        }
-        #endregion
-
-        #region Utility
-        public override void GetSubTimelines(TimelineClip _clip, PlayableDirector _director, List<PlayableDirector> _subTimelines) {
-            base.GetSubTimelines(_clip, _director, _subTimelines);
-
-            // Use this callback to assign the Audio Source bound object reference to timeline clips.
-            TrackAsset _track = _clip.GetParentTrack();
-            Object _binding = _director.GetGenericBinding(_track);
-
-            if (_clip.asset is AudioEnhancedPlayableAsset _asset) {
-                _asset.audioSource = _binding as AudioSource;
-            }
         }
         #endregion
     }

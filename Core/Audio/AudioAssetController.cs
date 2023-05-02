@@ -69,6 +69,8 @@ namespace EnhancedFramework.Core {
         protected override void OnDeactivation() {
             base.OnDeactivation();
 
+            bool _active = isActiveAndEnabled;
+
             // Stop fade out.
             foreach (AudioAsset _audio in fadeOutAudios) {
 
@@ -80,6 +82,11 @@ namespace EnhancedFramework.Core {
             // Stop audios.
             foreach (AudioHandler _handler in handlers) {
                 _handler.Stop();
+
+                // In case object is being destroyed.
+                if (!_active && _handler.GetHandle(out EnhancedAudioPlayer _player)) {
+                    _player.StopFollowTransform();
+                }
             }
 
             handlers.Clear();

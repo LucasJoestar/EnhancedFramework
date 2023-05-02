@@ -26,6 +26,8 @@ namespace EnhancedFramework.UI {
     /// <summary>
     /// <see cref="EnhancedBehaviour"/> UI class used to make a screen fade. 
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Special/Screen Fade"), DisallowMultipleComponent]
     public class ScreenFadingGroup : FadingObjectSingleton<ScreenFadingGroup> {
         #region Global Members
         [Space(10f)]

@@ -17,7 +17,8 @@ namespace EnhancedFramework.Core {
     /// Should be loaded after and in a different Splash specific scene than Core.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Splash Manager"), DisallowMultipleComponent]
+    [DefaultExecutionOrder(100)] // Execute late, after all other scripts are executed.
+    [AddComponentMenu(FrameworkUtility.MenuPath + "General/Splash Manager"), DisallowMultipleComponent]
     public class SplashManager : EnhancedSingleton<SplashManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 
@@ -33,6 +34,7 @@ namespace EnhancedFramework.Core {
         #region Global Members
         [Section("Splash Manager")]
 
+        [SerializeField] private SerializedType<ISplashState> splashStateType = new SerializedType<ISplashState>(SerializedTypeConstraint.None, typeof(DefaultSplashGameState));
         [SerializeField, Enhanced, Required] private SceneBundle nextScene = null;
 
         [Space(10f)]
@@ -60,6 +62,10 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
+        private const float SplashDelay = .5f;
+
+        // -----------------------
+
         protected override void OnBehaviourEnabled() {
             base.OnBehaviourEnabled();
 
@@ -70,7 +76,13 @@ namespace EnhancedFramework.Core {
         protected override void OnPlay() {
             base.OnPlay();
 
-            StartCoroutine(PlaySplash());
+            Delayer.Call(SplashDelay, OnComplete, true);
+
+            // ----- Local Method ----- \\
+
+            void OnComplete() {
+                StartCoroutine(PlaySplash());
+            }
         }
 
         protected override void OnBehaviourDisabled() {
@@ -109,7 +121,7 @@ namespace EnhancedFramework.Core {
             // (The Update system make sure to not perform initializations and play for more than a fixed amount of time)
             yield return new WaitForSecondsRealtime(TimeBeforeSplash);
 
-            gameState = GameState.CreateState<SplashGameState>();
+            gameState = GameState.CreateState(splashStateType);
             isPlaying = true;
 
             EnhancedSceneManager.Instance.LoadSceneBundle(nextScene, LoadSceneMode.Additive);

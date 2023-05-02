@@ -22,7 +22,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// The id of the referenced <see cref="CrossSceneObject"/>.
         /// </summary>
-        public EnhancedObjectID ReferenceID = EnhancedObjectID.None;
+        public EnhancedObjectID ReferenceID = EnhancedObjectID.Default;
 
         // -----------------------
 
@@ -72,7 +72,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_reference">This class referencing <see cref="Component"/>.</param>
         /// <returns>True if the associated reference <see cref="Component"/> could be found, false otherwise.</returns>
         public bool GetReference(out T _reference) {
-            if (ReferenceID.IsValid() && GetReference(out CrossSceneObject _ref) && _ref.TryGetComponent(out _reference)) {
+            if (ReferenceID.IsValid && GetReference(out CrossSceneObject _ref) && _ref.TryGetComponent(out _reference)) {
                 return true;
             }
 

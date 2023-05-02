@@ -60,14 +60,14 @@ namespace EnhancedFramework.PlayMaker {
         // -------------------------------------------
 
         private void Activate() {
-            if (Music.Value is AudioAssetController _audio) {
-                _audio.Activate(Instant.Value);
+            if (Music.Value is AudioMusicController _music) {
+                _music.Activate(Instant.Value);
             }
         }
 
         private void Deactivate() {
-            if (StopOnExit.Value && (Music.Value is AudioAssetController _audio)) {
-                _audio.Deactivate(Instant.Value);
+            if (StopOnExit.Value && (Music.Value is AudioMusicController _music)) {
+                _music.Deactivate(Instant.Value);
             }
         }
         #endregion

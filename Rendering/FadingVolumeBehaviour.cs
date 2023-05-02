@@ -39,6 +39,9 @@ namespace EnhancedFramework.Rendering {
         [Tooltip("The fading target weight of this volume: first value when fading out, second when fading in")]
         [Enhanced, MinMax(0f, 1f)] public Vector2 FadeWeight = new Vector2(0f, 1f);
 
+        [Tooltip("If true, enables / disables the associated volume component when fading this object")]
+        public bool EnableVolume = true;
+
         [Space(10f)]
 
         [SerializeField, Enhanced, Range(0f, 10f)] private float fadeInDuration = .5f;
@@ -230,11 +233,7 @@ namespace EnhancedFramework.Rendering {
             }
             #endif
 
-            if (Volume.weight == _weight) {
-                return;
-            }
-
-            Volume.weight = _weight;
+            SetWeight(_weight);
         }
 
         protected void CancelCurrentFade() {
@@ -249,13 +248,26 @@ namespace EnhancedFramework.Rendering {
             tween.Stop();
         }
 
+        private void SetWeight(float _weight) {
+
+            if (Volume.weight == _weight) {
+                return;
+            }
+
+            Volume.weight = _weight;
+
+            if (EnableVolume) {
+                Volume.enabled = !Mathf.Approximately(_weight, FadeWeight.x);
+            }
+        }
+
         // -------------------------------------------
         // Fade
         // -------------------------------------------
 
         private void Fade(float _weight, Action _onComplete) {
             CancelCurrentFade();
-            Volume.weight = _weight;
+            SetWeight(_weight);
 
             _onComplete?.Invoke();
         }
@@ -298,7 +310,7 @@ namespace EnhancedFramework.Rendering {
             // ----- Local Methods ----- \\
 
             void Set(float _value) {
-                Volume.weight = _value;
+                SetWeight(_value);
             }
 
             void OnStopped(bool _completed = false) {
@@ -316,7 +328,9 @@ namespace EnhancedFramework.Rendering {
     /// Ready-to-use <see cref="EnhancedBehaviour"/>-encapsulated <see cref="FadingVolume"/>.
     /// <br/> Use this to quickly implement instantly fading <see cref="UnityEngine.Rendering.Volume"/> objects.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [RequireComponent(typeof(Volume))]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Rendering/Fading Volume"), DisallowMultipleComponent]
     public class FadingVolumeBehaviour : FadingObjectBehaviour {
         #region Global Members
         [Section("Fading Volume")]
@@ -352,7 +366,30 @@ namespace EnhancedFramework.Rendering {
                 volume.Volume = GetComponent<Volume>();
             }
         }
-        #endif
+#endif
+        #endregion
+
+        #region Play Mode Data
+        public override bool CanSavePlayModeData {
+            get { return true; }
+        }
+
+        // -----------------------
+
+        public override void SavePlayModeData(PlayModeEnhancedObjectData _data) {
+
+            // Save as json.
+            _data.Strings.Add(JsonUtility.ToJson(volume));
+        }
+
+        public override void LoadPlayModeData(PlayModeEnhancedObjectData _data) {
+
+            // Load from json.
+            FadingVolume _volume = JsonUtility.FromJson<FadingVolume>(_data.Strings[0]);
+            _volume.Volume = volume.Volume;
+
+            volume = _volume;
+        }
         #endregion
     }
 }

@@ -20,7 +20,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// The <see cref="List{T}"/> wrapped in this collection.
         /// </summary>
-        [SerializeField] protected List<T> collection = new List<T>();
+        [SerializeField] internal List<T> collection = new List<T>();
 
         // -----------------------
 
@@ -208,6 +208,19 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The element to remove.</param>
         /// <returns>True if the element was part of this collection and could be removed, false otherwise.</returns>
         public virtual bool Remove(T _element) {
+
+            // Instance comparison.
+            if (CompareInstance()) {
+                int _index = collection.FindIndex(e => ReferenceEquals(e, _element));
+
+                if (_index == -1) {
+                    return false;
+                }
+
+                collection.RemoveAt(_index);
+                return true;
+            }
+
             return collection.Remove(_element);
         }
 
@@ -264,6 +277,12 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The element to get the index from this collection.</param>
         /// <returns>-1 if the element could not be found in this collection, or its index otherwise.</returns>
         public virtual int IndexOf(T _element) {
+
+            // Instance comparison.
+            if (CompareInstance()) {
+                return collection.FindIndex(e => ReferenceEquals(e, _element));
+            }
+
             return collection.IndexOf(_element);
         }
 
@@ -309,6 +328,12 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The element to check.</param>
         /// <returns>True if the element is contained in the collection, false otherwise.</returns>
         public virtual bool Contains(T _element) {
+
+            // Instance comparison.
+            if (CompareInstance()) {
+                return collection.Exists(e => ReferenceEquals(e, _element));
+            }
+
             return collection.Contains(_element);
         }
 
@@ -411,6 +436,14 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// Get this collection content as a new array.
+        /// </summary>
+        /// <returns>This collection content as an array.</returns>
+        public T[] ToArray() {
+            return collection.ToArray();
+        }
+
+        /// <summary>
         /// Clears the content of this collection.
         /// </summary>
         public virtual void Clear() {
@@ -418,6 +451,10 @@ namespace EnhancedFramework.Core {
         }
 
         // -----------------------
+
+        protected bool CompareInstance() {
+            return typeof(T).IsInterface;
+        }
 
         protected bool Compare<U>(U _first, U _second) {
             return EqualityComparer<U>.Default.Equals(_first, _second);

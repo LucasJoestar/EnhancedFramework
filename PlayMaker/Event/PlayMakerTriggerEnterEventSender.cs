@@ -13,7 +13,9 @@ namespace EnhancedFramework.PlayMaker {
     /// <see cref="EnhancedBehaviour"/> used to send the global enter trigger event
     /// to a <see cref="PlayMakerFSM"/> instance, when something enters this trigger.
     /// </summary>
-    public class PlayMakerTriggerEnterEventSender : LevelTrigger {
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Trigger Enter Event Sender")]
+    public class PlayMakerTriggerEnterEventSender : EnhancedTrigger {
         #region Global Members
         [Section("On Enter Trigger - Event Sender")]
 
@@ -25,9 +27,8 @@ namespace EnhancedFramework.PlayMaker {
 
         // -----------------------
 
-        protected override void OnEnterTrigger(Component _component) {
-            base.OnEnterTrigger(_component);
-
+        protected override void OnEnterTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
+            base.OnEnterTrigger(_actor, _behaviour);
             fsm.SendEvent(EventName);
         }
         #endregion

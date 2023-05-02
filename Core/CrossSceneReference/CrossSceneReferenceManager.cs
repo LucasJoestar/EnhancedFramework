@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// <br/> and used to load the associated <see cref="CrossSceneReference{T}"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Cross Scene Reference Manager"), DisallowMultipleComponent]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Cross Scene/Cross Scene Reference Manager"), DisallowMultipleComponent]
     public class CrossSceneReferenceManager : EnhancedSingleton<CrossSceneReferenceManager> {
         #region Global Members
         [Section("Cross Scene Reference Manager")]
@@ -55,7 +55,7 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            this.LogMessage($"Not Found ({references.Count})");
+            this.LogErrorMessage($"Not Found ({references.Count})");
 
             _reference = null;
             return false;

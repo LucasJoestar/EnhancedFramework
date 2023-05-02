@@ -5,10 +5,10 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
-
-using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,7 +16,55 @@ using UnityEditor.Experimental.SceneManagement;
 using UnityEditor.SceneManagement;
 #endif
 
+using Object = UnityEngine.Object;
+
 namespace EnhancedFramework.Core {
+    /// <summary>
+    /// Serializable <see cref="EnhancedBehaviour"/> data.
+    /// </summary>
+    [Serializable]
+    public class PlayModeEnhancedObjectData : PlayModeObjectData {
+        #region Global Members
+        [SerializeField] public List<Vector3> Vectors   = new List<Vector3>();
+        [SerializeField] public List<string> Strings    = new List<string>();
+        [SerializeField] public List<float> Floats      = new List<float>();
+        [SerializeField] public List<bool> Bools        = new List<bool>();
+        [SerializeField] public List<int> Ints          = new List<int>();
+
+        // -----------------------
+
+        public PlayModeEnhancedObjectData() : base() { }
+        #endregion
+
+        #region Behaviour
+        public override void Save(Object _object) {
+
+            Vectors.Clear();
+            Strings.Clear();
+            Floats.Clear();
+            Bools.Clear();
+            Ints.Clear();
+
+            if (_object is EnhancedBehaviour _behaviour) {
+                _behaviour.SavePlayModeData(this);
+            }
+
+            base.Save(_object);
+        }
+
+        public override bool Load(Object _object) {
+
+            if (_object is EnhancedBehaviour _behaviour) {
+
+                _behaviour.LoadPlayModeData(this);
+                return true;
+            }
+
+            return false;
+        }
+        #endregion
+    }
+
     /// <summary>
     /// Base class to derive every <see cref="MonoBehaviour"/> of the project from.
     /// <para/>
@@ -75,7 +123,7 @@ namespace EnhancedFramework.Core {
         #region Global Members
         [PropertyOrder(int.MinValue + 999)]
         [SerializeField, Enhanced, ReadOnly] protected float chronos = 1f;
-        [SerializeField, HideInInspector] private EnhancedObjectID objectID = EnhancedObjectID.None;
+        [SerializeField, HideInInspector] private EnhancedObjectID objectID = EnhancedObjectID.Default;
 
         /// <summary>
         /// This object local time scale factor.
@@ -110,6 +158,15 @@ namespace EnhancedFramework.Core {
         public float SmoothDeltaTime {
             get {
                 return Time.smoothDeltaTime * chronos;
+            }
+        }
+
+        /// <summary>
+        /// Object-related version of <see cref="Time.unscaledDeltaTime"/>.
+        /// </summary>
+        public float UnscaledDeltaTime {
+            get {
+                return Time.unscaledDeltaTime * chronos;
             }
         }
 
@@ -199,8 +256,10 @@ namespace EnhancedFramework.Core {
             GetObjectID();
 
             // Registration.
-            if (UpdateRegistration != 0) {
-                UpdateManager.Instance.Register(this, UpdateRegistration);
+            UpdateRegistration _registraiton = UpdateRegistration;
+
+            if (_registraiton != 0) {
+                UpdateManager.Instance.Register(this, _registraiton);
             }
 
             if (IsLoadingProcessor && (this is ILoadingProcessor _processor)) {
@@ -247,9 +306,14 @@ namespace EnhancedFramework.Core {
             }
             #endif
 
+            // Trigger release.
+            triggerHandler = triggerHandler.Release();
+
             // Unregistration.
-            if (UpdateRegistration != 0) {
-                UpdateManager.Instance.Unregister(this, UpdateRegistration);
+            UpdateRegistration _registraiton = UpdateRegistration;
+
+            if (_registraiton != 0) {
+                UpdateManager.Instance.Unregister(this, _registraiton);
             }
 
             if (IsLoadingProcessor && (this is ILoadingProcessor _processor)) {
@@ -287,29 +351,26 @@ namespace EnhancedFramework.Core {
         /// </summary>
         [ContextMenu("Get Object ID", false, 10)]
         private void GetObjectID() {
+
             #if UNITY_EDITOR
             if (!Application.isPlaying) {
+
                 // Prefab objects always have a null id.
                 if (!gameObject.scene.IsValid() || (StageUtility.GetCurrentStage() is PrefabStage)) {
 
-                    if (objectID.IsValid()) {
-                        SetID(EnhancedObjectID.None);
+                    if (objectID.IsValid) {
+                        SetID(EnhancedObjectID.Default);
                     }
 
                     return;
                 }
 
-                EnhancedObjectID _objectID =  new EnhancedObjectID(this);
+                if (!objectID.IsValid) {
 
-                if (!objectID.IsValid()) {
-
-                    //this.LogMessage($"Assigning ID:\n{_objectID.ToString().Bold()}   |   {gameObject.scene.name}");
-                    SetID(_objectID);
-                } else if (objectID != _objectID) {
-
-                    this.LogMessage($"Assigning new ID:\n{objectID.ToString().Bold()}   [OLD]   |   {_objectID.ToString().Bold()}   [NEW]");
+                    EnhancedObjectID _objectID = new EnhancedObjectID(this);
                     SetID(_objectID);
                 }
+
 
                 return;
             }
@@ -317,6 +378,7 @@ namespace EnhancedFramework.Core {
             // ----- Local Method ----- \\
 
             void SetID(EnhancedObjectID _id) {
+
                 Undo.RecordObject(this, "Assigning ID");
                 PrefabUtility.RecordPrefabInstancePropertyModifications(this);
 
@@ -326,9 +388,7 @@ namespace EnhancedFramework.Core {
             #endif
 
             // Runtime assignement.
-            if (!objectID.IsValid()) {
-                objectID = new EnhancedObjectID(this);
-            }
+            objectID.InitSceneObject();
         }
         #endregion
 
@@ -361,6 +421,78 @@ namespace EnhancedFramework.Core {
         /// <param name="_event">Event to call.</param>
         public void AnimationEvent(EnhancedAnimationEvent _event) {
             _event.Invoke(this);
+        }
+        #endregion
+
+        #region Trigger
+        protected TriggerInfoHandler triggerHandler = default;
+
+        /// <inheritdoc cref="TriggerInfoHandler.ActorCount"/>
+        public int TriggerActorCount {
+            get { return triggerHandler.ActorCount; }
+        }
+
+        // -----------------------
+
+        /// <inheritdoc cref="ITrigger.OnEnterTrigger(ITriggerActor)"/>
+        public void OnEnterTrigger(ITriggerActor _actor) {
+
+            // Security.
+            if (!(this is ITrigger _trigger)) {
+
+                this.LogWarningMessage("Object is no Trigger");
+                return;
+            }
+
+            triggerHandler = triggerHandler.RegisterActor(_trigger, _actor);
+            EnhancedBehaviour _behaviour = _actor.Behaviour;
+
+            if (InteractWithTrigger(_behaviour)) {
+                OnEnterTrigger(_actor, _behaviour);
+            }
+        }
+
+        /// <inheritdoc cref="ITrigger.OnExitTrigger(ITriggerActor)"/>
+        public void OnExitTrigger(ITriggerActor _actor) {
+
+            triggerHandler = triggerHandler.UnregisterActor(_actor);
+            EnhancedBehaviour _behaviour = _actor.Behaviour;
+
+            if (InteractWithTrigger(_behaviour)) {
+                OnExitTrigger(_actor, _behaviour);
+            }
+        }
+
+        // -------------------------------------------
+        // Callback
+        // -------------------------------------------
+
+        /// <summary>
+        /// <inheritdoc cref="ITrigger.OnEnterTrigger(ITriggerActor)"/>
+        /// <para/>
+        /// Requires this object to inherit from <see cref="ITrigger"/>.
+        /// </summary>
+        /// <param name="_behaviour"><see cref="EnhancedBehaviour"/> entering this trigger.</param>
+        /// <inheritdoc cref="ITrigger.OnEnterTrigger(ITriggerActor)"/>
+        protected virtual void OnEnterTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) { }
+
+        /// <summary>
+        /// <inheritdoc cref="ITrigger.OnExitTrigger(ITriggerActor)"/>
+        /// <para/>
+        /// Requires this object to inherit from <see cref="ITrigger"/>.
+        /// <param name="_behaviour"><see cref="EnhancedBehaviour"/> exiting this trigger.</param>
+        /// <inheritdoc cref="ITrigger.OnExitTrigger(ITriggerActor)"/>
+        protected virtual void OnExitTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) { }
+
+        // -----------------------
+
+        /// <summary>
+        /// Called when an actor tries to interact with this trigger.
+        /// </summary>
+        /// <param name="_actor"><see cref="EnhancedBehaviour"/> interacting with trigger.</param>
+        /// <returns>True if this <see cref="EnhancedBehaviour"/> should interact with this trigger, false otherwise.</returns>
+        protected virtual bool InteractWithTrigger(EnhancedBehaviour _actor) {
+            return true;
         }
         #endregion
 
@@ -429,6 +561,31 @@ namespace EnhancedFramework.Core {
         public virtual Color GetLogMessageColor(LogType _type) {
             return SuperColor.White.Get();
         }
+        #endregion
+
+        #region Play Mode Data
+        /// <summary>
+        /// Indicates if this object data can be saved during Play Mode.
+        /// </summary>
+        public virtual bool CanSavePlayModeData {
+            get { return false; }
+        }
+
+        // -----------------------
+
+        /// <summary>
+        /// Saves this object data.
+        /// </summary>
+        /// <param name="_data">Wrapper in which to save this object data.</param>
+        [Conditional("UNITY_EDITOR")]
+        public virtual void SavePlayModeData(PlayModeEnhancedObjectData _data) { }
+
+        /// <summary>
+        /// Loads this object data.
+        /// </summary>
+        /// <param name="_data">Wrapper from which to load this object data.</param>
+        [Conditional("UNITY_EDITOR")]
+        public virtual void LoadPlayModeData(PlayModeEnhancedObjectData _data) { }
         #endregion
     }
 }

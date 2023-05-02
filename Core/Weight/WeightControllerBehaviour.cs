@@ -90,17 +90,6 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
-        public const float UpdateCooldwonDefaultDuration = .2f;
-        protected readonly ManualCooldown updateCooldown = new ManualCooldown(UpdateCooldwonDefaultDuration);
-
-        /// <summary>
-        /// Duration of this controller update cooldown.
-        /// <br/> Used to only update this controller every X seconds.
-        /// </summary>
-        protected virtual float UpdateCooldownDuration {
-            get { return UpdateCooldwonDefaultDuration; }
-        }
-
         /// <summary>
         /// Color used to draw handles for this area center, small range.
         /// </summary>
@@ -201,21 +190,19 @@ namespace EnhancedFramework.Core {
                 return _alpha;
             }
         }
-#endif
+        #endif
         #endregion
 
         #region Behaviour
-        protected override void OnActivation() {
-            base.OnActivation();
+        public const float UpdateCooldwonDefaultDuration = .2f;
+        protected readonly ManualCooldown updateCooldown = new ManualCooldown(UpdateCooldwonDefaultDuration);
 
-            UpdateManager.Instance.Register(this, UpdateRegistration.Dynamic);
-            SetWeight(0f);
-        }
-
-        protected override void OnDeactivation() {
-            base.OnDeactivation();
-
-            UpdateManager.Instance.Unregister(this, UpdateRegistration.Dynamic);
+        /// <summary>
+        /// Duration of this controller update cooldown.
+        /// <br/> Used to only update this controller every X seconds.
+        /// </summary>
+        protected virtual float UpdateCooldownDuration {
+            get { return UpdateCooldwonDefaultDuration; }
         }
 
         // -------------------------------------------
@@ -279,10 +266,27 @@ namespace EnhancedFramework.Core {
         protected virtual void SetWeight(float _weight) {
             weight = _weight;
         }
+
+        // -------------------------------------------
+        // Activation
+        // -------------------------------------------
+
+        protected override void OnActivation() {
+            base.OnActivation();
+
+            UpdateManager.Instance.Register(this, UpdateRegistration.Dynamic);
+            SetWeight(0f);
+        }
+
+        protected override void OnDeactivation() {
+            base.OnDeactivation();
+
+            UpdateManager.Instance.Unregister(this, UpdateRegistration.Dynamic);
+        }
         #endregion
 
         #region Trigger
-        protected override void OnEnterTrigger(Component _component) {
+        protected override void OnEnterTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
 
             // Actor.
             if (isActor) {
@@ -290,19 +294,19 @@ namespace EnhancedFramework.Core {
                 return;
             }
 
-            SetActor(true, _component.transform);
-            base.OnEnterTrigger(_component);
+            SetActor(true, _behaviour.transform);
+            base.OnEnterTrigger(_actor, _behaviour);
         }
 
-        protected override void OnExitTrigger(Component _component) {
+        protected override void OnExitTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
 
             // Actor.
-            if (!isActor || (_component.transform != actor)) {
+            if (!isActor || (_behaviour.transform != actor)) {
                 return;
             }
 
             SetActor(false, null);
-            base.OnExitTrigger(_component);
+            base.OnExitTrigger(_actor, _behaviour);
         }
         #endregion
 

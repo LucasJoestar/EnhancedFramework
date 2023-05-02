@@ -45,7 +45,7 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="FlagReference.GetValue"/>
-        [Button(ActivationMode.Always, SuperColor.Green)]
+        [Button(ActivationMode.Always, SuperColor.Green, IsDrawnOnTop = false)]
         public bool GetValue() {
             bool _value = Flag.GetValue();
 
@@ -57,7 +57,7 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="FlagReference.SetValue(bool)"/>
-        [Button(ActivationMode.Play, SuperColor.Orange)]
+        [Button(ActivationMode.Play, SuperColor.Orange, IsDrawnOnTop = false)]
         public void SetValue(bool _value) {
             Flag.SetValue(_value);
         }

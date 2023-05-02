@@ -22,7 +22,7 @@ namespace EnhancedFramework.Core {
         private protected EnhancedAnimationEvent() { }
         #endregion
 
-        #region Event Behaviour
+        #region Event
         /// <summary>
         /// Invokes this event from a specific <see cref="EnhancedBehaviour"/>.
         /// </summary>
@@ -37,8 +37,9 @@ namespace EnhancedFramework.Core {
     /// Invoked from a source <see cref="EnhancedBehaviour"/> target, used to apply its behaviour to.
 	/// </summary>
     public abstract class EnhancedAnimationEvent<T> : EnhancedAnimationEvent where T : EnhancedBehaviour {
-        #region Event Behaviour
+        #region Event
         internal override sealed void Invoke(EnhancedBehaviour _behaviour) {
+
             // This method is called on each and every EnhancedBehaviour component on the source behaviour instance.
             // To prevent from invoking this event multiple times, cast it into its target type for match.
             if (_behaviour is T _eventBehaviour) {

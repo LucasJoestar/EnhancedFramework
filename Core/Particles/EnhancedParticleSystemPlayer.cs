@@ -90,7 +90,7 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// <see cref="IPoolableObject"/> utility component used to play any <see cref="ParticleSystemAsset"/>.
     /// </summary>
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Particle System Player"), DisallowMultipleComponent]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Particles/Particle System Player"), DisallowMultipleComponent]
     #pragma warning disable CS0414
     public class EnhancedParticleSystemPlayer : EnhancedPoolableObject, IHandle {
         #region State

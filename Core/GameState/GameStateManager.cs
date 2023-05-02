@@ -42,7 +42,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// Whether the game can be paused or not.
         /// </summary>
         [Tooltip("Whether the game can be paused or not")]
-        [Space(5f)] public bool CanPause = true;
+        public bool CanPause = true;
 
         /// <summary>
         /// Whether the black bars on top and bottom of the screen should be visible or not.
@@ -59,9 +59,7 @@ namespace EnhancedFramework.Core.GameStates {
             base.Reset();
 
             HasControl = true;
-
             CanPause = false;
-
             ShowBlackBars = false;
 
             return this;
@@ -74,10 +72,10 @@ namespace EnhancedFramework.Core.GameStates {
     /// used to dynamically push and pop states on the stack of the game.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [DefaultExecutionOrder(-97)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Game State Manager"), DisallowMultipleComponent]
-    public class GameStateManager : EnhancedSingleton<GameStateManager>, IPermanentUpdate {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
+    [DefaultExecutionOrder(-960)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "General/Game State Manager"), DisallowMultipleComponent]
+    public class GameStateManager : EnhancedSingleton<GameStateManager>, IStableUpdate {
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
         [Section("Game State Manager")]
@@ -113,7 +111,7 @@ namespace EnhancedFramework.Core.GameStates {
             get { return states.Count; }
         }
 
-        private readonly List<IGameStateOverrideCallback> overrideCallbacks = new List<IGameStateOverrideCallback>();
+        private readonly EnhancedCollection<IGameStateOverrideCallback> overrideCallbacks = new EnhancedCollection<IGameStateOverrideCallback>();
 
         private readonly List<GameState> pushPendingStates = new List<GameState>();
         private readonly List<GameState> popPendingStates = new List<GameState>();
@@ -127,7 +125,7 @@ namespace EnhancedFramework.Core.GameStates {
             GameState.CreateState(defaultStateType);
         }
 
-        void IPermanentUpdate.Update() {
+        void IStableUpdate.Update() {
             // Push and pop pending states.
             bool _refresh = false;
 
@@ -354,7 +352,8 @@ namespace EnhancedFramework.Core.GameStates {
             float _chronos = 1f;
             int _priority = -1;
 
-            for (int i = 0; i < states.Count; i++) {
+            for (int i = states.Count; i-- > 0;) {
+
                 GameState _state = states.GetKeyAt(i);
                 _state.OnGameStateOverride(_override);
 

@@ -32,25 +32,6 @@ namespace EnhancedFramework.Core.Settings {
         public const string MenuPath    = FrameworkUtility.MenuPath + "Game Settings/";
         public const int MenuOrder      = FrameworkUtility.MenuOrder;
 
-        private static T instance = null;
-
-        /// <summary>
-        /// Singleton instance.
-        /// </summary>
-        private static T Instance {
-            get {
-                #if UNITY_EDITOR
-                if (!Application.isPlaying && (instance == null)) {
-                    instance = FindObjectOfType<T>();
-                }
-                #endif
-
-                return instance;
-            } set {
-                instance = value;
-            }
-        }
-
         /// <summary>
         /// Global shared instance across the entiere game.
         /// </summary>

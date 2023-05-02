@@ -15,7 +15,7 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// <see cref="ScriptableObject"/> data holder for an audio asset.
     /// </summary>
-    [CreateAssetMenu(fileName = "ADA_AudioAsset", menuName = FrameworkUtility.MenuPath + "Audio/Audio Asset", order = FrameworkUtility.MenuOrder)]
+    [CreateAssetMenu(fileName = "AD_AudioAsset", menuName = FrameworkUtility.MenuPath + "Audio/Audio Asset", order = FrameworkUtility.MenuOrder)]
     public class AudioAsset : EnhancedAssetFeedback {
         #region Global Members
         [Section("Audio Asset")]
@@ -82,11 +82,11 @@ namespace EnhancedFramework.Core {
 
         [Space(10f)]
 
-        [Tooltip("If true, use a random range where to start playing this audio")]
-        [SerializeField, Enhanced, DisplayName("Start Range")] private bool useStartRange = false;
+        [Tooltip("If true, use a specific range to play this audio")]
+        [SerializeField, Enhanced, DisplayName("Range")] private bool usePlayRange = false;
 
-        [Tooltip("Start range used to play this audio at")]
-        [SerializeField, Enhanced, ShowIf("useStartRange"), MinMax("Range")] private Vector2 startRange = Vector2.zero;
+        [Tooltip("Play range used of this audio (start and end time)")]
+        [SerializeField, Enhanced, ShowIf("usePlayRange"), MinMax("AudioRange")] private Vector2 playRange = new Vector2(0f, 1f);
 
         // -----------------------
 
@@ -152,10 +152,17 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// Play range of this asset (between 0 and is duration).
+        /// Range of this audio (between 0 and its duration).
         /// </summary>
-        public Vector2 Range {
+        public Vector2 AudioRange {
             get { return new Vector2(0f, Duration); }
+        }
+
+        /// <summary>
+        /// Play range of this audio.
+        /// </summary>
+        public Vector2 PlayRange {
+            get { return usePlayRange ? playRange : AudioRange; }
         }
 
         /// <summary>
@@ -347,7 +354,7 @@ namespace EnhancedFramework.Core {
             _source.clip = GetClip();
 
             _source.ignoreListenerPause = AudioManager.Instance.IgnorePause(mixerGroup);
-            _source.time = useStartRange ? startRange.Random() : 0f;
+            _source.time = PlayRange.x;
 
             _settings.ApplyValues(_source);
         }

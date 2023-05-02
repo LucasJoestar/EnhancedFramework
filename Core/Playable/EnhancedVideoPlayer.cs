@@ -20,9 +20,9 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [RequireComponent(typeof(VideoPlayer))]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Video Player"), DisallowMultipleComponent]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Enhanced Video Player"), DisallowMultipleComponent]
     #pragma warning disable 0414
-    public class EnhancedVideoPlayer : EnhancedBehaviour, ISkippableElement, IPermanentUpdate, ILoadingProcessor {
+    public class EnhancedVideoPlayer : EnhancedPlayer, ISkippableElement, IStableUpdate, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Play;
 
         #region Loading Processor
@@ -30,7 +30,9 @@ namespace EnhancedFramework.Core {
 
         // True while not yet prepared.
         public bool IsProcessing {
-            get { return prepareOnInit && !IsPrepared; }
+            get {
+                return prepareOnInit && !IsPrepared;
+            }
         }
         #endregion
 
@@ -49,7 +51,7 @@ namespace EnhancedFramework.Core {
         private bool playAfterLoading = false;
 
         [Tooltip("If true, the video will initiate playaback engine preparation on initialization")]
-        [SerializeField] private bool prepareOnInit = false;
+        [SerializeField] private bool prepareOnInit = true;
 
         [Tooltip("If true, disables the associated VideoPlayer when it stops playing")]
         [SerializeField] private bool disableOnStop = false;
@@ -213,7 +215,7 @@ namespace EnhancedFramework.Core {
         /// Whether the video is already prepared or not.
         /// </summary>
         public bool IsPrepared {
-            get { return videoPlayer.isPrepared; }
+            get { return videoPlayer.isPrepared || !videoPlayer.isActiveAndEnabled; }
         }
 
         // -----------------------
@@ -249,14 +251,9 @@ namespace EnhancedFramework.Core {
 
             // Prepare the video.
             if (prepareOnInit) {
+
                 Time = playRange.x;
-                Prepare(OnPrepared);
-            }
-
-            // ----- Local Method ----- \\
-
-            void OnPrepared() {
-                prepareOnInit = false;
+                Prepare();
             }
         }
 
@@ -270,7 +267,7 @@ namespace EnhancedFramework.Core {
             }
         }
 
-        void IPermanentUpdate.Update() {
+        void IStableUpdate.Update() {
             OnPlayerUpdate();
         }
 
@@ -290,8 +287,10 @@ namespace EnhancedFramework.Core {
         protected override void OnValidate() {
             base.OnValidate();
 
+            // Reference.
             if (!videoPlayer) {
                 videoPlayer = GetComponent<VideoPlayer>();
+                videoPlayer.playOnAwake = false;
             }
 
             // Range initialization.
@@ -302,7 +301,7 @@ namespace EnhancedFramework.Core {
         #endif
         #endregion
 
-        #region Behaviour
+        #region Player
         private GameState gameState = null;
         private bool isActive       = false;
 
@@ -312,8 +311,7 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="VideoPlayer.Play"/>
         /// (From <see cref="VideoPlayer.Play"/>)
         /// </summary>
-        [Button(SuperColor.Green)]
-        public void Play() {
+        public override void Play() {
             // Do not execute if already playing.
             if (IsPlaying) {
                 return;
@@ -387,15 +385,14 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            UpdateManager.Instance.Register(this, UpdateRegistration.Permanent);
+            UpdateManager.Instance.Register(this, UpdateRegistration.Stable);
         }
 
         /// <summary>
         /// <inheritdoc cref="VideoPlayer.Pause"/>
         /// (From <see cref="VideoPlayer.Pause"/>)
         /// </summary>
-        [Button(SuperColor.Orange)]
-        public void Pause() {
+        public override void Pause() {
             if (IsPaused) {
                 return;
             }
@@ -408,8 +405,7 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="VideoPlayer.Stop"/>
         /// (From <see cref="VideoPlayer.Stop"/>)
         /// </summary>
-        [Button(SuperColor.Crimson)]
-        public void Stop() {
+        public override void Stop() {
             videoPlayer.Stop();
 
             // Stopping the video does not call the "loopPointReached" event,
@@ -450,8 +446,9 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         private void OnStop(VideoPlayer _player) {
+
             // Not active if never being played or already stopped.
-            if (!isActive) {
+            if (!isActive || GameManager.IsQuittingApplication) {
                 return;
             }
 
@@ -470,6 +467,7 @@ namespace EnhancedFramework.Core {
             #if UNITY_EDITOR
             // Editor behaviour.
             if (!Application.isPlaying) {
+
                 videoPlayer.sendFrameReadyEvents = false;
                 videoPlayer.frameReady -= OnFrameReady;
                 return;
@@ -482,7 +480,7 @@ namespace EnhancedFramework.Core {
                 gameState = null;
             }
 
-            UpdateManager.Instance.Unregister(this, UpdateRegistration.Permanent);
+            UpdateManager.Instance.Unregister(this, UpdateRegistration.Stable);
 
             // Disables the video to make sure nothing is rendered anymore.
             if (disableOnStop) {
@@ -506,6 +504,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_onPrepared">Called when the video has been fully prepared.</param>
         public void Prepare(Action _onPrepared = null) {
+
             if (IsPrepared) {
                 _onPrepared?.Invoke();
                 return;

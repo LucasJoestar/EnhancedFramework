@@ -12,6 +12,8 @@ namespace EnhancedFramework.PlayMaker {
     /// <summary>
     /// <see cref="EnhancedBehaviour"/> used to send the global PLAY event to a <see cref="PlayMakerFSM"/> instance.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Play Event Sender")]
     public class PlayMakerPlayEventSender : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 

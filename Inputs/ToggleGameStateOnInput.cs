@@ -14,6 +14,8 @@ namespace EnhancedFramework.Inputs {
     /// Utility component used to automatically push/remove
     /// <br/> a specific <see cref="GameState"/> from the stack whenever a specific input is being performed.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Input/Toggle Game State On Input")]
     public class ToggleGameStateOnInput : EnhancedBehaviour {
         #region Global Members
         [Section("Game State Input Toggle")]

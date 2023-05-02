@@ -29,7 +29,7 @@ namespace EnhancedFramework.Inputs {
 
         #region Global Members
         [Tooltip("If true, this input won't be related to any input map or database")]
-        [SerializeField] internal bool isOrphan = false;
+        [SerializeField] private bool isOrphan = false;
 
         [Space(10f)]
 
@@ -51,6 +51,21 @@ namespace EnhancedFramework.Inputs {
                 return true;
                 #endif
             }
+            set {
+                if (value == IsEnabled) {
+                    return;
+                }
+
+                if (value) {
+                    Enable();
+                } else {
+                    Disable();
+                }
+            }
+        }
+
+        public override bool IsOrphan {
+            get { return isOrphan; }
         }
 
         /// <summary>
@@ -68,6 +83,7 @@ namespace EnhancedFramework.Inputs {
         /// </summary>
         internal void Initialize(InputAction _input) {
             input = _input;
+            IsPaused = false;
         }
         #endif
 
@@ -88,6 +104,11 @@ namespace EnhancedFramework.Inputs {
 
         #region Input
         public override bool Performed() {
+
+            if (IsPaused) {
+                return false;
+            }
+
             #if NEW_INPUT_SYSTEM
             return input.WasPerformedThisFrame();
             #else
@@ -96,6 +117,11 @@ namespace EnhancedFramework.Inputs {
         }
 
         public override bool Pressed() {
+
+            if (IsPaused) {
+                return false;
+            }
+
             #if NEW_INPUT_SYSTEM
             return input.WasPressedThisFrame();
             #else
@@ -104,9 +130,28 @@ namespace EnhancedFramework.Inputs {
         }
 
         public override bool Holding() {
+
+            if (IsPaused) {
+                return false;
+            }
+
             #if NEW_INPUT_SYSTEM
             InputActionPhase _phase = input.phase;
-            return (_phase != InputActionPhase.Waiting) && (_phase != InputActionPhase.Started);
+
+            switch (_phase) {
+
+                case InputActionPhase.Performed:
+                    return true;
+
+                case InputActionPhase.Waiting:
+                    return input.ReadValue<float>() != 0f;
+
+                case InputActionPhase.Started:
+                case InputActionPhase.Disabled:
+                case InputActionPhase.Canceled:
+                default:
+                    return false;
+            }
             #else
             return InputSystem.GetButton(input);
             #endif
@@ -115,6 +160,11 @@ namespace EnhancedFramework.Inputs {
         // -----------------------
 
         public override float GetAxis() {
+
+            if (IsPaused) {
+                return 0f;
+            }
+
             #if NEW_INPUT_SYSTEM
             return input.ReadValue<float>();
             #else
@@ -123,6 +173,11 @@ namespace EnhancedFramework.Inputs {
         }
 
         public override Vector2 GetVector2Axis() {
+
+            if (IsPaused) {
+                return Vector2.zero;
+            }
+
             #if NEW_INPUT_SYSTEM
             return input.ReadValue<Vector2>();
             #else
@@ -132,6 +187,11 @@ namespace EnhancedFramework.Inputs {
         }
 
         public override Vector3 GetVector3Axis() {
+
+            if (IsPaused) {
+                return Vector3.zero;
+            }
+
             #if NEW_INPUT_SYSTEM
             Vector2 _value = input.ReadValue<Vector2>();
             return new Vector3(_value.x, 0f, _value.y);

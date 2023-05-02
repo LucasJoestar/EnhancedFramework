@@ -4,8 +4,6 @@
 //
 // ================================================================================== //
 
-using UnityEngine;
-
 namespace EnhancedFramework.Core {
     /// <summary>
     /// Base audio <see cref="WeightController{T}"/> class.
@@ -52,8 +50,8 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public abstract class AudioControllerBehaviour : EnhancedActivatorBehaviour {
         #region Trigger
-        protected override bool InteractWithTrigger(Component _component) {
-            return base.InteractWithTrigger(_component) && AudioManager.Instance.HasTriggerTags(_component);
+        protected override bool InteractWithTrigger(EnhancedBehaviour _actor) {
+            return base.InteractWithTrigger(_actor) && AudioManager.Instance.HasTriggerTags(_actor);
         }
         #endregion
     }
@@ -63,8 +61,8 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public abstract class AudioWeightControllerBehaviour : WeightAreaController {
         #region Trigger
-        protected override bool InteractWithTrigger(Component _component) {
-            return base.InteractWithTrigger(_component) && AudioManager.Instance.HasTriggerTags(_component);
+        protected override bool InteractWithTrigger(EnhancedBehaviour _actor) {
+            return base.InteractWithTrigger(_actor) && AudioManager.Instance.HasTriggerTags(_actor);
         }
         #endregion
     }

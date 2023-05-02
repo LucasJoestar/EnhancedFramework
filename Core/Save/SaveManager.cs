@@ -4,14 +4,20 @@
 //
 // ================================================================================== //
 
+#if NEWTONSOFT
+#define JSON_SERIALIZATION
+#endif
+
 using EnhancedEditor;
+using System;
+using UnityEngine;
+
+#if JSON_SERIALIZATION
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Utilities;
-using System;
-using System.Diagnostics;
-using UnityEngine;
+#endif
 
 using Object = UnityEngine.Object;
 
@@ -22,8 +28,15 @@ namespace EnhancedFramework.Core {
     [Serializable]
     public class SaveDataType<T> {
         #region Global Members
-        [JsonProperty] private PairCollection<string, T> collection = new PairCollection<string, T>();
-        [JsonIgnore] private int index = 0;
+        #if JSON_SERIALIZATION
+        [JsonProperty]
+        #endif
+        private PairCollection<string, T> collection = new PairCollection<string, T>();
+
+        #if JSON_SERIALIZATION
+        [JsonIgnore]
+        #endif
+        private int index = 0;
         #endregion
 
         #region Utility
@@ -65,7 +78,7 @@ namespace EnhancedFramework.Core {
     [Serializable]
     public class SaveData {
         #region Data
-        internal EnhancedObjectID id = EnhancedObjectID.None;
+        internal EnhancedObjectID id = EnhancedObjectID.Default;
 
         // Value.
         public SaveDataType<object>   Object_data     = new SaveDataType<object>();
@@ -121,8 +134,8 @@ namespace EnhancedFramework.Core {
     /// <br/> Used to serialize and deserialize data for any object in the game.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [DefaultExecutionOrder(-99)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Save Manager"), DisallowMultipleComponent]
+    [DefaultExecutionOrder(-990)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Save/Save Manager"), DisallowMultipleComponent]
     public class SaveManager : EnhancedSingleton<SaveManager> {
         #region Global Members
         private string saveJson = string.Empty;
@@ -177,9 +190,11 @@ namespace EnhancedFramework.Core {
         /// <param name="_savable"></param>
         public void Serialize(ISaveable _savable) {
             data.Setup(_savable.ID);
-
             _savable.Serialize(data);
+
+            #if JSON_SERIALIZATION
             string _json = JsonConvert.SerializeObject(data);
+            #endif
 
             // Write json.
         }
@@ -193,7 +208,10 @@ namespace EnhancedFramework.Core {
 
             // Read json.
 
+            #if JSON_SERIALIZATION
             data = JsonConvert.DeserializeObject<SaveData>(_json);
+            #endif
+
             _savable.Deserialize(data);
         }
 

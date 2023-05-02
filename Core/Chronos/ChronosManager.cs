@@ -223,8 +223,8 @@ namespace EnhancedFramework.Core {
     /// <br/> Manages the whole time scale of the game, with numerous multiplicators and overrides.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [DefaultExecutionOrder(-99)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Chronos Manager"), DisallowMultipleComponent]
+    [DefaultExecutionOrder(-990)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Chronos/Chronos Manager"), DisallowMultipleComponent]
     public class ChronosManager : EnhancedSingleton<ChronosManager>, IObjectPoolManager<ChronosModifier>, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
@@ -233,8 +233,13 @@ namespace EnhancedFramework.Core {
 
         [Section("Chronos Manager")]
 
-        [SerializeField] private bool hasPauseInterface = false;
-        [SerializeField, Enhanced, ShowIf("hasPauseInterface")] private SerializedInterface<IFadingObject> pauseInterface = null;
+        [SerializeField] private SerializedType<IPauseChronosState> pauseStateType = new SerializedType<IPauseChronosState>(SerializedTypeConstraint.None,
+                                                                                                                            typeof(DefaultPauseChronosGameState));
+
+        [Space(5f)]
+
+        [SerializeField] private bool usePauseInterface = false;
+        [SerializeField, Enhanced, ShowIf("usePauseInterface"), Required] private FadingObjectBehaviour pauseInterface = null;
 
         [Space(10f)]
 
@@ -246,6 +251,13 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public float GameChronos {
             get { return gameChronos; }
+        }
+
+        /// <summary>
+        /// <see cref="GameState"/> type used when pausing the game chronos.
+        /// </summary>
+        public Type PauseStateType {
+            get { return pauseStateType.Type; }
         }
         #endregion
 
@@ -446,7 +458,7 @@ namespace EnhancedFramework.Core {
         [Button(ActivationMode.Play, SuperColor.Pumpkin)]
         public void Pause() {
             if (!pauseState.IsActive()) {
-                pauseState = GameState.CreateState<PauseChronosGameState>();
+                pauseState = GameState.CreateState(pauseStateType);
             }
         }
 
@@ -465,16 +477,16 @@ namespace EnhancedFramework.Core {
         void IGameStateLifetimeCallback.OnInit(GameState _state) {
             pauseState = _state;
 
-            if (hasPauseInterface) {
-                pauseInterface.Interface.Show();
+            if (usePauseInterface) {
+                pauseInterface.Show();
             }
         }
 
         void IGameStateLifetimeCallback.OnTerminate(GameState _state) {
             pauseState = null;
 
-            if (hasPauseInterface) {
-                pauseInterface.Interface.Hide();
+            if (usePauseInterface) {
+                pauseInterface.Hide();
             }
         }
         #endregion

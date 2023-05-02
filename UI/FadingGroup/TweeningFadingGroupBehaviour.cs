@@ -8,6 +8,7 @@
 #define TWEENING
 #endif
 
+using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace EnhancedFramework.UI {
     /// Ready-to-use <see cref="EnhancedBehaviour"/>-encapsulated <see cref="TweeningFadingGroup"/>.
     /// <br/> Use this to quickly implement fading <see cref="CanvasGroup"/> objects using tweening.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Fading Group/Tween Fading Group"), DisallowMultipleComponent]
     public class TweeningFadingGroupBehaviour : FadingGroupBehaviour<TweeningFadingGroup> {
         #region Behaviour
         #if TWEENING

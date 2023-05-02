@@ -18,6 +18,7 @@ MonoBehaviour:
     objectID: 11400000
     prefabID: 0
   enableOnInit: 0
+  isPaused: 0
   isOrphan: 1
   map: {fileID: 0}
   input:

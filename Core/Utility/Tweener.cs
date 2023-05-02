@@ -208,6 +208,7 @@ namespace EnhancedFramework.Core {
         }
         #endif
 
+        /// <param name="_curve">Tween evaluation curve.</param>
         /// <inheritdoc cref="Tween(float, float, Action{float}, float, bool, Action{bool})"/>
         public TweenHandler Tween(float _from, float _to, Action<float> _setter, float _duration, AnimationCurve _curve, bool _realTime = false, Action<bool> _onStopped = null) {
             return Tween(Set, _duration, _curve, _realTime, _onStopped);
@@ -239,6 +240,8 @@ namespace EnhancedFramework.Core {
         /// Tweens a float value from a start to an end value, using a given duration.
         /// <br/> Calls a specific setter with the new float value.
         /// </summary>
+        /// <param name="_from">Initial tween value.</param>
+        /// <param name="_to">Target tween value.</param>
         /// <param name="_setter">Called to set the new float value.</param>
         /// <inheritdoc cref="Tween(Action{float}, float, bool, Action{bool})"/>
         public TweenHandler Tween(float _from, float _to, Action<float> _setter, float _duration, bool _realTime = false, Action<bool> _onStopped = null) {

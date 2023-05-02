@@ -13,7 +13,9 @@ namespace EnhancedFramework.Inputs {
     /// <summary>
     /// <see cref="ChronosManager"/>-related input utility class.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [ScriptingDefineSymbol("CHRONOS_INPUT", "Chronos runtime inputs")]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Chronos/Chronos Inputs Controller"), DisallowMultipleComponent]
     public class ChronosInputs : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
@@ -35,7 +37,7 @@ namespace EnhancedFramework.Inputs {
 
             #if CHRONOS_INPUT
             if (pause.IsValid()) {
-                pause.OnPerformed += (InputActionEnhancedAsset _) => GameState.ToggleState<PauseChronosGameState>();
+                pause.OnPerformed += (InputActionEnhancedAsset _) => GameState.ToggleState(ChronosManager.Instance.PauseStateType);
             }
 
             if (increaseChronos.IsValid()) {

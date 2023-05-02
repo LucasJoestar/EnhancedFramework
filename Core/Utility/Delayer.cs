@@ -300,11 +300,13 @@ namespace EnhancedFramework.Core {
     #if UNITY_EDITOR
     [InitializeOnLoad]
     #endif
-    public class Delayer : IObjectPoolManager<DelayedCall>, IPermanentUpdate {
+    public class Delayer : IObjectPoolManager<DelayedCall>, IStableUpdate {
         #region Global Members
         public Object LogObject {
             get { return GameManager.Instance; }
         }
+
+        public int InstanceID { get; set; } = EnhancedUtility.GenerateGUID();
 
         /// <summary>
         /// Static singleton instance.
@@ -319,7 +321,7 @@ namespace EnhancedFramework.Core {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void Initialize() {
             pool.Initialize(instance);
-            UpdateManager.Instance.Register(instance, UpdateRegistration.Permanent);
+            UpdateManager.Instance.Register(instance, UpdateRegistration.Stable);
         }
 
         #if UNITY_EDITOR
@@ -332,6 +334,7 @@ namespace EnhancedFramework.Core {
         }
         
         private static void EditorUpdate() {
+
             if (!Application.isPlaying) {
                 instance.Update();
             }

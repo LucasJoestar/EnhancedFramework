@@ -11,8 +11,8 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Class instance used to retrieve a specific <see cref="Component"/> instance from another scene using this object guid.
     /// </summary>
-    [DefaultExecutionOrder(-30)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Cross Scene Object"), DisallowMultipleComponent]
+    [DefaultExecutionOrder(-300)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Cross Scene/Cross Scene Object"), DisallowMultipleComponent]
     public class CrossSceneObject : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 

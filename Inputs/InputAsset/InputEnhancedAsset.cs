@@ -29,7 +29,7 @@ namespace EnhancedFramework.Inputs {
         /// Is this input asset currently enabled?
         /// <br/> Always return true with the native input system.
         /// </summary>
-        public abstract bool IsEnabled { get; }
+        public abstract bool IsEnabled { get; set; }
         #endregion
 
         #region Initialization

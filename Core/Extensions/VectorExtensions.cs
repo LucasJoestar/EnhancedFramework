@@ -203,6 +203,16 @@ namespace EnhancedFramework.Core {
 			return (_value >= _vector.x) && (_value <= _vector.y);
 		}
 
+        /// <inheritdoc cref="Contains(Vector2, float)"/>
+        public static bool Contains(this Vector2Int _vector, float _value) {
+            return (_value >= _vector.x) && (_value <= _vector.y);
+        }
+
+        /// <inheritdoc cref="Contains(Vector2, float)"/>
+        public static bool Contains(this Vector2Int _vector, int _value) {
+            return (_value >= _vector.x) && (_value <= _vector.y);
+        }
+
         /// <summary>
         /// Get this <see cref="Vector3"/> as a <see cref="Vector2"/>.
         /// </summary>

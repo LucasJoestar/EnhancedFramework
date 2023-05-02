@@ -12,6 +12,8 @@ namespace EnhancedFramework.PlayMaker {
     /// <summary>
     /// <see cref="EnhancedBehaviour"/> used to send the global INIT event to a <see cref="PlayMakerFSM"/> instance.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Init Event Sender")]
     public class PlayMakerInitEventSender : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 

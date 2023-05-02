@@ -14,11 +14,21 @@ namespace EnhancedFramework.UI {
     /// <summary>
     /// <see cref="FadingGroupController"/> used to manage UI interaction.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Fading Group/Fading Group Interaction Controller"), DisallowMultipleComponent]
     public class FadingGroupInteractionController : FadingGroupController {
         #region Global Members
         [Section("Fading Group Interaction Controller")]
 
+        [Tooltip("If true, fires a callback when the interface cancel button is being performed")]
         [SerializeField] private bool useCancelCallback = false;
+
+        [Tooltip("Audio to play on cancel")]
+        [SerializeField] private AudioAsset cancelAudio = null;
+
+        [Space(10f)]
+
+        [Tooltip("Callback to fire when the interface cancel button is being performed")]
         [SerializeField] private UnityEvent onCancel = new UnityEvent();
         #endregion
 
@@ -42,6 +52,7 @@ namespace EnhancedFramework.UI {
 
             // Disable inputs until completion.
             OnDisableInputs?.Invoke();
+            SelectionUtility.ResetSelection();
         }
 
         public override void OnShowPerformed(FadingGroup _group) {
@@ -61,6 +72,7 @@ namespace EnhancedFramework.UI {
 
             // Enable inputs once completed.
             OnEnableInputs?.Invoke();
+            SelectionUtility.ApplySelection();
         }
 
         // -----------------------
@@ -70,6 +82,7 @@ namespace EnhancedFramework.UI {
 
             // Disable inputs until completion.
             OnDisableInputs?.Invoke();
+            SelectionUtility.ResetSelection();
         }
 
         public override void OnHidePerformed(FadingGroup _group) {
@@ -95,7 +108,9 @@ namespace EnhancedFramework.UI {
 
             // Enable inputs once completed.
             if (groupBuffer.Count != 0) {
+
                 OnEnableInputs?.Invoke();
+                SelectionUtility.ApplySelection();
             }
         }
 
@@ -116,6 +131,14 @@ namespace EnhancedFramework.UI {
 
                     // Call event.
                     _controller.onCancel.Invoke();
+
+                    // Audio.
+                    AudioAsset _audio = _controller.cancelAudio;
+
+                    if (_audio.IsValid()) {
+                        _audio.PlayAudio();
+                    }
+
                     return true;
                 }
             }

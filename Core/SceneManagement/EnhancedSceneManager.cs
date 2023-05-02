@@ -8,7 +8,6 @@ using EnhancedEditor;
 using EnhancedFramework.Core.GameStates;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -116,8 +115,8 @@ namespace EnhancedFramework.Core {
     /// property to call your own functions and receive multiple callbacks.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [DefaultExecutionOrder(-95)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "Manager/Scene Manager"), DisallowMultipleComponent]
+    [DefaultExecutionOrder(-950)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "General/Scene Manager"), DisallowMultipleComponent]
     public class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager>, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
@@ -163,7 +162,7 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        private readonly List<ILoadingProcessor> processors = new List<ILoadingProcessor>();
+        private readonly EnhancedCollection<ILoadingProcessor> processors = new EnhancedCollection<ILoadingProcessor>();
 
         // -------------------------------------------
         // Accessors

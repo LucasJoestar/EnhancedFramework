@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
 using UnityEngine;
 
@@ -13,6 +14,28 @@ namespace EnhancedFramework.Inputs {
     /// </summary>
     public abstract class InputActionEnhancedAsset : InputEnhancedAsset {
         public new const int MenuOrder      = FrameworkUtility.MenuOrder;
+
+        #region Global Members
+        [PropertyOrder(9)]
+
+        [SerializeField, Enhanced, ReadOnly] private bool isPaused = false;
+
+        /// <summary>
+        /// If true, indicates if this input isn't related to any input map or database.
+        /// </summary>
+        public virtual bool IsOrphan {
+            get { return false; }
+        }
+
+        /// <summary>
+        /// Whether this input is currently paused or not.
+        /// <br/> When paused, does not react to any input even if enabled.
+        /// </summary>
+        public bool IsPaused {
+            get { return isPaused; }
+            set { isPaused = value; }
+        }
+        #endregion
 
         #region Event
         /// <summary>
@@ -36,14 +59,29 @@ namespace EnhancedFramework.Inputs {
         // -----------------------
 
         protected void CallOnStarted() {
+
+            if (IsPaused) {
+                return;
+            }
+
             OnStarted?.Invoke(this);
         }
 
         protected void CallOnCanceled() {
+
+            if (IsPaused) {
+                return;
+            }
+
             OnCanceled?.Invoke(this);
         }
 
         protected void CallOnPerformed() {
+
+            if (IsPaused) {
+                return;
+            }
+
             OnPerformed?.Invoke(this);
         }
         #endregion

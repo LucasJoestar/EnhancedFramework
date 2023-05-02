@@ -11,6 +11,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
+#if UNITY_EDITOR
+using UnityEditor;
+
+using ArrayUtility = EnhancedEditor.ArrayUtility;
+#endif
+
 using SnapshotController = EnhancedFramework.Core.AudioWeightController<EnhancedFramework.Core.AudioSnapshotAsset>;
 using AmbientController  = EnhancedFramework.Core.AudioWeightController<EnhancedFramework.Core.AudioAmbientController>;
 
@@ -18,12 +24,14 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Singleton class managing the game global audio system, and all associated <see cref="EnhancedAudioPlayer"/>.
     /// </summary>
+    [ExecuteInEditMode]
+    [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Audio Manager"), DisallowMultipleComponent]
-    public class AudioManager : EnhancedSingleton<AudioManager>, IPermanentUpdate, IGameStateOverrideCallback,
+    public class AudioManager : EnhancedSingleton<AudioManager>, IStableUpdate, IGameStateOverrideCallback,
                                 IObjectPoolManager<EnhancedAudioPlayer>, IObjectPoolManager<MusicPlayer>, 
                                 IObjectPoolManager<AmbientController>,   IObjectPoolManager<AmbientSoundPlayer>,
                                 IObjectPoolManager<SnapshotController> {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Permanent;
+        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
         [Section("Audio Manager")]
@@ -57,7 +65,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Is the game audio currently paused?
         /// </summary>
-        public bool IsPaused {
+        public static bool IsPaused {
             get { return AudioListener.pause; }
             private set { AudioListener.pause = value; }
         }
@@ -80,7 +88,13 @@ namespace EnhancedFramework.Core {
         #region Enhanced Behaviour
         protected override void OnBehaviourEnabled() {
             base.OnBehaviourEnabled();
-            
+
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                return;
+            }
+            #endif
+
             // Registration.
             GameStateManager.Instance.RegisterOverrideCallback(this);
         }
@@ -100,7 +114,9 @@ namespace EnhancedFramework.Core {
             EnhancedSceneManager.OnStartLoading += OnStartLoading;
         }
 
-        void IPermanentUpdate.Update() {
+        void IStableUpdate.Update() {
+
+            Pause(ChronosManager.Instance.GameChronos == 0f);
 
             UpdateAudioPlayers();
             UpdateMusic();
@@ -110,6 +126,12 @@ namespace EnhancedFramework.Core {
 
         protected override void OnBehaviourDisabled() {
             base.OnBehaviourDisabled();
+
+            #if UNITY_EDITOR
+            if (!Application.isPlaying) {
+                return;
+            }
+            #endif
 
             // Unregistration.
             GameStateManager.Instance.UnregisterOverrideCallback(this);
@@ -130,6 +152,44 @@ namespace EnhancedFramework.Core {
                 }
             }
         }
+
+        #if UNITY_EDITOR
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+        private ManualCooldown editorCooldown = new ManualCooldown(.1f);
+
+        protected override void OnEnable() {
+            base.OnEnable();
+
+            if (Application.isPlaying) {
+                return;
+            }
+
+            EditorApplication.update += OnEditorUpdate;
+        }
+
+        protected override void OnDisable() {
+            base.OnDisable();
+
+            EditorApplication.update -= OnEditorUpdate;
+        }
+
+        private void OnEditorUpdate() {
+            if (!previewPlayer) {
+                return;
+            }
+
+            // Cooldown (editor coroutine may throw exceptions if called too often).
+            editorCooldown.Update(ChronosUtility.RealDeltaTime);
+            if (!editorCooldown.IsValid) {
+                return;
+            }
+
+            editorCooldown.Reload();
+            previewPlayer.AudioUpdate();
+        }
+        #endif
         #endregion
 
         #region Game State
@@ -163,7 +223,7 @@ namespace EnhancedFramework.Core {
                         // Pause / Resume.
                         if (_pause) {
                             _player.Pause(true);
-                        } else {
+                        } else if (_player.Status == EnhancedAudioPlayer.State.Paused) {
                             _player.Play();
                         }
                     }
@@ -210,6 +270,7 @@ namespace EnhancedFramework.Core {
         /// Updates all active audio players.
         /// </summary>
         private void UpdateAudioPlayers() {
+
             for (int i = audioPlayers.Count; i-- > 0;) {
                 audioPlayers[i].AudioUpdate();
             }
@@ -483,7 +544,7 @@ namespace EnhancedFramework.Core {
         /// <returns>True if any music is playing on a lower layer, false otherwise.</returns>
         internal bool IsMusicPlayingOnLowerLayer(MusicPlayer _player) {
 
-            int _index = musicBuffer.IndexOf(_player);
+            int _index = musicBuffer.IndexOf( _player);
             if (_index == -1) {
                 return false;
             }
