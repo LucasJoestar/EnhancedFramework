@@ -46,7 +46,7 @@ namespace EnhancedFramework.Inputs {
         [Space(10f)]
 
         [Tooltip("Amount of actuation required for the control to be considered as pressed.\nIf zero, uses default")]
-        [Range(0f, 1f)]public float PressPoint = 0f;
+        [Range(0f, 1f)] public float PressPoint = 0f;
 
         /// <summary>
         /// Required press point for this interaction.
@@ -92,6 +92,13 @@ namespace EnhancedFramework.Inputs {
 
                     // Ignore any input on a control we're not currently tracking.
                     if (currentControl != _control) {
+
+                        if (currentControl == null) {
+
+                            _context.Canceled();
+                            Reset();
+                        }
+
                         return;
                     }
 

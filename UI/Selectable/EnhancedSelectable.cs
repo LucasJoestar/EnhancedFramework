@@ -4,11 +4,11 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using EnhancedFramework.Core;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using EnhancedEditor;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -27,39 +27,38 @@ namespace EnhancedFramework.UI {
     }
 
     /// <summary>
-    /// Base class to inherit your own <see cref="EnhancedButton"/> effects from.
+    /// Base class to inherit your own <see cref="EnhancedSelectable"/> effects from.
     /// </summary>
-    public abstract class EnhancedButtonEffect : EnhancedBehaviour {
+    public abstract class EnhancedSelectableEffect : EnhancedBehaviour {
         #region Behaviour
         /// <summary>
-        /// Called when changing the selection state of the associated button.
+        /// Called when changing the selection state of the associated selectable.
         /// </summary>
-        /// <param name="_button">Source button of this effect.</param>
+        /// <param name="_selectable">Source selectable of this effect.</param>
         /// <param name="_state"><see cref="SelectableState"/> of the button.</param>
         /// <param name="_instant">Whether the effect should be applied instantly or not.</param>
-        public abstract void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant);
+        public abstract void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant);
         #endregion
     }
 
     /// <summary>
-    /// Enhanced <see cref="Button"/> behaviour, being automatically selected on mouse hover.
+    /// Enhanced <see cref="Selectable"/> behaviour, being automatically selected on mouse hover and with many additional options.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button/Enhanced Button"), DisallowMultipleComponent]
-    public class EnhancedButton : Button {
+    public abstract class EnhancedSelectable : Selectable {
         #region Global Members
-        [Tooltip("Automatically selects this button whenever its GameObject gets enabled")]
+        [Tooltip("Automatically selects this selectable whenever its GameObject gets enabled")]
         [SerializeField, HideInInspector] public bool AutoSelectOnEnabled = false;
 
         [Space(5f)]
 
-        [SerializeField, HideInInspector] public EnhancedButtonEffect[] Effects = new EnhancedButtonEffect[0];
+        [SerializeField, HideInInspector] public EnhancedSelectableEffect[] Effects = new EnhancedSelectableEffect[0];
         [SerializeField, Enhanced, ReadOnly] private FadingObjectBehaviour group = null;
 
         // -----------------------
 
         /// <summary>
-        /// Is this button currently selected?
+        /// Is this selectable currently selected?
         /// </summary>
         public bool IsSelected {
             get {
@@ -122,15 +121,15 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Selectable
-        public override void OnPointerEnter(PointerEventData eventData) {
-            base.OnPointerEnter(eventData);
+        public override void OnPointerEnter(PointerEventData _eventData) {
+            base.OnPointerEnter(_eventData);
 
             // Select on hover.
             Select();
         }
 
-        public override void OnDeselect(BaseEventData eventData) {
-            base.OnDeselect(eventData);
+        public override void OnDeselect(BaseEventData _eventData) {
+            base.OnDeselect(_eventData);
 
             // Simulate pointer exit.
             OnPointerExit(null);

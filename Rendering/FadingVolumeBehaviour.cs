@@ -227,9 +227,9 @@ namespace EnhancedFramework.Rendering {
 
             #if TWEENING
             if (_show) {
-                _weight = DOVirtual.EasedValue(0f, 1f, _value, fadeInEase);
+                _weight = DOVirtual.EasedValue(FadeWeight.x, FadeWeight.y, _value, fadeInEase);
             } else {
-                _weight = DOVirtual.EasedValue(1f, 0f, _value, fadeOutEase);
+                _weight = DOVirtual.EasedValue(FadeWeight.y, FadeWeight.x, _value, fadeOutEase);
             }
             #endif
 

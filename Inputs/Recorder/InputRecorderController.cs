@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using EnhancedFramework.Core.Option;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -103,6 +104,11 @@ namespace EnhancedFramework.Inputs {
 
         [Tooltip("Whether this object is currently still processing or not")]
         [SerializeField, Enhanced, ReadOnly] private bool isProcessing = true;
+
+        [Space(10f)]
+
+        [Tooltip("Path where to write the records on disk")]
+        [SerializeField] private OptionPath path = OptionPath.PersistentPath;
 
         // -----------------------
 
@@ -298,7 +304,7 @@ namespace EnhancedFramework.Inputs {
         /// </summary>
         public string CapturePath {
             get {
-                string _path = Path.Combine(Application.persistentDataPath, CaptureFolder);
+                string _path = Path.Combine(path.Get(true), CaptureFolder);
 
                 // No directory.
                 if (!Directory.Exists(_path)) {

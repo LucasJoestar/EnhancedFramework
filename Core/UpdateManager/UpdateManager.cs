@@ -262,7 +262,7 @@ namespace EnhancedFramework.Core {
                 _init.IsInitialized = true;
 
                 // Once the object is initialized, register its other updates.
-                initUpdates.RemoveFirst();
+                initUpdates.Remove(_init);
 
                 Register<IBaseUpdate>(_init, _pair.Second);
             }
@@ -290,7 +290,7 @@ namespace EnhancedFramework.Core {
                 _play.IsPlaying = true;
 
                 // Once the object is playing, register its other updates.
-                playUpdates.RemoveFirst();
+                playUpdates.Remove(_play);
 
                 Register<IBaseUpdate>(_play, _pair.Second);
             }

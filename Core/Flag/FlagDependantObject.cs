@@ -77,6 +77,9 @@ namespace EnhancedFramework.Core {
         [Tooltip("Objects to manage activation on flag condition")]
         [SerializeField, Enhanced, Required] private GameObject[] managedObjects = new GameObject[0];
 
+        [Tooltip("Objects to inverse activation on flag condition")]
+        [SerializeField, Enhanced, Required] private GameObject[] inverseObjects = new GameObject[0];
+
         [Space(10f)]
 
         [Tooltip("Required flags condition")]
@@ -166,6 +169,10 @@ namespace EnhancedFramework.Core {
             foreach (GameObject _object in managedObjects) {
                 _object.SetActive(_active);
             }
+
+            foreach (GameObject _object in inverseObjects) {
+                _object.SetActive(!_active);
+            }            
         }
 
         // -------------------------------------------

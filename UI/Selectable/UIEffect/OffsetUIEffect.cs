@@ -14,8 +14,8 @@ namespace EnhancedFramework.UI {
     /// Set the offset of the button text.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Offset Button Effect"), DisallowMultipleComponent]
-    public class OffsetButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Offset UI Effect"), DisallowMultipleComponent]
+    public class OffsetUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Offset Effect")]
 
@@ -27,7 +27,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
             Vector2 _offset = offset[_state];
             text.margin = new Vector4(_offset.x, _offset.y, text.margin.y, text.margin.z);
         }

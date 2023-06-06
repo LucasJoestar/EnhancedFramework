@@ -125,13 +125,11 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public int Hash {
             get {
-                #if DEVELOPMENT
                 if (hash == 0) {
 
                     hash = Animator.StringToHash(stateName);
-                    this.LogWarning("State hash value was not correctly configured");
+                    //this.LogWarning("State hash value was not correctly configured");
                 }
-                #endif
 
                 return hash;
             }
@@ -193,9 +191,9 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Animation
-        /// <inheritdoc cref="Play(Animator, int)"/>
-        public void Play(Animator _animator) {
-            Play(_animator, layerIndex);
+        /// <inheritdoc cref="Play(Animator, int, bool)"/>
+        public void Play(Animator _animator, bool _instant = false) {
+            Play(_animator, layerIndex, _instant);
         }
 
         /// <summary>
@@ -203,7 +201,15 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_animator"><see cref="Animator"/> on which to play the transition.</param>
         /// <param name="_layerIndex">Index of this state layer.</param>
-        public void Play(Animator _animator, int _layerIndex) {
+        /// <param name="_instant">If true, instantly plays the animation.</param>
+        public void Play(Animator _animator, int _layerIndex, bool _instant = false) {
+
+            // Instant.
+            if (_instant) {
+
+                _animator.Play(Hash, _layerIndex);
+                return;
+            }
 
             int _currentHash = _animator.GetCurrentAnimatorStateInfo(_layerIndex).shortNameHash;
             int _nextHash    = _animator.GetNextAnimatorStateInfo(_layerIndex).shortNameHash;

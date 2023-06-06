@@ -13,10 +13,20 @@ using Range = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Core {
     /// <summary>
+    /// Override for an audio loop.
+    /// </summary>
+    public enum LoopOverride {
+        None = 0,
+
+        Loop = 1,
+        NoLoop = 2,
+    }
+
+    /// <summary>
     /// <see cref="ScriptableObject"/> data holder for an audio asset.
     /// </summary>
     [CreateAssetMenu(fileName = "AD_AudioAsset", menuName = FrameworkUtility.MenuPath + "Audio/Audio Asset", order = FrameworkUtility.MenuOrder)]
-    public class AudioAsset : EnhancedAssetFeedback {
+    public class AudioAsset : EnhancedAssetFeedback, IEnhancedAnimationEvent {
         #region Global Members
         [Section("Audio Asset")]
 
@@ -35,6 +45,9 @@ namespace EnhancedFramework.Core {
 
         [Tooltip("If true, automatically loops when reaching the end")]
         [SerializeField, Enhanced, DisplayName("Loop")] private bool isLooping  = false;
+
+        [Tooltip("If true, do not fade out the audio when completing a loop")]
+        [SerializeField, Enhanced, DisplayName("Loop Seemless")] private bool loopSeemless  = true;
 
         [Space(5f)]
 
@@ -105,9 +118,9 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// Minimum duration of this audio, in second(s).
+        /// Minimum duration of this audio clip, in second(s).
         /// </summary>
-        public float Duration {
+        public float ClipDuration {
             get {
                 float _duration = 0f;
 
@@ -121,6 +134,13 @@ namespace EnhancedFramework.Core {
 
                 return _duration;
             }
+        }
+
+        /// <summary>
+        /// Minimum duration of this audio asset, in seconds.
+        /// </summary>
+        public float Duration {
+            get { return PlayRange.y;  }
         }
 
         /// <summary>
@@ -152,10 +172,17 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// Whether to seemlessly loop or to perform a fade out at the end.
+        /// </summary>
+        public bool LoopSeemless {
+            get { return loopSeemless; }
+        }
+
+        /// <summary>
         /// Range of this audio (between 0 and its duration).
         /// </summary>
         public Vector2 AudioRange {
-            get { return new Vector2(0f, Duration); }
+            get { return new Vector2(0f, ClipDuration); }
         }
 
         /// <summary>
@@ -323,6 +350,24 @@ namespace EnhancedFramework.Core {
         [Button(SuperColor.Crimson, IsDrawnOnTop = false), DisplayName("Stop")]
         private void StopPreview() {
             AudioManager.Instance.StopPreview(this);
+        }
+        #endregion
+
+        #region Event
+        private const float EventDelay = .2f;
+        private UnscaledCooldown eventCooldown = new UnscaledCooldown();
+
+        // -----------------------
+
+        /// <inheritdoc cref="IEnhancedAnimationEvent.Invoke(EnhancedBehaviour)"/>
+        public void Invoke(EnhancedBehaviour _behaviour) {
+
+            if (!eventCooldown.IsValid) {
+                return;
+            }
+
+            PlayAudio(_behaviour.transform.position);
+            eventCooldown.Reload();
         }
         #endregion
 

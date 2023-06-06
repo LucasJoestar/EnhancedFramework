@@ -23,8 +23,9 @@ namespace EnhancedFramework.UI {
     /// Fades a specific <see cref="Graphic"/> color.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Color Button Effect"), DisallowMultipleComponent]
-    public class ColorButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Color UI Effect"), DisallowMultipleComponent]
+    #pragma warning disable
+    public class ColorUIEffect : EnhancedSelectableEffect {
         #region Color
         [Serializable]
         public struct ColorFade {
@@ -55,7 +56,7 @@ namespace EnhancedFramework.UI {
 
         // -----------------------
 
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
             #if TWEENER
             // Fade.
             tween.DoKill();

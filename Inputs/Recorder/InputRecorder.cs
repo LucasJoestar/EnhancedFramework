@@ -13,6 +13,7 @@ using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -80,6 +81,174 @@ namespace EnhancedFramework.Inputs {
     }
 
     /// <summary>
+    /// Wrapper for a single input capture data value.
+    /// </summary>
+    [Serializable]
+    public struct InputCaptureSingleDataObject {
+        #region Content
+        public Quaternion Quaternion;
+        public Vector3 Vector;
+        public float Float;
+        public string String;
+        #endregion
+    }
+
+    /// <summary>
+    /// Wrapper for a custom input data.
+    /// </summary>
+    [Serializable]
+    public class InputCaptureData {
+        #region Global Members
+        /// <summary>
+        /// Unique identifier of this input data.
+        /// </summary>
+        public int ID = 0;
+
+        /// <summary>
+        /// Index of the current capture replay data.
+        /// </summary>
+        public int ReplayIndex = 0;
+
+        /// <summary>
+        /// All registered data in this wrapper.
+        /// </summary>
+        public PairCollection<double, InputCaptureSingleDataObject> Data = new PairCollection<double, InputCaptureSingleDataObject>();
+
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <param name="_id"><inheritdoc cref="ID" path="/summary"/></param>
+        /// <inheritdoc cref="InputCaptureData"/>
+        public InputCaptureData(int _id) {
+            ID = _id;
+        }
+        #endregion
+
+        #region Behaviour
+        /// <summary>
+        /// Records a entry for this data.
+        /// </summary>
+        /// <param name="_time">Current record time.</param>
+        /// <param name="_id">ID of the data to record.</param>
+        /// <param name="_data">Data value.</param>
+        /// <returns>True if the data was recorded, false otherwise.</returns>
+        public bool Record(double _time, int _id, InputCaptureSingleDataObject _data) {
+
+            if (ID != _id) {
+                return false;
+            }
+
+            Data.Add(_time, _data);
+            return true;
+        }
+
+        /// <summary>
+        /// Replays recorded data for this frame.
+        /// </summary>
+        /// <param name="_recorderData"><see cref="IInputRecorderData"/> to replay.</param>
+        /// <param name="_time">Current game time.</param>
+        /// <param name="_timeRuntime">Record runtime.</param>
+        /// <param name="_timeStartEvent">Record first event time.</param>
+        /// <returns>True if the data was replayed, false otherwise.</returns>
+        public bool Replay(IInputRecorderData _recorderData, double _time, double _timeRuntime, double _timeStartEvent) {
+
+            if (_recorderData.InputDataID != ID) {
+                return false;
+            }
+
+            //m_AllEventsByTime[m_AllEventsByTimeIndex + 1].internalTime > m_StartTimeAsPerFirstEvent + (InputRuntime.s_Instance.currentTime - m_StartTimeAsPerRuntime)
+
+            while ((ReplayIndex < Data.Count) && (Data[ReplayIndex].First < (_timeStartEvent + (_time - _timeRuntime)))) {
+
+                _recorderData.Replay(Data[ReplayIndex].Second);
+                ReplayIndex++;
+            }
+
+            return true;
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Holder for all input data from a single capture.
+    /// </summary>
+    [Serializable]
+    public class InputCaptureDataHolder {
+        #region Global Members
+        /// <summary>
+        /// All data from this input capture.
+        /// </summary>
+        [SerializeField] public EnhancedCollection<InputCaptureData> Data = new EnhancedCollection<InputCaptureData>();
+        #endregion
+
+        #region Behaviour
+        /// <summary>
+        /// Records a specific input data.
+        /// </summary>
+        /// <param name="_time">Current record time.</param>
+        /// <param name="_id">ID of the data to record.</param>
+        /// <param name="_data">Data value.</param>
+        public void RecordData(double _time, int _id, InputCaptureSingleDataObject _data) {
+
+            for (int i = 0; i < Data.Count; i++) {
+
+                if (Data[i].Record(_time, _id, _data)) {
+                    return;
+                }
+            }
+
+            InputCaptureData _capture = new InputCaptureData(_id);
+            _capture.Record(_time, _id, _data);
+
+            Data.Add(_capture);
+        }
+
+        /// <summary>
+        /// Replays recorded data for this frame.
+        /// </summary>
+        /// <param name="_recorderData"><see cref="IInputRecorderData"/> to replay.</param>
+        /// <param name="_time">Current game time.</param>
+        /// <param name="_timeRuntime">Record runtime.</param>
+        /// <param name="_timeStartEvent">Record first event time.</param>
+        public void ReplayData(IInputRecorderData _recorderData, double _time, double _timeRuntime, double _timeStartEvent) {
+
+            for (int i = 0; i < Data.Count; i++) {
+
+                if (Data[i].Replay(_recorderData, _time, _timeRuntime, _timeStartEvent)) {
+                    return;
+                }
+            }
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Inherit from this interface to record and replay your own data bind to input captures.
+    /// </summary>
+    public interface IInputRecorderData {
+        #region Content
+        /// <summary>
+        /// Unique identifier of this object related data.
+        /// </summary>
+        int InputDataID { get; }
+
+        /// <summary>
+        /// Records an input data for this frame.
+        /// </summary>
+        /// <param name="_data">This frame input data.</param>
+        /// <returns>True if a data should be recorded, false otherwise.</returns>
+        bool Record(out InputCaptureSingleDataObject _data);
+
+        /// <summary>
+        /// Replays a previously recorded input data.
+        /// </summary>
+        /// <param name="_data">Input data to replay.</param>
+        void Replay(InputCaptureSingleDataObject _data);
+        #endregion
+    }
+
+    /// <summary>
     /// <see cref="InputEventTrace"/> wrapper used to record and replay game inputs.
     /// </summary>
     [ScriptGizmos(false, true)]
@@ -123,6 +292,11 @@ namespace EnhancedFramework.Inputs {
                  "by frame in that replay will try to compensate for differences in frame timings and redistribute events to frames that " +
                  "more closely match the original timing. Note that this is not perfect and will not necessarily create a 1:1 match.")]
         [SerializeField] private bool simulateOriginalTimingOnReplay = true;
+
+        [Space(5f)]
+
+        [Tooltip("Toggles meta data recording")]
+        [SerializeField] private bool recordMetaData = true;
 
         [Space(10f)]
 
@@ -275,7 +449,9 @@ namespace EnhancedFramework.Inputs {
                 // Record.
                 case State.Record:
 
-                    if (!IsRecording) {
+                    if (IsRecording) {
+                        RecordInputData();
+                    } else {
                         StopRecord();
                     }
 
@@ -284,7 +460,9 @@ namespace EnhancedFramework.Inputs {
                 // Replay.
                 case State.Replay:
 
-                    if (!IsReplaying) {
+                    if (IsReplaying) {
+                        ReplayInputData();
+                    } else {
                         StopReplay();
                     }
 
@@ -316,6 +494,10 @@ namespace EnhancedFramework.Inputs {
         #endregion
 
         #region Record File
+        private const string MetaFileExtension = ".meta";
+
+        // -----------------------
+
         /// <summary>
         /// Saves the current record to a file on disk.
         /// </summary>
@@ -336,6 +518,12 @@ namespace EnhancedFramework.Inputs {
 
             // Save.
             eventTrace.WriteTo(_filePath);
+
+            // Meta.
+            string _metaFilePath = $"{_filePath}{MetaFileExtension}";
+            string _metaData = JsonUtility.ToJson(dataHolder);
+
+            File.WriteAllText(_metaFilePath, _metaData);
 
             this.LogMessage($"Successfully saved record at path \'{_filePath}\'");
             return true;
@@ -359,6 +547,22 @@ namespace EnhancedFramework.Inputs {
             CreateEventTrace();
             eventTrace.ReadFrom(_filePath);
 
+            // Meta.
+            string _metaFilePath = $"{_filePath}{MetaFileExtension}";
+            if (File.Exists(_metaFilePath)) {
+
+                string _json = File.ReadAllText(_metaFilePath);
+                if (!string.IsNullOrEmpty(_json)) {
+
+                    InputCaptureDataHolder _data = new InputCaptureDataHolder();
+                    JsonUtility.FromJsonOverwrite(_json, _data);
+
+                    if (_data != null) {
+                        dataHolder = _data;
+                    }
+                }
+            }
+
             this.LogMessage($"Successfully loaded record from path \'{_filePath}\'");
             return true;
         }
@@ -371,9 +575,10 @@ namespace EnhancedFramework.Inputs {
         private static readonly Type inputRuntimeType           = typeof(InputEventTrace).Assembly.GetType("UnityEngine.InputSystem.LowLevel.InputRuntime");
         private static readonly FieldInfo inputRuntimeInstance  = inputRuntimeType.GetField("s_Instance", StaticFlags);
 
-        private static readonly FieldInfo timeRuntimeField  = typeof(InputEventTrace.ReplayController).GetField("m_StartTimeAsPerRuntime", InstanceFlags);
-        private static readonly FieldInfo allEventsField    = typeof(InputEventTrace.ReplayController).GetField("m_AllEventsByTime", InstanceFlags);
-        private static readonly FieldInfo eventIndexField   = typeof(InputEventTrace.ReplayController).GetField("m_AllEventsByTimeIndex", InstanceFlags);
+        private static readonly FieldInfo timeRuntimeField      = typeof(InputEventTrace.ReplayController).GetField("m_StartTimeAsPerRuntime", InstanceFlags);
+        private static readonly FieldInfo timeFirstEventField   = typeof(InputEventTrace.ReplayController).GetField("m_StartTimeAsPerFirstEvent", InstanceFlags);
+        private static readonly FieldInfo allEventsField        = typeof(InputEventTrace.ReplayController).GetField("m_AllEventsByTime", InstanceFlags);
+        private static readonly FieldInfo eventIndexField       = typeof(InputEventTrace.ReplayController).GetField("m_AllEventsByTimeIndex", InstanceFlags);
 
         [NonSerialized] private double replayTime = 0d;
 
@@ -402,7 +607,7 @@ namespace EnhancedFramework.Inputs {
         }
 
         /// <summary>
-        /// Time offset of the capture capture.
+        /// Time offset of the current capture.
         /// </summary>
         public double GetCaptureTimeOffset {
             get {
@@ -551,7 +756,6 @@ namespace EnhancedFramework.Inputs {
                 //this.LogMessage("Delog Elapsed => " + _time + " - " + _elapsed + " | " + _captureOffset + " - " + _realElapsed + " | " + EventIndex);
 
                 timeRuntimeField.SetValue(replayController, _time + _realElapsed);
-
                 return;
             }
 
@@ -730,6 +934,78 @@ namespace EnhancedFramework.Inputs {
                     _input.IsPaused = _pause;
                 }
             }
+        }
+        #endregion
+
+        #region Data
+        private static List<IInputRecorderData> dataBuffer = new List<IInputRecorderData>();
+        private static InputCaptureDataHolder dataHolder = new InputCaptureDataHolder();
+
+        // -----------------------
+
+        /// <summary>
+        /// Records all registered input data.
+        /// </summary>
+        private void RecordInputData() {
+
+            if (isPaused || !recordMetaData) {
+                return;
+            }
+
+            double _time = InputCurrentTime;
+
+            for (int i = 0; i < dataBuffer.Count; i++) {
+
+                IInputRecorderData _recordData = dataBuffer[i];
+
+                if (_recordData.Record(out InputCaptureSingleDataObject _data)) {
+                    dataHolder.RecordData(_time, _recordData.InputDataID, _data);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Replays all registered input data.
+        /// </summary>
+        private void ReplayInputData() {
+
+            if (isPaused || !recordMetaData) {
+                return;
+            }
+
+            double _time = InputCurrentTime;
+            double _timeRuntime = (double)timeRuntimeField.GetValue(replayController);
+            double _timeFirstEvent = (double)timeFirstEventField.GetValue(replayController);
+
+            if (_timeFirstEvent < 0d) {
+                return;
+            }
+
+            for (int i = 0; i < dataBuffer.Count; i++) {
+
+                IInputRecorderData _recordData = dataBuffer[i];
+                dataHolder.ReplayData(_recordData, _time, _timeRuntime, _timeFirstEvent);
+            }
+        }
+
+        // -------------------------------------------
+        // Rehistration
+        // -------------------------------------------
+
+        /// <summary>
+        /// Registers a specific <see cref="IInputRecorderData"/> instance.
+        /// </summary>
+        /// <param name="_data"><see cref="IInputRecorderData"/> to register.</param>
+        public static void RegisterInputData(IInputRecorderData _data) {
+            dataBuffer.Add(_data);
+        }
+
+        /// <summary>
+        /// Unregisters a specific <see cref="IInputRecorderData"/> instance.
+        /// </summary>
+        /// <param name="_data"><see cref="IInputRecorderData"/> to unregister.</param>
+        public static void UnregisterInputData(IInputRecorderData _data) {
+            dataBuffer.Remove(_data);
         }
         #endregion
 

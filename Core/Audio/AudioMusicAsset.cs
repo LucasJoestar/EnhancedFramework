@@ -143,6 +143,7 @@ namespace EnhancedFramework.Core {
         private int id = 0;
 
         private MusicInterruption interruptionMode = MusicInterruption.None;
+        private LoopOverride loopOverride = LoopOverride.None;
         private AudioLayer layer = AudioLayer.Default;
         private AudioMusicAsset music = null;
 
@@ -185,6 +186,17 @@ namespace EnhancedFramework.Core {
                 return audioHandler.GetHandle(out EnhancedAudioPlayer _player) && (_player.Status == EnhancedAudioPlayer.State.Playing);
             }
         }
+
+        /// <summary>
+        /// Whether this music is looping or not.
+        /// </summary>
+        public LoopOverride Loop {
+            get { return loopOverride; }
+            set {
+                loopOverride = value;
+                UpdateLoopOverride();
+            }
+        }
         #endregion
 
         #region Behaviour
@@ -212,6 +224,8 @@ namespace EnhancedFramework.Core {
 
             music = _music;
             layer = _layer;
+            loopOverride = LoopOverride.None;
+
             interruptionMode = _interruption;
 
             id = ++lastID;
@@ -290,7 +304,9 @@ namespace EnhancedFramework.Core {
 
             // Play audio.
             if (!audioHandler.Play()) {
+
                 audioHandler = music.Music.PlayAudio();
+                UpdateLoopOverride();
             }
 
             // Volume and state setup.
@@ -974,6 +990,18 @@ namespace EnhancedFramework.Core {
         /// <param name="_isOverridden">True if this music is overridden, false otherwise.</param>
         public void SetOverridden(bool _isOverridden) {
             isOverridden = _isOverridden;
+        }
+
+        /// <summary>
+        /// Update this music loop override.
+        /// </summary>
+        public void UpdateLoopOverride() {
+
+            if ((loopOverride == LoopOverride.None) || !audioHandler.GetHandle(out EnhancedAudioPlayer _player)) {
+                return;
+            }
+
+            _player.Loop = loopOverride == LoopOverride.Loop;
         }
 
         // -------------------------------------------

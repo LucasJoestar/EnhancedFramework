@@ -40,6 +40,9 @@ namespace EnhancedFramework.UI {
             [Tooltip("If true, hides this group when the source is being shown, and shows it when the source is being hidden")]
             public bool Inverse = false;
 
+            [Tooltip("If different than none, only fade the group on the requested constraint")]
+            public FadingMode Constraint = FadingMode.None;
+
             [Space(5f)]
 
             [Tooltip("Delay before showing this group (in seconds)")]
@@ -72,6 +75,18 @@ namespace EnhancedFramework.UI {
             /// <inheritdoc cref="SubFadingGroupEffect.OnSetVisibility(bool, bool)"/>
             public void Update(bool _visible, bool _instant) {
 
+                // Constraint.
+                if (Constraint != FadingMode.None) {
+
+                    if ((Constraint == FadingMode.Show) && !_visible) {
+                        return;
+                    }
+
+                    if ((Constraint == FadingMode.Hide) && _visible) {
+                        return;
+                    }
+                }
+
                 if (Inverse) {
                     _visible = !_visible;
                 }
@@ -79,7 +94,7 @@ namespace EnhancedFramework.UI {
                 float _delay = _visible ? ShowDelay : HideDelay;
 
                 delay.Cancel();
-                delay = Delayer.Call(ShowDelay, OnComplete, RealTime);
+                delay = Delayer.Call(_delay, OnComplete, RealTime);
 
                 // ----- Local Method ----- \\
 

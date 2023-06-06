@@ -11,6 +11,7 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Class instance used to retrieve a specific <see cref="Component"/> instance from another scene using this object guid.
     /// </summary>
+    [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-300)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Cross Scene/Cross Scene Object"), DisallowMultipleComponent]
     public class CrossSceneObject : EnhancedBehaviour {

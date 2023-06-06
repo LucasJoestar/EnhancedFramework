@@ -14,8 +14,8 @@ namespace EnhancedFramework.UI {
     /// Set the size of the button text.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Size Button Effect"), DisallowMultipleComponent]
-    public class SizeButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Size UI Effect"), DisallowMultipleComponent]
+    public class SizeUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Size Effect")]
 
@@ -27,7 +27,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
             text.fontSize = size[_state];
         }
         #endregion

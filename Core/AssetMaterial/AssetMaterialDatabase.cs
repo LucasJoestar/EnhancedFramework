@@ -19,10 +19,8 @@ namespace EnhancedFramework.Core {
     #pragma warning disable
     public class AssetMaterialGroup<T> where T : Object {
         #region Global Members
-        #if UNITY_EDITOR
         [Tooltip("Name of this group (editor only)")]
         [SerializeField, Delayed] private string name = "New Group";
-        #endif
 
         [Tooltip("Asset of this group")]
         [SerializeField, Enhanced, Required] public T Asset = null;

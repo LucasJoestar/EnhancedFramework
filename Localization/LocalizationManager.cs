@@ -133,6 +133,21 @@ namespace EnhancedFramework.Localization {
         #endregion
 
         #region Global Members
+        [Section("Localization Manager")]
+
+        [Tooltip("If true, unload unused tables when possible")]
+        [SerializeField] private bool unloadTables = true;
+
+        [Space(10f)]
+
+        [Tooltip("All asset tables to load on game init")]
+        [SerializeField] private LocalizedAssetTable[] generalAssets = new LocalizedAssetTable[0];
+
+        [Tooltip("All string tables to load on game init")]
+        [SerializeField] private LocalizedStringTable[] generalStrings = new LocalizedStringTable[0];
+
+        // -----------------------
+
         private readonly EnhancedCollection<ILocalizer> localizables = new EnhancedCollection<ILocalizer>();
         private readonly List<AsyncOperationHandle> operations = new List<AsyncOperationHandle>();
         #endregion
@@ -148,6 +163,15 @@ namespace EnhancedFramework.Localization {
             if (!_handle.IsDone) {
                 operations.Add(_handle);
                 _handle.Completed += OnComplete;
+            }
+
+            // Load.
+            foreach (LocalizedAssetTable _asset in generalAssets) {
+                LoadAssetTable(_asset.TableReference);
+            }
+
+            foreach (LocalizedStringTable _asset in generalStrings) {
+                LoadStringTable(_asset.TableReference);
             }
 
             // ----- Local Method ----- \\
@@ -326,6 +350,7 @@ namespace EnhancedFramework.Localization {
         /// </summary>
         /// <param name="_tables">All string tables to release.</param>
         public void ReleaseStringTables(IList<TableReference> _tables) {
+
             foreach (TableReference _table in _tables) {
                 ReleaseStringTable(_table);
             }
@@ -336,6 +361,7 @@ namespace EnhancedFramework.Localization {
         /// </summary>
         /// <param name="_tables">All asset tables to release.</param>
         public void ReleaseAssetTables(IList<TableReference> _tables) {
+
             foreach (TableReference _table in _tables) {
                 ReleaseAssetTable(_table);
             }
@@ -346,6 +372,11 @@ namespace EnhancedFramework.Localization {
         /// </summary>
         /// <param name="_table">The string table to release.</param>
         public void ReleaseStringTable(TableReference _table) {
+            
+            if (!unloadTables) {
+                return;
+            }
+
             LocalizationSettings.StringDatabase.ReleaseTable(_table);
         }
 
@@ -354,6 +385,11 @@ namespace EnhancedFramework.Localization {
         /// </summary>
         /// <param name="_table">The asset table to release.</param>
         public void ReleaseAssetTable(TableReference _table) {
+
+            if (!unloadTables) {
+                return;
+            }
+
             LocalizationSettings.AssetDatabase.ReleaseTable(_table);
         }
         #endregion

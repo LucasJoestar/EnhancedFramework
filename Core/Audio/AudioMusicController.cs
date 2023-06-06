@@ -32,6 +32,9 @@ namespace EnhancedFramework.Core {
         [Tooltip("If true, overrides the default play settings of this music")]
         [SerializeField] private bool overrideSettings = false;
 
+        [Tooltip("Music loop override")]
+        [SerializeField] private LoopOverride loopOverride = LoopOverride.None;
+
         // -----------------------
 
         /// <summary>
@@ -56,7 +59,12 @@ namespace EnhancedFramework.Core {
         protected override void OnActivation() {
             base.OnActivation();
 
-            AudioManager.Instance.PlayMusic(Music, Layer, InterruptionMode);
+            MusicHandler _music = AudioManager.Instance.PlayMusic(Music, Layer, InterruptionMode);
+
+            // Set loop.
+            if (_music.GetHandle(out MusicPlayer _handle)) {
+                _handle.Loop = loopOverride;
+            }
         }
 
         protected override void OnDeactivation() {

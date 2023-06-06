@@ -24,9 +24,12 @@ namespace EnhancedFramework.Editor {
         // -----------------------
 
         static LevelTriggerAreaDrawer() {
-            EditorSceneManager.sceneOpened += OnOpenedScene;
-            EditorSceneManager.sceneSaved += OnSavedScene;
-            SceneView.duringSceneGui += OnSceneGUI;
+
+            EditorSceneManager.sceneOpened  += OnOpenedScene;
+            EditorSceneManager.sceneSaved   += OnSavedScene;
+
+            SceneManager.sceneLoaded        += OnLoadedScene;
+            SceneView.duringSceneGui        += OnSceneGUI;
 
             GetTriggerAras();
         }
@@ -40,6 +43,10 @@ namespace EnhancedFramework.Editor {
         }
 
         private static void OnSavedScene(Scene _scene) {
+            GetTriggerAras();
+        }
+
+        private static void OnLoadedScene(Scene _scene, LoadSceneMode _mode) {
             GetTriggerAras();
         }
 

@@ -87,24 +87,24 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Animation
-        /// <inheritdoc cref="EnhancedAnimatorController.Play(Animator, string)"/>
-        public bool Play(string _stateName) {
-            return controller.Play(animator, _stateName);
+        /// <inheritdoc cref="EnhancedAnimatorController.Play(Animator, string, bool)"/>
+        public bool Play(string _stateName, bool _instant = false) {
+            return controller.Play(animator, _stateName, _instant);
         }
 
-        /// <inheritdoc cref="EnhancedAnimatorController.Play(Animator, int)"/>
-        public bool Play(int _stateHash) {
-            return controller.Play(animator, _stateHash);
+        /// <inheritdoc cref="EnhancedAnimatorController.Play(Animator, int, bool)"/>
+        public bool Play(int _stateHash, bool _instant = false) {
+            return controller.Play(animator, _stateHash, _instant);
         }
 
-        /// <inheritdoc cref="EnhancedAnimatorController.Play(Animator, int, int)"/>
-        public bool Play(int _stateHash, int _layerIndex) {
-            return controller.Play(animator, _stateHash, _layerIndex);
+        /// <inheritdoc cref="EnhancedAnimatorController.Play(Animator, int, int, bool)"/>
+        public bool Play(int _stateHash, int _layerIndex, bool _instant = false) {
+            return controller.Play(animator, _stateHash, _layerIndex, _instant);
         }
 
-        /// <inheritdoc cref="EnhancedAnimatorController.PlayDefault(Animator, int)"/>
-        public void PlayDefault(int _layerIndex) {
-            controller.PlayDefault(animator, _layerIndex);
+        /// <inheritdoc cref="EnhancedAnimatorController.PlayDefault(Animator, int, bool)"/>
+        public void PlayDefault(int _layerIndex, bool _instant = false) {
+            controller.PlayDefault(animator, _layerIndex, _instant);
         }
 
         /// <inheritdoc cref="EnhancedAnimatorController.PlayDefault(Animator, int, float)"/>

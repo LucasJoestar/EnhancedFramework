@@ -75,7 +75,12 @@ namespace EnhancedFramework.Core {
         /// <param name="_increase">Value time increase (in seconds).</param>
         /// <returns>This value at the current evaluation time.</returns>
         public float EvaluateContinue(int _id, float _increase) {
-            float _time = Mathf.Clamp(timeWrapper[_id] + _increase, 0f, Duration);
+
+            if (!timeWrapper.TryGetValue(_id, out float _value)) {
+                return 0f;
+            }
+
+            float _time = Mathf.Clamp(_value + _increase, 0f, Duration);
             timeWrapper[_id] = _time;
 
             return DoEvaluate(_id, _time / Duration);
@@ -88,6 +93,11 @@ namespace EnhancedFramework.Core {
         /// <param name="_time">Time to evaluate this value at.</param>
         /// <returns>This value at the given time.</returns>
         public float Evaluate(int _id, float _time) {
+
+            if (!timeWrapper.ContainsKey(_id)) {
+                return 0f;
+            }
+
             timeWrapper[_id] = _time;
             return DoEvaluate(_id, _time / Duration);
         }
@@ -99,6 +109,11 @@ namespace EnhancedFramework.Core {
         /// <param name="_percent">Lifetime percentage to evaluate the curve at.</param>
         /// <returns>The curve value at the given percentage.</returns>
         public float EvaluatePercent(int _id, float _percent) {
+
+            if (!timeWrapper.ContainsKey(_id)) {
+                return 0f;
+            }
+
             timeWrapper[_id] = Duration * _percent;
             return DoEvaluate(_id, _percent);
         }
@@ -119,6 +134,11 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
         public float GetTimeRatio(int _id) {
+
+            if (!timeWrapper.ContainsKey(_id)) {
+                return 0f;
+            }
+
             return timeWrapper[_id] / Duration;
         }
 
@@ -128,6 +148,11 @@ namespace EnhancedFramework.Core {
         /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
         /// <returns>This value first default value.</returns>
         public float Reset(int _id) {
+
+            if (!timeWrapper.ContainsKey(_id)) {
+                return 0f;
+            }
+
             timeWrapper[_id] = 0f;
             return DoEvaluate(_id, 0f);
         }

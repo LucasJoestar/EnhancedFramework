@@ -164,13 +164,11 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public int Hash {
             get {
-                #if DEVELOPMENT
                 if (hash == 0) {
 
                     hash = Animator.StringToHash(parameterName);
                     this.LogErrorMessage("Parameter hash value was not correctly configured");
                 }
-                #endif
 
                 return hash;
             }

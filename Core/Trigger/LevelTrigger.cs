@@ -7,8 +7,11 @@
 using EnhancedEditor;
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace EnhancedFramework.Core {
     /// <summary>
@@ -197,6 +200,11 @@ namespace EnhancedFramework.Core {
         [SerializeField] protected TagGroup requiredTags = new TagGroup();
 
         [SerializeField] protected FlagValueGroup requiredFlags = new FlagValueGroup();
+
+        [Space(5f)]
+
+        [Tooltip("If true, automatically disables this trigger collider after trigger exit")]
+        [SerializeField] protected bool onlyOnce = false;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -404,6 +412,11 @@ namespace EnhancedFramework.Core {
         protected override void OnEnterTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
             base.OnEnterTrigger(_actor, _behaviour);
 
+            // Flag requirement.
+            if (!requiredFlags.Valid) {
+                return;
+            }
+
             // Callbacks.
             PortalIdentifier _portal = GetInteractionPortal(_behaviour);
 
@@ -436,6 +449,13 @@ namespace EnhancedFramework.Core {
                 actor = null;
             }
             #endif
+
+            // Disable.
+            if (onlyOnce) {
+
+                collider.enabled = false;
+                enabled = false;
+            }
         }
 
         // -------------------------------------------
@@ -443,7 +463,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         protected override bool InteractWithTrigger(EnhancedBehaviour _behaviour) {
-            return base.InteractWithTrigger(_behaviour) && _behaviour.HasTags(requiredTags) && requiredFlags.Valid;
+            return base.InteractWithTrigger(_behaviour) && _behaviour.HasTags(requiredTags);
         }
 
         /// <summary>

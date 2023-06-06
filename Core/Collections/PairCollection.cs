@@ -85,6 +85,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_key">The key to get the associated index.</param>
         /// <returns>-1 if the key could not be found in this collection, or its index otheriwse.</returns>
         public int IndexOfKey(T _key) {
+
             for (int i = 0; i < Count; i++) {
                 if (Compare(collection[i].First, _key)) {
                     return i;
@@ -100,6 +101,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_key">The value to get the associated index.</param>
         /// <returns>-1 if the value could not be found in this collection, or its index otheriwse.</returns>
         public int IndexOfValue(U _value) {
+
             for (int i = 0; i < Count; i++) {
                 if (Compare(collection[i].Second, _value)) {
                     return i;

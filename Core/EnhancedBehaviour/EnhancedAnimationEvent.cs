@@ -8,11 +8,24 @@ using UnityEngine;
 
 namespace EnhancedFramework.Core {
     /// <summary>
+    /// Base interface to derive any animation event class from.
+    /// </summary>
+    public interface IEnhancedAnimationEvent {
+        #region Content
+        /// <summary>
+        /// Invokes this event from a specific <see cref="EnhancedBehaviour"/>.
+        /// </summary>
+        /// <param name="_behaviour">The <see cref="EnhancedBehaviour"/> invoking this event.</param>
+        void Invoke(EnhancedBehaviour _behaviour);
+        #endregion
+    }
+
+    /// <summary>
     /// <see cref="ScriptableObject"/> base serializable class for all animation events.
     /// <para/>
     /// Always inherit from <see cref="EnhancedAnimationEvent{T}"/> instead of this base class.
     /// </summary>
-    public abstract class EnhancedAnimationEvent : ScriptableObject {
+    public abstract class EnhancedAnimationEvent : ScriptableObject, IEnhancedAnimationEvent {
         public const int AnimationEventMenuOrder = 151;
 
         #region Constructor
@@ -23,11 +36,8 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Event
-        /// <summary>
-        /// Invokes this event from a specific <see cref="EnhancedBehaviour"/>.
-        /// </summary>
-        /// <param name="_behaviour">The <see cref="EnhancedBehaviour"/> invoking this event.</param>
-        internal abstract void Invoke(EnhancedBehaviour _behaviour);
+        /// <inheritdoc cref="IEnhancedAnimationEvent.Invoke(EnhancedBehaviour)"/>
+        public abstract void Invoke(EnhancedBehaviour _behaviour);
         #endregion
     }
 
@@ -38,7 +48,7 @@ namespace EnhancedFramework.Core {
 	/// </summary>
     public abstract class EnhancedAnimationEvent<T> : EnhancedAnimationEvent where T : EnhancedBehaviour {
         #region Event
-        internal override sealed void Invoke(EnhancedBehaviour _behaviour) {
+        public override sealed void Invoke(EnhancedBehaviour _behaviour) {
 
             // This method is called on each and every EnhancedBehaviour component on the source behaviour instance.
             // To prevent from invoking this event multiple times, cast it into its target type for match.

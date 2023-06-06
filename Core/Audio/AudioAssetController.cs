@@ -40,6 +40,9 @@ namespace EnhancedFramework.Core {
 
         [Tooltip("If true, overrides the default settings of this audio")]
         [SerializeField] private bool overrideSettings = false;
+
+        [Tooltip("Audio loop override")]
+        [SerializeField] private LoopOverride loopOverride = LoopOverride.None;
         #endregion
 
         #region Behaviour
@@ -60,6 +63,11 @@ namespace EnhancedFramework.Core {
 
                 if (_handler.GetHandle(out EnhancedAudioPlayer _player)) {
                     _player.PushVolumeModifier(AudioPlayerModifier.ControllerSource, 0f);
+
+                    // Loop override.
+                    if (loopOverride != LoopOverride.None){
+                        _player.Loop = loopOverride == LoopOverride.Loop;
+                    }
                 }
             }
 

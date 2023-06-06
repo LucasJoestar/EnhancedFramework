@@ -214,6 +214,14 @@ namespace EnhancedFramework.Core {
             get { return audioSource.ignoreListenerPause; }
         }
 
+        /// <summary>
+        /// This audio loop mode.
+        /// </summary>
+        public bool Loop {
+            get { return audioSource.loop; }
+            set { audioSource.loop = value; }
+        }
+
         // -----------------------
 
         #if UNITY_EDITOR
@@ -301,6 +309,7 @@ namespace EnhancedFramework.Core {
 
                     // Instant.
                     if (!audioSource.isPlaying && !IsAudioPaused) {
+
                         Stop(true);
                         return;
                     }
@@ -309,11 +318,13 @@ namespace EnhancedFramework.Core {
                     if (_time >= (audioAsset.PlayRange.y - audioAsset.FadeOutDuration)) {
 
                         bool _instant = _time >= audioAsset.PlayRange.y;
-                        Stop(_instant, null, true, false);
 
-                        return;
+                        if (_instant || !Loop || !audioAsset.LoopSeemless) {
+
+                            Stop(_instant, null, true, false);
+                            return;
+                        }
                     }
-
                     break;
 
                 // Ignore.
@@ -609,11 +620,12 @@ namespace EnhancedFramework.Core {
             void OnStop() {
 
                 // Restart loop.
-                if (!_stopLoop && audioAsset.Loop) {
+                if (!_stopLoop && Loop) {
 
                     _onComplete?.Invoke();
-                    Play();
+                    Time = audioAsset.PlayRange.x;
 
+                    Play();
                     return;
                 }
 

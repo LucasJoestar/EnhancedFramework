@@ -7,11 +7,13 @@
 using EnhancedEditor;
 using System;
 using UnityEngine;
+using System.Runtime.CompilerServices;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
+[assembly: InternalsVisibleTo("EnhancedFramework.UI")]
 namespace EnhancedFramework.Core.Option {
     /// <summary>
     /// <see cref="BaseGameOption"/>-related <see cref="ScriptableObject"/> wrapper.
@@ -27,7 +29,7 @@ namespace EnhancedFramework.Core.Option {
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
         [Tooltip("Default option values")]
-        [SerializeReference, Enhanced, Block] private BaseGameOption defaultOption = new DefaultGameOption();
+        [SerializeReference, Enhanced, Block] internal BaseGameOption defaultOption = new DefaultGameOption();
         #endregion
 
         #region Scriptable Object
@@ -85,6 +87,7 @@ namespace EnhancedFramework.Core.Option {
 
             // Initializes this option value.
             runtimeOption = _settings.GetOption(defaultOption.GUID, defaultOption.Name, CreateOption);
+            runtimeOption.Initialize(defaultOption);
         }
 
         /// <summary>

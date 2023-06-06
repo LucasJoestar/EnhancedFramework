@@ -147,6 +147,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     [ScriptGizmos(false, true)]
     [ScriptingDefineSymbol("DEVELOPER_CONSOLE", "Developer Console")]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Developer Console/Developer Console"), DisallowMultipleComponent]
+    #pragma warning disable
     public class DeveloperConsole : EnhancedSingleton<DeveloperConsole>, IStableUpdate, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 

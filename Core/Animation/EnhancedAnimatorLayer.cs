@@ -81,14 +81,15 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_animator"><see cref="Animator"/> on which to play the transition.</param>
         /// <param name="_stateHash">Hash name of the sate to play.</param>
+        /// <param name="_instant">If true, instantly plays the animation.</param>
         /// <returns>True if the given state could be successfully played, false otherwise.</returns>
-        public bool Play(Animator _animator, int _stateHash) {
+        public bool Play(Animator _animator, int _stateHash, bool _instant = false) {
 
             foreach (EnhancedAnimatorState _state in states) {
 
                 if (_state.Hash == _stateHash) {
 
-                    _state.Play(_animator, layerIndex);
+                    _state.Play(_animator, layerIndex, _instant);
                     return true;
                 }
             }
@@ -97,7 +98,15 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="PlayDefault(Animator, float)"/>
-        public void PlayDefault(Animator _animator) {
+        public void PlayDefault(Animator _animator, bool _instant = false) {
+
+            // Instant.
+            if (_instant) {
+
+                _animator.Play(defaultState.Hash, layerIndex);
+                return;
+            }
+
             PlayDefault(_animator, defaultTransition);
         }
 

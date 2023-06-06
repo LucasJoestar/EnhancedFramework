@@ -13,8 +13,8 @@ namespace EnhancedFramework.UI {
     /// Fades a <see cref="FadingGroup"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Fading Group Button Effect"), DisallowMultipleComponent]
-    public class FadingGroupButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Fading Group UI Effect"), DisallowMultipleComponent]
+    public class FadingGroupUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Fading Group Effect")]
 
@@ -26,7 +26,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
             group.Fade(fade[_state]);
         }
         #endregion

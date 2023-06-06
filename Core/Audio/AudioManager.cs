@@ -26,6 +26,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ExecuteInEditMode]
     [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-955)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Audio Manager"), DisallowMultipleComponent]
     public class AudioManager : EnhancedSingleton<AudioManager>, IStableUpdate, IGameStateOverrideCallback,
                                 IObjectPoolManager<EnhancedAudioPlayer>, IObjectPoolManager<MusicPlayer>, 
@@ -299,24 +300,16 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Pauses a specific <see cref="AudioAsset"/> preview.
         /// </summary>
-        /// <param name="_audio"><see cref="AudioAsset"/> to pause.</param>
-        internal void PausePreview(AudioAsset _audio) {
-            if (_audio != previewPlayer.AudioAsset) {
-                return;
-            }
-
+        /// <param name="_"><see cref="AudioAsset"/> to pause.</param>
+        internal void PausePreview(AudioAsset _) {
             previewPlayer.Pause(false);
         }
 
         /// <summary>
         /// Stops a specific <see cref="AudioAsset"/> preview.
         /// </summary>
-        /// <param name="_audio"><see cref="AudioAsset"/> to pause.</param>
-        internal void StopPreview(AudioAsset _audio) {
-            if (_audio != previewPlayer.AudioAsset) {
-                return;
-            }
-
+        /// <param name="_"><see cref="AudioAsset"/> to pause.</param>
+        internal void StopPreview(AudioAsset _) {
             previewPlayer.Stop(false);
         }
 

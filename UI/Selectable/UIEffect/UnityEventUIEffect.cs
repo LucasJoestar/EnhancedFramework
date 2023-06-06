@@ -13,8 +13,8 @@ namespace EnhancedFramework.UI {
     /// Invoke a <see cref="UnityEvent"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Event Button Effect"), DisallowMultipleComponent]
-    public class UnityEventButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Event UI Effect"), DisallowMultipleComponent]
+    public class UnityEventUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Unity Event Effect")]
 
@@ -22,7 +22,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
             events[_state].Invoke();
         }
         #endregion

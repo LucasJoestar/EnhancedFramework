@@ -11,6 +11,8 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Utility <see cref="EnhancedBehaviour"/> used to initialize this object activation state.
     /// </summary>
+    [ScriptGizmos(false, true)]
+    [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Game Object Activator")]
     public class GameObjectActivator : EnhancedBehaviour {
         #region Mode
         /// <summary>

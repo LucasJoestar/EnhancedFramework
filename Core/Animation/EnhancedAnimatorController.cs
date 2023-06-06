@@ -4,6 +4,14 @@
 //
 // ================================================================================== //
 
+#if UNITY_2020_3 || UNITY_2022_2_OR_NEWER
+#define DEFAULT_VALUES
+#endif
+
+#if UNITY_2020_3 || UNITY_2022_1_OR_NEWER
+#define KEEP_ANIMATOR_STATE
+#endif
+
 using EnhancedEditor;
 using UnityEngine;
 using System;
@@ -91,8 +99,15 @@ namespace EnhancedFramework.Core {
         [Button(ActivationMode.Play, SuperColor.HarvestGold, IsDrawnOnTop = false)]
         public void Initialize(Animator _animator) {
 
-            _animator.writeDefaultValuesOnDisable   = resetDefaultValuesOnDisable;
-            _animator.keepAnimatorStateOnDisable    = keepAnimatorStateOnDisable;
+            #if DEFAULT_VALUES
+            _animator.writeDefaultValuesOnDisable = resetDefaultValuesOnDisable;
+            #endif
+
+            #if KEEP_ANIMATOR_STATE
+            _animator.keepAnimatorStateOnDisable = keepAnimatorStateOnDisable;
+            #else
+            _animator.keepAnimatorControllerStateOnDisable = keepAnimatorStateOnDisable;
+            #endif
 
             _animator.feetPivotActive   = feetPivotBlend;
             _animator.fireEvents        = animationEvents;
@@ -153,18 +168,18 @@ namespace EnhancedFramework.Core {
 
         #region Animation
         /// <param name="_stateName">Name of the state to play.</param>
-        /// <inheritdoc cref="Play(Animator, int, int)"/>
-        public bool Play(Animator _animator, string _stateName) {
+        /// <inheritdoc cref="Play(Animator, int, int, bool)"/>
+        public bool Play(Animator _animator, string _stateName, bool _instant = false) {
             int _hash = Animator.StringToHash(_stateName);
-            return Play(_animator, _hash);
+            return Play(_animator, _hash, _instant);
         }
 
-        /// <inheritdoc cref="Play(Animator, int, int)"/>
-        public bool Play(Animator _animator, int _stateHash) {
+        /// <inheritdoc cref="Play(Animator, int, int, bool)"/>
+        public bool Play(Animator _animator, int _stateHash, bool _instant = false) {
 
             for (int i = 0; i < layers.Length; i++) {
 
-                if (Play(_animator, _stateHash, i)) {
+                if (Play(_animator, _stateHash, i, _instant)) {
                     return true;
                 }
             }
@@ -178,14 +193,20 @@ namespace EnhancedFramework.Core {
         /// <param name="_animator"><see cref="Animator"/> on which to play the state.</param>
         /// <param name="_stateHash">Hash of the state to play.</param>
         /// <param name="_layerIndex">Index of the layer on which to play the state.</param>
+        /// <param name="_instant">If true, instantly plays the animation.</param>
         /// <returns>True if the state could be successfully played, false otherwise.</returns>
-        public bool Play(Animator _animator, int _stateHash, int _layerIndex) {
-            return layers[_layerIndex].Play(_animator, _stateHash);
+        public bool Play(Animator _animator, int _stateHash, int _layerIndex, bool _instant = false) {
+
+            if (_layerIndex >= layers.Length) {
+                return false;
+            }
+
+            return layers[_layerIndex].Play(_animator, _stateHash, _instant);
         }
 
         /// <inheritdoc cref="PlayDefault(Animator, int, float)"/>
-        public void PlayDefault(Animator _animator, int _layerIndex) {
-            layers[_layerIndex].PlayDefault(_animator);
+        public void PlayDefault(Animator _animator, int _layerIndex, bool _instant = false) {
+            layers[_layerIndex].PlayDefault(_animator, _instant);
         }
 
         /// <summary>

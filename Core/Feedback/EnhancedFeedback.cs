@@ -192,7 +192,7 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         [Tooltip("Delay before playing this feedback")]
-        [Enhanced, Range(0f, 5f)] public float Delay = 0f;
+        [Enhanced, Range(0f, 10f)] public float Delay = 0f;
 
         [Tooltip("If true, delay will not be affected by time scale")]
 		[SerializeField, Enhanced, DisplayName("Real Time")] private bool useRealTime = false;

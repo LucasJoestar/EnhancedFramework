@@ -457,6 +457,11 @@ namespace EnhancedFramework.Core {
         }
 
         protected bool Compare<U>(U _first, U _second) {
+
+            if (typeof(U).IsInterface) {
+                return ReferenceEquals(_first, _second);
+            }
+
             return EqualityComparer<U>.Default.Equals(_first, _second);
         }
         #endregion

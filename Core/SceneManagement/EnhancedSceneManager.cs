@@ -131,6 +131,9 @@ namespace EnhancedFramework.Core {
 
         [Space(10f)]
 
+        [Tooltip("If true, unload unused reosurces after loading and unloading (this can be an expensive operation)")]
+        [SerializeField] private bool unloadResources = true;
+
         [Tooltip("The first scene to load when starting the game")]
         [SerializeField, Enhanced, Required] private SceneBundle firstScene = null;
 
@@ -525,8 +528,11 @@ namespace EnhancedFramework.Core {
             loadingBundles.Clear();
 
             // Free memory.
-            SetLoadingState(LoadingState.FreeMemory);
-            yield return FreeMemory();
+            if (FreeMemory(out AsyncOperation _freeMemory)) {
+
+                SetLoadingState(LoadingState.FreeMemory);
+                yield return _freeMemory;
+            }
 
             SetLoadingState(LoadingState.WaitForInitialization);
 
@@ -732,8 +738,11 @@ namespace EnhancedFramework.Core {
             unloadingBundles.Clear();
 
             // Free memory.
-            SetUnloadingState(UnloadingState.FreeMemory);
-            yield return FreeMemory();
+            if (FreeMemory(out AsyncOperation _freeMemory)) {
+
+                SetUnloadingState(UnloadingState.FreeMemory);
+                yield return _freeMemory;
+            }
 
             yield return new WaitForSecondsRealtime(UnloadCompletionDelay);
 
@@ -813,9 +822,18 @@ namespace EnhancedFramework.Core {
         /// Free some memory space.
         /// <br/> Called once unloading operations have been complete.
         /// </summary>
-        private AsyncOperation FreeMemory() {
+        private bool FreeMemory(out AsyncOperation _operation) {
+
+            if (!unloadResources) {
+
+                _operation = null;
+                return false;
+            }
+
             GC.Collect();
-            return Resources.UnloadUnusedAssets();
+            _operation = Resources.UnloadUnusedAssets();
+
+            return true;
         }
         #endregion
     }

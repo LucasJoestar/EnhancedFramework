@@ -215,7 +215,9 @@ namespace EnhancedFramework.Core {
         protected virtual void ControllerUpdate() {
 
             // Update cooldown.
-            if (!updateCooldown.Update(DeltaTime)) {
+            float _delta = unscaledTime ? UnscaledDeltaTime : DeltaTime;
+
+            if (!updateCooldown.Update(_delta)) {
                 return;
             }
 

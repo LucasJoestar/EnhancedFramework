@@ -19,6 +19,7 @@ namespace EnhancedFramework.Timeline {
     /// <summary>
     /// <see cref="PlayableDirector"/>-related binding data storage component.
     /// </summary>
+    [ScriptGizmos(false, true)]
     public class EnhancedPlayableBindingData : EnhancedBehaviour {
         #region Global Members
         [Section("Playable Binding Data")]

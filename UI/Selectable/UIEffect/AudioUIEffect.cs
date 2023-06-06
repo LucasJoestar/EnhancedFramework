@@ -13,8 +13,8 @@ namespace EnhancedFramework.UI {
     /// Plays an <see cref="AudioAsset"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Audio Button Effect")]
-    public class AudioButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Audio UI Effect")]
+    public class AudioUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Audio Effect")]
 
@@ -31,7 +31,7 @@ namespace EnhancedFramework.UI {
 
         // -----------------------
 
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
 
             // Ignore.
             if (lastState == _state) {

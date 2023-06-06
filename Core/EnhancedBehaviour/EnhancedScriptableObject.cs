@@ -81,7 +81,13 @@ namespace EnhancedFramework.Core {
 
             #if UNITY_EDITOR
             // Editor behaviour.
-            if (!Application.isPlaying && !objectID.IsValid) {
+            if (!Application.isPlaying) {
+
+                EnhancedObjectID _objectID = new EnhancedObjectID(this);
+
+                if (objectID == _objectID) {
+                    return;
+                }
 
                 Undo.RecordObject(this, "Assigning ID");
 

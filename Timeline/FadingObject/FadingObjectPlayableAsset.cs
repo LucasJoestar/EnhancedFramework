@@ -83,6 +83,11 @@ namespace EnhancedFramework.Timeline {
         [Tooltip("Visibility of this object when exiting this clip")]
         public bool ExitVisibility   = false;
 
+        [Space(5f)]
+
+        public bool EnterInstant = false;
+        public bool ExitInstant = false;
+
         // -----------------------
 
         /// <summary>
@@ -125,7 +130,7 @@ namespace EnhancedFramework.Timeline {
             float _time = (float)_playable.GetTime();
 
             // Fade in.
-            float _startDuration = GetDuration(EnterVisibility);
+            float _startDuration = EnterInstant ? 0f : GetDuration(EnterVisibility);
 
             if ((_time < _startDuration) && (fromVisibility != EnterVisibility)) {
 
@@ -134,7 +139,7 @@ namespace EnhancedFramework.Timeline {
             }
 
             // Fade out.
-            float _endDuration = GetDuration(ExitVisibility);
+            float _endDuration = ExitInstant ? 0f : GetDuration(ExitVisibility);
             float _endStart = (float)_playable.GetDuration() - _endDuration;
 
             if ((_time > _endStart) && (EnterVisibility != ExitVisibility)) {

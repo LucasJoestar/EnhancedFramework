@@ -64,7 +64,7 @@ namespace EnhancedFramework.Core {
         /// Indicates if this id is valid.
         /// </summary>
         public bool IsValid {
-            get { return (type != Type.Null) && (objectID != 0L) && !string.IsNullOrEmpty(assetGUID); }
+            get { return (type != Type.Null) && (objectID != 0L); }
         }
 
         // -----------------------

@@ -227,7 +227,11 @@ namespace EnhancedFramework.Core {
                     }
 
                     _pair.Second = _inArea;
-                    actors[i] = _pair;
+
+                    // Security (happens when instantly exiting the trigger).
+                    if ((i < actors.Count) && _actor == actors[i].First) {
+                        actors[i] = _pair;
+                    }
                 }
             }
 
@@ -245,6 +249,11 @@ namespace EnhancedFramework.Core {
 
         protected override void OnEnterTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {
 
+            // Flag requirement.
+            if (!requiredFlags.Valid) {
+                return;
+            }
+
             // Already registered.
             if (actors.ContainsKey(_actor)) {
                 return;
@@ -257,6 +266,7 @@ namespace EnhancedFramework.Core {
 
             // Register actor.
             actors.Add(_actor, false);
+            AreaUpdate();
         }
 
         protected override void OnExitTrigger(ITriggerActor _actor, EnhancedBehaviour _behaviour) {

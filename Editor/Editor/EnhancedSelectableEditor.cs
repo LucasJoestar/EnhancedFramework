@@ -10,10 +10,10 @@ using UnityEditor.UI;
 
 namespace EnhancedFramework.Editor {
     /// <summary>
-    /// Custom <see cref="EnhancedButton"/> editor.
+    /// Custom <see cref="EnhancedSelectable"/> editor.
     /// </summary>
-    [CustomEditor(typeof(EnhancedButton), true), CanEditMultipleObjects]
-    public class EnhancedButtonEditor : ButtonEditor {
+    [CustomEditor(typeof(EnhancedSelectable), true), CanEditMultipleObjects]
+    public class EnhancedSelectableEditor : SelectableEditor {
         #region Editor GUI
         public override void OnInspectorGUI() {
             serializedObject.Update();
@@ -21,10 +21,16 @@ namespace EnhancedFramework.Editor {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("AutoSelectOnEnabled"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Effects"));
 
-            serializedObject.ApplyModifiedProperties();
-
             EditorGUILayout.Space(5f);
             base.OnInspectorGUI();
+
+            SerializedProperty _last = serializedObject.FindProperty("group");
+
+            while (_last.NextVisible(false)) {
+                EditorGUILayout.PropertyField(_last);
+            }
+
+            serializedObject.ApplyModifiedProperties();
         }
         #endregion
     }

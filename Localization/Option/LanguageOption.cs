@@ -28,6 +28,9 @@ namespace EnhancedFramework.Localization {
         [Tooltip("All available language of the game")]
         [SerializeField] private Locale[] allLanguage = new Locale[0];
 
+        [Tooltip("Identifier of the selected language")]
+        [SerializeField, HideInInspector] private LocaleIdentifier languageIdentifier = default;
+
         // -----------------------
 
         /// <summary>
@@ -41,6 +44,8 @@ namespace EnhancedFramework.Localization {
                 }
 
                 language = value;
+                languageIdentifier = value.Identifier;
+
                 Apply();
             }
         }
@@ -57,6 +62,18 @@ namespace EnhancedFramework.Localization {
         /// </summary>
         public int SelectedLanguageIndex {
             get { return Array.IndexOf(allLanguage, language); }
+            set { Language = GetLanguage(value); }
+        }
+
+        // -----------------------
+
+        public override int SelectedValueIndex {
+            get { return SelectedLanguageIndex; }
+            set { SelectedLanguageIndex = value; }
+        }
+
+        public override int AvailableOptionCount {
+            get { return LanguageCount; }
         }
         #endregion
 
@@ -67,6 +84,23 @@ namespace EnhancedFramework.Localization {
 
         public override void Refresh() {
             language =  LocalizationManager.Instance.SelectedLocale;
+        }
+
+        public override void Initialize(BaseGameOption _option) {
+
+            if (!(_option is LanguageOption _language)) {
+                return;
+            }
+
+            allLanguage = _language.allLanguage;
+
+            Locale _locale = _language.language;
+
+            if ((_locale == null) && allLanguage.Find(l => l.Identifier == _language.languageIdentifier, out Locale _temp)) {
+                _locale = _temp;
+            }
+
+            Language = _locale;
         }
         #endregion
 

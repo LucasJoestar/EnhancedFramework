@@ -347,6 +347,15 @@ namespace EnhancedFramework.Core {
 
         #region Object ID
         /// <summary>
+        /// If true, automatically regenerates this object ID on play if required.
+        /// </summary>
+        public virtual bool AutoRegenerateID {
+            get { return true; }
+        }
+
+        // -----------------------
+
+        /// <summary>
         /// Get this object unique ID.
         /// </summary>
         [ContextMenu("Get Object ID", false, 10)]
@@ -365,12 +374,11 @@ namespace EnhancedFramework.Core {
                     return;
                 }
 
-                if (!objectID.IsValid) {
+                if (true/*!objectID.IsValid*/) {
 
                     EnhancedObjectID _objectID = new EnhancedObjectID(this);
                     SetID(_objectID);
                 }
-
 
                 return;
             }
@@ -378,6 +386,10 @@ namespace EnhancedFramework.Core {
             // ----- Local Method ----- \\
 
             void SetID(EnhancedObjectID _id) {
+
+                if (objectID == _id) {
+                    return;
+                }
 
                 Undo.RecordObject(this, "Assigning ID");
                 PrefabUtility.RecordPrefabInstancePropertyModifications(this);
@@ -388,7 +400,9 @@ namespace EnhancedFramework.Core {
             #endif
 
             // Runtime assignement.
-            objectID.InitSceneObject();
+            if (AutoRegenerateID) {
+                objectID.InitSceneObject();
+            }
         }
         #endregion
 
@@ -419,8 +433,15 @@ namespace EnhancedFramework.Core {
         /// Note that this method should only be called from an animation event.
         /// </summary>
         /// <param name="_event">Event to call.</param>
-        public void AnimationEvent(EnhancedAnimationEvent _event) {
-            _event.Invoke(this);
+        public void AnimationEvent(ScriptableObject _event) {
+
+            if (!(_event is IEnhancedAnimationEvent _animationEvent)) {
+
+                this.LogWarningMessage($"{_event.name} is not of AnimationEvent type", _event);
+                return;
+            }
+
+            _animationEvent.Invoke(this);
         }
         #endregion
 

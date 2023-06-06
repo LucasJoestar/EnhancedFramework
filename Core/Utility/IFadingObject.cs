@@ -13,9 +13,10 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public enum FadingMode {
         None = 0,
-        Show,
-        Hide,
-        FadeInOut,
+
+        Show        = 1,
+        Hide        = 2,
+        FadeInOut   = 3,
     }
 
     /// <summary>

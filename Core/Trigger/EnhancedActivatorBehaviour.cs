@@ -49,6 +49,11 @@ namespace EnhancedFramework.Core {
         [Tooltip("Delay before deactivating this object (in seconds)")]
         [SerializeField, Enhanced, Range(0f, 10f)] protected float deactivationDelay = 0f;
 
+        [Space(5f)]
+
+        [Tooltip("If true delay will not be affected by the game time scale")]
+        [SerializeField] protected bool unscaledTime = false;
+
         // -----------------------
 
         [PropertyOrder(9)]
@@ -145,7 +150,7 @@ namespace EnhancedFramework.Core {
             }
 
             SetState(State.ActivateDelay);
-            delay = Delayer.Call(activationDelay, OnComplete, false);
+            delay = Delayer.Call(activationDelay, OnComplete, unscaledTime);
 
             // ----- Local Method ----- \\
 
@@ -192,7 +197,7 @@ namespace EnhancedFramework.Core {
             }
 
             SetState(State.DeactivateDelay);
-            delay = Delayer.Call(deactivationDelay, OnComplete, false);
+            delay = Delayer.Call(deactivationDelay, OnComplete, unscaledTime);
 
             // ----- Local Method ----- \\
 

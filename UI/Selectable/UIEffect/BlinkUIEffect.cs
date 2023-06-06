@@ -17,8 +17,8 @@ namespace EnhancedFramework.UI {
     /// Blinks an array <see cref="Graphic"/> color.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/Blink Button Effect")]
-    public class BlinkButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Blink UI Effect")]
+    public class BlinkUIEffect : EnhancedSelectableEffect {
         #region Blink
         [Serializable]
         public struct BlinkEffect {
@@ -49,7 +49,7 @@ namespace EnhancedFramework.UI {
 
         // -----------------------
 
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
 
             // Security.
             if (graphics.Length == 0) {

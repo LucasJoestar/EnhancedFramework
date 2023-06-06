@@ -5,20 +5,20 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using EnhancedFramework.Core;
-using System;
+using EnhancedFramework.Core.Option;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace EnhancedFramework.UI {
     /// <summary>
-    /// 
+    /// Enhanced <see cref="EnhancedOptionUI"/> for a toggle option.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button/Option Button"), DisallowMultipleComponent]
-    public class EnhancedOptionButton : EnhancedButton {
-        #region Global Members
-
+    public class EnhancedOptionToggleUI : EnhancedOptionUI {
+        #region Option
+        public override void RefreshOption() {
+            
+        }
         #endregion
     }
 }

@@ -13,14 +13,14 @@ using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 namespace EnhancedFramework.PlayMaker {
     /// <summary>
-    /// <see cref="FsmStateAction"/> used to fade the <see cref="ScreenFadingGroup"/>.
+    /// <see cref="FsmStateAction"/> used to fade the <see cref="BlackBarsFadingGroup"/>.
     /// </summary>
-    [Tooltip("Fades the game screen.")]
+    [Tooltip("Fades the screen Black Bars.")]
     [ActionCategory("FadingGroup")]
-    public class ScreenFade : FadingObjectFade {
+    public class BlackBarsFade : FadingObjectFade {
         #region Global Members
         public override IFadingObject FadingObject {
-            get { return ScreenFadingGroup.Instance; }
+            get { return BlackBarsFadingGroup.Instance; }
         }
         #endregion
     }

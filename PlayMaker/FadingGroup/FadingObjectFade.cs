@@ -6,6 +6,7 @@
 
 using EnhancedFramework.Core;
 using HutongGames.PlayMaker;
+using System;
 using UnityEngine;
 
 using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
@@ -66,10 +67,10 @@ namespace EnhancedFramework.PlayMaker {
         // -----------------------
 
         private void Fade() {
-            var _fadingObject = FadingObject;
+            IFadingObject _fadingObject = FadingObject;
 
             if (_fadingObject != null) {
-                _fadingObject.Fade((FadingMode)FadingMode.Value, Instant.Value, OnComplete, WaitDuration.Value);
+                PerformFade(_fadingObject, (FadingMode)FadingMode.Value, Instant.Value, OnComplete, WaitDuration.Value);
             }
 
             // ----- Local Method ----- \\
@@ -77,6 +78,10 @@ namespace EnhancedFramework.PlayMaker {
             void OnComplete() {
                 Fsm.Event(CompletedEvent);
             }
+        }
+
+        protected virtual void PerformFade(IFadingObject _fadingObject, FadingMode _fadingMode, bool _instant, Action _onComplete, float _waitDuration) {
+            _fadingObject.Fade((FadingMode)FadingMode.Value, Instant.Value, _onComplete, WaitDuration.Value);
         }
         #endregion
     }

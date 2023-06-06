@@ -296,6 +296,11 @@ namespace EnhancedFramework.Core {
         #region Chronos Override
         private static readonly BufferR<ChronosModifier> chronosBuffers = new BufferR<ChronosModifier>(new ChronosModifier(1f));
 
+        /// <summary>
+        /// Called whenever the game time scale is changed.
+        /// </summary>
+        public static Action<float> OnTimeScaleUpdate = null;
+
         // -----------------------
 
         /// <inheritdoc cref="PushOverride(int, float, int, float, bool, Action)"/>
@@ -365,6 +370,8 @@ namespace EnhancedFramework.Core {
         private void RefreshChronos(float _chronos) {
             gameChronos = _chronos;
             Time.timeScale = Mathf.Min(99f, _chronos * coefficient);
+
+            OnTimeScaleUpdate?.Invoke(Time.timeScale);
         }
         #endregion
 

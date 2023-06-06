@@ -339,7 +339,7 @@ namespace EnhancedFramework.UI {
         }
 
         protected virtual void CancelCurrentFade() {
-            delay.Cancel();
+            delay.Complete();
         }
 
         protected void ToggleCanvas(bool _select = false) {
@@ -793,9 +793,9 @@ namespace EnhancedFramework.UI {
 
             #if TWEENING
             if (_show) {
-                _alpha = DOVirtual.EasedValue(0f, 1f, _value, fadeInEase);
+                _alpha = DOVirtual.EasedValue(FadeAlpha.x, FadeAlpha.y, _value, fadeInEase);
             } else {
-                _alpha = DOVirtual.EasedValue(1f, 0f, _value, fadeOutEase);
+                _alpha = DOVirtual.EasedValue(FadeAlpha.y, FadeAlpha.x, _value, fadeOutEase);
             }
             #else
             _alpha = _value;

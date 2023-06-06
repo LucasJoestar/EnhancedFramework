@@ -12,8 +12,8 @@ namespace EnhancedFramework.UI {
     /// Sets the position and size of a <see cref="RectTransform"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Button Effect/RectTransform Button Effect")]
-    public class RectTransformButtonEffect : EnhancedButtonEffect {
+    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/RectTransform UI Effect")]
+    public class RectTransformUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Audio Effect")]
 
@@ -34,7 +34,7 @@ namespace EnhancedFramework.UI {
 
         // -----------------------
 
-        public override void OnSelectionState(EnhancedButton _button, SelectableState _state, bool _instant) {
+        public override void OnSelectionState(EnhancedSelectable _selectable, SelectableState _state, bool _instant) {
 
             // Ignore.
             if (!enable.GetValue(_state, out bool _enable) || !_enable) {
