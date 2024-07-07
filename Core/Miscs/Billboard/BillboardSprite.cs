@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Billboard Sprite"), DisallowMultipleComponent]
-    public class BillboardSprite : EnhancedBehaviour, ILateUpdate {
+    public sealed class BillboardSprite : EnhancedBehaviour, ILateUpdate {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Late;
 
         #region Global Members
@@ -35,15 +35,15 @@ namespace EnhancedFramework.Core {
             Vector3 _forward = -_camera.transform.forward;
 
             // Constraints.
-            if (lockedAxis.HasFlag(AxisConstraints.X)) {
+            if (lockedAxis.HasFlagUnsafe(AxisConstraints.X)) {
                 _forward.x = _objectForward.x;
             }
 
-            if (lockedAxis.HasFlag(AxisConstraints.X)) {
+            if (lockedAxis.HasFlagUnsafe(AxisConstraints.X)) {
                 _forward.y = _objectForward.y;
             }
 
-            if (lockedAxis.HasFlag(AxisConstraints.X)) {
+            if (lockedAxis.HasFlagUnsafe(AxisConstraints.X)) {
                 _forward.z = _objectForward.z;
             }
 

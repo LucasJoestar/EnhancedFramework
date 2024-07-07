@@ -13,13 +13,16 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="EnhancedSelectable"/> editor.
     /// </summary>
     [CustomEditor(typeof(EnhancedSelectable), true), CanEditMultipleObjects]
-    public class EnhancedSelectableEditor : SelectableEditor {
+    public sealed class EnhancedSelectableEditor : SelectableEditor {
         #region Editor GUI
         public override void OnInspectorGUI() {
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("AutoSelectOnEnabled"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Effects"));
+
+            serializedObject.ApplyModifiedProperties();
+            serializedObject.Update();
 
             EditorGUILayout.Space(5f);
             base.OnInspectorGUI();

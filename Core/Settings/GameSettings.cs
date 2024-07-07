@@ -11,11 +11,11 @@ using UnityEngine;
 using System;
 using System.IO;
 using UnityEditor;
-using UnityEditor.Build.Reporting;
 using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 
 using ArrayUtility = EnhancedEditor.ArrayUtility;
-using Object = UnityEngine.Object;
+using Object       = UnityEngine.Object;
 #endif
 
 namespace EnhancedFramework.Core.Settings {
@@ -24,7 +24,7 @@ namespace EnhancedFramework.Core.Settings {
     /// Implements the interface on another class to avoid Unity creating a new instance of the console window.
     /// </summary>
     [InitializeOnLoad]
-    internal class GameSettingsProcessor : IPreprocessBuildWithReport {
+    internal sealed class GameSettingsProcessor : IPreprocessBuildWithReport {
         #region Global Members
         int IOrderedCallback.callbackOrder {
             get { return 99; }
@@ -92,17 +92,11 @@ namespace EnhancedFramework.Core.Settings {
     /// Global game settings, referencing each and every <see cref="BaseSettings{T}"/> shared across the game.
     /// </summary>
     [CreateAssetMenu(fileName = "GGS_GameSettings", menuName = MenuPath + "GameSettings", order = MenuOrder - 50)]
-    public class GameSettings : BaseSettings<GameSettings> {
+    public sealed class GameSettings : BaseSettings<GameSettings> {
         #region Global Members
         [Section("Game Settings")]
 
-        [SerializeField] protected BaseSettings[] settings = new BaseSettings[] { };
-
-        [Space(10f)]
-
-        [SerializeField, Enhanced, Required] protected BuildSceneDatabase buildSceneDatabase    = null;
-        [SerializeField, Enhanced, Required] protected FlagDatabase flagDatabase                = null;
-        [SerializeField, Enhanced, Required] protected TagDatabase tagDatabase                  = null;
+        [SerializeField] protected ScriptableSettings[] settings = new ScriptableSettings[0];
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -115,13 +109,9 @@ namespace EnhancedFramework.Core.Settings {
             base.Init();
 
             // Settings and databases assignement.
-            foreach (BaseSettings _settings in settings) {
-                _settings.Init();
+            for (int i = 0; i < settings.Length; i++) {
+                settings[i].Init();
             }
-
-            BuildSceneDatabase.Database = buildSceneDatabase;
-            FlagDatabase.Database = flagDatabase;
-            MultiTags.Database = tagDatabase;
         }
         #endregion
 
@@ -151,22 +141,8 @@ namespace EnhancedFramework.Core.Settings {
         [Button(ActivationMode.Editor, SuperColor.Green, IsDrawnOnTop = false)]
         private void Setup() {
             #if UNITY_EDITOR
-
-            // Databases.
-            if (!buildSceneDatabase) {
-                buildSceneDatabase = LoadAsset<BuildSceneDatabase>();
-            }
-
-            if (!flagDatabase) {
-                flagDatabase = LoadAsset<FlagDatabase>();
-            }
-
-            if (!tagDatabase) {
-                tagDatabase = LoadAsset<TagDatabase>();
-            }
-
             // Settings.
-            var _types = TypeCache.GetTypesDerivedFrom<BaseSettings>();
+            var _types = TypeCache.GetTypesDerivedFrom<ScriptableSettings>();
             ArrayUtility.RemoveNulls(ref settings);
 
             foreach (Type _type in _types) {
@@ -175,7 +151,7 @@ namespace EnhancedFramework.Core.Settings {
                     continue;
                 }
 
-                if (Array.Find(settings, s => s.GetType() == _type)) {
+                if (Array.Find(settings, s => s.GetType().IsSameOrSubclass(_type))) {
                     continue;
                 }
 
@@ -184,9 +160,9 @@ namespace EnhancedFramework.Core.Settings {
 
                     // Create setting.
                     string _prefix = _type.IsSubclassOfGeneric(typeof(BaseDatabase<>)) ? "DT_" : "GS_";
-                    string _path = Path.Combine(GetProjectFolder(), $"{_prefix}{_type.Name}.asset");
+                    string _path   = Path.Combine(GetProjectFolder(), $"{_prefix}{_type.Name}.asset");
 
-                    _path = AssetDatabase.GenerateUniqueAssetPath(_path);
+                    _path  = AssetDatabase.GenerateUniqueAssetPath(_path);
                     _asset = CreateInstance(_type);
 
                     AssetDatabase.CreateAsset(_asset, _path);
@@ -194,20 +170,17 @@ namespace EnhancedFramework.Core.Settings {
                     AssetDatabase.Refresh();
                 }
 
-                ArrayUtility.Add(ref settings, _asset as BaseSettings);
+                ArrayUtility.Add(ref settings, _asset as ScriptableSettings);
             }
 
+            Array.Sort(settings, (a, b) => a.name.CompareTo(b.name));
             EditorUtility.SetDirty(this);
 
             // ----- Local Method ----- \\
 
-            T LoadAsset<T>() where T : Object {
-                return LoadObject(typeof(T)) as T;
-            }
-
             Object LoadObject(Type _type) {
-                if (AssetDatabase.FindAssets($"t:{_type.Name}").SafeFirst(out string _path)) {
-                    return AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(_path), _type);
+                if (AssetDatabase.FindAssets($"t:{_type.Name}").SafeFirst(out string _guid)) {
+                    return AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(_guid), _type);
                 }
 
                 return null;

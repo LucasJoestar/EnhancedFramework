@@ -5,16 +5,16 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using UnityEngine;
 using EnhancedFramework.Core;
+using UnityEngine;
 
 namespace EnhancedFramework.UI {
     /// <summary>
     /// Fades a <see cref="FadingGroup"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Fading Group UI Effect"), DisallowMultipleComponent]
-    public class FadingGroupUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Fading Group UI Effect"), DisallowMultipleComponent]
+    public sealed class FadingGroupUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Fading Group Effect")]
 

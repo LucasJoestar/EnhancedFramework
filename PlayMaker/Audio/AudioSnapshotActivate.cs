@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Activates an Audio Snapshot.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class AudioSnapshotActivate : FsmStateAction {
+    public sealed class AudioSnapshotActivate : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Snapshot - Instant - Reset

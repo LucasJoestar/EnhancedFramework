@@ -14,7 +14,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem.GameStates {
     /// Enables the <see cref="DeveloperConsole"/> while on the stack.
     /// </summary>
     [Serializable, DisplayName("Utility/Developer Console")]
-    public class DeveloperConsoleGameState : GameState {
+    public sealed class DeveloperConsoleGameState : GameState {
         #region Global Members
         /// <summary>
         /// Don't need a high priority, just enough to remain above the default state.
@@ -41,7 +41,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem.GameStates {
 
             // Set the cursor free to use the console.
             _state.IsCursorVisible = true;
-            _state.CursorLockMode = CursorLockMode.None;
+            _state.CursorLockMode  = CursorLockMode.None;
         }
         #endregion
     }

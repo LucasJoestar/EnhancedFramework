@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,10 +27,12 @@ namespace EnhancedFramework.Core {
         public static bool GetSharedMaterial(this RaycastHit _hit, out Material _material) {
 
             if (GetRendererInfos(_hit, out Renderer _renderer, out int _materialIndex)) {
-                _renderer.GetSharedMaterials(materialBuffer);
 
-                if (_materialIndex < materialBuffer.Count) {
-                    _material = materialBuffer[_materialIndex];
+                List<Material> _buffer = materialBuffer;
+                _renderer.GetSharedMaterials(_buffer);
+
+                if (_materialIndex < _buffer.Count) {
+                    _material = _buffer[_materialIndex];
                     return true;
                 }
             }
@@ -47,10 +50,12 @@ namespace EnhancedFramework.Core {
         public static bool GetMaterial(this RaycastHit _hit, out Material _material) {
 
             if (GetRendererInfos(_hit, out Renderer _renderer, out int _materialIndex)) {
-                _renderer.GetMaterials(materialBuffer);
 
-                if (materialBuffer.Count < _materialIndex) {
-                    _material = materialBuffer[_materialIndex];
+                List<Material> _buffer = materialBuffer;
+                _renderer.GetMaterials(_buffer);
+
+                if (_buffer.Count < _materialIndex) {
+                    _material = _buffer[_materialIndex];
                     return true;
                 }
             }

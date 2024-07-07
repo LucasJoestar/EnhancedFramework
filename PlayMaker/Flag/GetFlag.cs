@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Get the value of a Flag")]
     [ActionCategory("Flag")]
-    public class GetFlag : FsmStateAction {
+    public sealed class GetFlag : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - True - False - Store
@@ -42,9 +42,9 @@ namespace EnhancedFramework.PlayMaker {
             base.Reset();
 
             FlagVariable = null;
-            TrueEvent = null;
-            FalseEvent = null;
-            StoreValue = null;
+            TrueEvent    = null;
+            FalseEvent   = null;
+            StoreValue   = null;
         }
 
         public override void OnEnter() {

@@ -15,7 +15,7 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="GameState"/> drawer.
     /// </summary>
     [CustomPropertyDrawer(typeof(GameState), true)]
-    public class GameStatePropertyDrawer : EnhancedPropertyEditor {
+    public sealed class GameStatePropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
         protected override float OnEnhancedGUI(Rect _position, SerializedProperty _property, GUIContent _label) {
             string _name = EnhancedEditorUtility.GetSerializedPropertyValueTypeName(_property);
@@ -31,10 +31,10 @@ namespace EnhancedFramework.Editor {
     /// used to draw the state stack in the <see cref="GameStateManager"/> inspector.
     /// </summary>
     [CustomPropertyDrawer(typeof(Pair<Reference<GameState>, int>), true)]
-    public class PairGameStatePriorityPropertyDrawer : EnhancedPropertyEditor {
+    public sealed class PairGameStatePriorityPropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
         private static readonly GUIContent gameStateGUI = new GUIContent("Game State");
-        private static readonly GUIContent priorityGUI = new GUIContent("Priority");
+        private static readonly GUIContent priorityGUI  = new GUIContent("Priority");
 
         // -----------------------
 

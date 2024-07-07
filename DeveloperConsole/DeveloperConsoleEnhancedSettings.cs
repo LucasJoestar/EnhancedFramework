@@ -1,8 +1,8 @@
-// ===== Enhanced Editor - https://github.com/LucasJoestar/EnhancedEditor ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ============================================================================ //
+// ================================================================================== //
 
 #if UNITY_EDITOR
 #define EDITOR_BEHAVIOUR
@@ -24,7 +24,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// Cannot inherit from EnhancedSettings, as it needs to be accessible at runtime.
     /// </summary>
     [Serializable]
-    public class DeveloperConsoleSettings : ScriptableObject {
+    public sealed class DeveloperConsoleSettings : ScriptableObject {
         #region Global Members
         /// <summary>
         /// Determines the Unity console log types to be displayed in the developer console.
@@ -136,8 +136,8 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         [SettingsProvider]
         private static SettingsProvider CreateUserSettingsProvider() {
             SettingsProvider _provider = new SettingsProvider(PreferencesPath, SettingsScope.User) {
-                label = PreferencesLabel,
-                keywords = PreferencesKeywords,
+                label      = PreferencesLabel,
+                keywords   = PreferencesKeywords,
                 guiHandler = DrawSettings,
             };
 

@@ -43,7 +43,9 @@ namespace EnhancedFramework.Inputs.GameStates {
         /// </summary>
         public abstract InputGameStateMode Mode { get; }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <summary>
         /// Creates a new instance of this state, with a specific <see cref="InputEnhancedAsset"/> associated.

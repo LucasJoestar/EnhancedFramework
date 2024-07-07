@@ -30,6 +30,13 @@ namespace EnhancedFramework.Core.GameStates {
         public override IGameStateLifetimeCallback LifetimeCallback {
             get { return EnhancedSceneManager.Instance; }
         }
+
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
+        /// <inheritdoc cref="UnloadingGameState{T}"/>
+        public UnloadingGameState() : base(false) { }
         #endregion
 
         #region State Override
@@ -45,7 +52,7 @@ namespace EnhancedFramework.Core.GameStates {
     /// Default <see cref="GameState"/> applied when the game is performing a <see cref="SceneBundle"/> unloading operation.
     /// </summary>
     [Serializable, DisplayName("Loading/Unloading [Default]")]
-    public class DefaultUnloadingGameState : UnloadingGameState<GameStateOverride> {
+    public sealed class DefaultUnloadingGameState : UnloadingGameState<GameStateOverride> {
         #region Global Members
         /// <summary>
         /// Doesn't need to use a high priority, as the operations are called as soon as the state is created.

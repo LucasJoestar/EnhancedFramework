@@ -18,7 +18,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="Animator"/>-related layer configuration asset.
     /// </summary>
     [CreateAssetMenu(fileName = "ANIL_AnimatorLayer", menuName = FrameworkUtility.MenuPath + "Animation/Animator Layer", order = FrameworkUtility.MenuOrder)]
-    public class EnhancedAnimatorLayer : EnhancedScriptableObject {
+    public sealed class EnhancedAnimatorLayer : EnhancedScriptableObject {
         #region Global Members
         [Section("Animator Layer")]
 
@@ -69,8 +69,8 @@ namespace EnhancedFramework.Core {
 
             layerIndex = _index;
 
-            foreach (EnhancedAnimatorState _state in states) {
-                _state.Initialize(_index);
+            for (int i = 0; i < states.Length; i++) {
+                states[i].Initialize(_index);
             }
         }
         #endregion
@@ -85,7 +85,8 @@ namespace EnhancedFramework.Core {
         /// <returns>True if the given state could be successfully played, false otherwise.</returns>
         public bool Play(Animator _animator, int _stateHash, bool _instant = false) {
 
-            foreach (EnhancedAnimatorState _state in states) {
+            for (int i = 0; i < states.Length; i++) {
+                EnhancedAnimatorState _state = states[i];
 
                 if (_state.Hash == _stateHash) {
 
@@ -116,7 +117,6 @@ namespace EnhancedFramework.Core {
         /// <param name="_animator"><see cref="Animator"/> on which to play the state.</param>
         /// <param name="_transitionDuration">Transition duration (in seconds).</param>
         public void PlayDefault(Animator _animator, float _transitionDuration) {
-
             EnhancedAnimatorTransitionSettings _settings = new EnhancedAnimatorTransitionSettings(_transitionDuration, 0f, false);
             PlayDefault(_animator, _settings);
         }
@@ -124,7 +124,6 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         private void PlayDefault(Animator _animator, EnhancedAnimatorTransitionSettings _settings) {
-
             EnhancedAnimatorTransition _transition = EnhancedAnimatorTransition.GetCache(_settings, StateTransitionMode.CrossFade);
             _transition.Play(_animator, defaultState, layerIndex);
         }
@@ -139,7 +138,8 @@ namespace EnhancedFramework.Core {
         /// <returns>True if the associated state could be successfully retrieved, false otherwise.</returns>
         public bool GetState(int _stateHash, out EnhancedAnimatorState _state) {
 
-            foreach (EnhancedAnimatorState _temp in states) {
+            for (int i = 0; i < states.Length; i++) {
+                EnhancedAnimatorState _temp = states[i];
 
                 if (_temp.Hash == _stateHash) {
 
@@ -172,7 +172,6 @@ namespace EnhancedFramework.Core {
 
                 _animator.AddLayer(layerName);
                 _layers = _animator.layers;
-
             }
 
             _layer = _layers[_layerIndex];

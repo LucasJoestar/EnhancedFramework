@@ -6,16 +6,16 @@
 
 #if TEXT_MESH_PRO_PACKAGE
 using EnhancedEditor;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 namespace EnhancedFramework.UI {
     /// <summary>
     /// Set the font material of the button text.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Font Material UI Effect"), DisallowMultipleComponent]
-    public class FontMaterialUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Font Material UI Effect"), DisallowMultipleComponent]
+    public sealed class FontMaterialUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Font Material Effect")]
 

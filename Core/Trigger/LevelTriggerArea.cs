@@ -20,13 +20,14 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Trigger/Level Trigger Area")]
-    public class LevelTriggerArea : LevelTrigger, IDynamicUpdate {
+    public sealed class LevelTriggerArea : LevelTrigger, IDynamicUpdate {
         #region Handles Mode
         /// <summary>
         /// Mode used to determine which handles should be drawn.
         /// </summary>
         private enum HandlesMode {
             None    = 0,
+
             Area    = 1,
             Portals = 2,
         }
@@ -181,8 +182,7 @@ namespace EnhancedFramework.Core {
         #region Trigger
         public const float UpdateCooldwonDefaultDuration = .05f;
 
-        private readonly ManualCooldown updateCooldown = new ManualCooldown(UpdateCooldwonDefaultDuration);
-        private PairCollection<ITriggerActor, bool> actors = new PairCollection<ITriggerActor, bool>();
+        private readonly PairCollection<ITriggerActor, bool> actors = new PairCollection<ITriggerActor, bool>();
 
         /// <summary>
         /// Whether this trigger is currently active and updated or not.
@@ -198,21 +198,16 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private void AreaUpdate() {
 
-            // Update cooldown.
-            /*if (!updateCooldown.Update(DeltaTime)) {
-                return;
-            }
-
-            updateCooldown.Reload();*/
-
             Transform _transform = transform;
             Quaternion _rotation = _transform.rotation;
-            Vector3 _position = _transform.position;
+            Vector3 _position    = _transform.position;
 
             // Check if any actor entered / exited the area.
-            for (int i = 0; i < actors.Count; i++) {
+            List<Pair<ITriggerActor, bool>> _actorsSpan = actors.collection;
 
-                Pair<ITriggerActor, bool> _pair = actors[i];
+            for (int i = 0; i < _actorsSpan.Count; i++) {
+
+                Pair<ITriggerActor, bool> _pair = _actorsSpan[i];
                 ITriggerActor _actor = _pair.First;
 
                 bool _inArea = IsInArea(_actor);
@@ -229,8 +224,8 @@ namespace EnhancedFramework.Core {
                     _pair.Second = _inArea;
 
                     // Security (happens when instantly exiting the trigger).
-                    if ((i < actors.Count) && _actor == actors[i].First) {
-                        actors[i] = _pair;
+                    if ((i < _actorsSpan.Count) && (_actor == _actorsSpan[i].First)) {
+                        _actorsSpan[i] = _pair;
                     }
                 }
             }
@@ -238,7 +233,7 @@ namespace EnhancedFramework.Core {
             // ----- Local Method ----- \\
 
             bool IsInArea(ITriggerActor _actor) {
-                Vector3 _actorLocal = (_actor.Behaviour.transform.position - _position).RotateInverse(_rotation);
+                Vector3 _actorLocal = (_actor.Behaviour.Transform.position - _position).RotateInverse(_rotation);
                 return EnhancedGeometryUtility.PointInPolygon(_actorLocal, areaVertices);
             }
         }

@@ -19,13 +19,13 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Echo Effect")]
-    public class EchoEffect : EnhancedBehaviour, ILateUpdate {
+    public sealed class EchoEffect : EnhancedBehaviour, ILateUpdate {
         #region Echo
         /// <summary>
         /// <see cref="EchoEffect"/>-related single echo settings wrapper.
         /// </summary>
         [Serializable]
-        public class Echo {
+        public sealed class Echo {
             [Tooltip("Transform of this echo")]
             [Enhanced, Required] public RectTransform Transform = null;
 
@@ -103,11 +103,14 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
-        private Vector2 lastPosition = Vector2.zero;
-        private Vector2 lastSize = Vector2.zero;
+        private TweenCallback onKillPositionSequence = null;
+        private TweenCallback onKillSizeSequence     = null;
 
         private Sequence positionSequence = null;
-        private Sequence sizeSequence = null;
+        private Sequence sizeSequence    = null;
+
+        private Vector2 lastPosition = Vector2.zero;
+        private Vector2 lastSize     = Vector2.zero;
 
         // -----------------------
 
@@ -137,7 +140,8 @@ namespace EnhancedFramework.UI {
                     }
                 }
 
-                positionSequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnPositionKilled);
+                onKillPositionSequence ??= OnPositionKilled;
+                positionSequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKillPositionSequence);
             }
 
             // Size.
@@ -158,7 +162,8 @@ namespace EnhancedFramework.UI {
 
                 }
 
-                sizeSequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnSizeKilled);
+                onKillSizeSequence ??= OnSizeKilled;
+                sizeSequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKillSizeSequence);
             }
 
             // Instant.

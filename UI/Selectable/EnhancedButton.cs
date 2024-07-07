@@ -22,6 +22,8 @@ namespace EnhancedFramework.UI {
         [Tooltip("Called when the user clicks on the button")]
         [SerializeField] private UnityEvent m_OnClick = new UnityEvent();
 
+        // -----------------------
+
         /// <summary>
         /// Called when the user clicks on the button.
         /// </summary>
@@ -32,7 +34,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Button
-        private void Press() {
+        public void Press() {
 
             if (IsActive() && IsInteractable()) {
 

@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Deactivates an Audio Controller.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class AudioControllerDeactivate : FsmStateAction {
+    public sealed class AudioControllerDeactivate : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Audio - Instant

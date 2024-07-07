@@ -6,16 +6,16 @@
 
 using EnhancedEditor.Editor;
 using EnhancedFramework.Core.Option;
+using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEditor;
 
 namespace EnhancedFramework.Editor {
     /// <summary>
     /// Editor class manipulating and updating the data contained in the <see cref="OptionSettings"/>.
     /// </summary>
     [InitializeOnLoad]
-    public class OptionSettingsManager : IPreprocessBuildWithReport {
+    public sealed class OptionSettingsManager : IPreprocessBuildWithReport {
         #region Global Members
         private static readonly AutoManagedResource<OptionSettings> resource = new AutoManagedResource<OptionSettings>("OptionSettings", false);
 
@@ -26,7 +26,9 @@ namespace EnhancedFramework.Editor {
         /// </summary>
         public static OptionSettings Settings => resource.GetResource();
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         static OptionSettingsManager() {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;

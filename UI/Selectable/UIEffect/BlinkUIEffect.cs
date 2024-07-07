@@ -17,8 +17,8 @@ namespace EnhancedFramework.UI {
     /// Blinks an array <see cref="Graphic"/> color.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Blink UI Effect")]
-    public class BlinkUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Blink UI Effect")]
+    public sealed class BlinkUIEffect : EnhancedSelectableEffect {
         #region Blink
         [Serializable]
         public struct BlinkEffect {
@@ -45,6 +45,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
+        private TweenCallback onKillSequence = null;
         private Sequence sequence = null;
 
         // -----------------------
@@ -72,7 +73,8 @@ namespace EnhancedFramework.UI {
                     sequence.Join(_graphic.DOColor(blink.Color, blink.Duration));
                 }
 
-                sequence.SetEase(blink.Ease).SetUpdate(realTime).SetRecyclable(true).SetAutoKill(false).OnKill(OnKilled);
+                onKillSequence ??= OnKilled;
+                sequence.SetEase(blink.Ease).SetUpdate(realTime).SetRecyclable(true).SetAutoKill(false).OnKill(onKillSequence);
             }
 
             // ----- Local Method ----- \\

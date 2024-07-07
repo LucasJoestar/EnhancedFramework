@@ -19,7 +19,7 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(100)] // Execute late, after all other scripts are executed.
     [AddComponentMenu(FrameworkUtility.MenuPath + "General/Splash Manager"), DisallowMultipleComponent]
-    public class SplashManager : EnhancedSingleton<SplashManager>, ILoadingProcessor {
+    public sealed class SplashManager : EnhancedSingleton<SplashManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 
         #region Loading Processor

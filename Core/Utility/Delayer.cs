@@ -6,6 +6,8 @@
 
 using EnhancedEditor;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -25,10 +27,12 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         public int ID {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return handler.ID; }
         }
 
         public bool IsValid {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return GetHandle(out _); }
         }
 
@@ -109,15 +113,16 @@ namespace EnhancedFramework.Core {
     /// Utility class used to delay method calls both during editor and runtime.
     /// </summary>
     [Serializable]
-    public class DelayedCall : IHandle, IPoolableObject {
+    public sealed class DelayedCall : IHandle, IPoolableObject {
         #region State
         /// <summary>
         /// References all available states of this object.
         /// </summary>
         public enum State {
-            Inactive,
-            Active,
-            Paused,
+            Inactive = 0,
+
+            Active   = 1,
+            Paused   = 2,
         }
         #endregion
 
@@ -232,14 +237,14 @@ namespace EnhancedFramework.Core {
         // Utility
         // -------------------------------------------
 
-        internal bool Update() {
+        internal bool Update(float deltaTime, float realDeltaTime) {
 
             // Ignore if not active.
             if (state != State.Active) {
                 return false;
             }
 
-            delay -= ChronosUtility.GetDeltaTime(useRealTime);
+            delay -= useRealTime ? realDeltaTime : deltaTime;
 
             // Complete.
             if (delay <= 0f) {
@@ -272,7 +277,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        void IPoolableObject.OnCreated() { }
+        void IPoolableObject.OnCreated(IObjectPool _pool) { }
 
         void IPoolableObject.OnRemovedFromPool() { }
 
@@ -300,7 +305,7 @@ namespace EnhancedFramework.Core {
     #if UNITY_EDITOR
     [InitializeOnLoad]
     #endif
-    public class Delayer : IObjectPoolManager<DelayedCall>, IStableUpdate {
+    public sealed class Delayer : IObjectPoolManager<DelayedCall>, IStableUpdate {
         #region Global Members
         public Object LogObject {
             get { return GameManager.Instance; }
@@ -313,6 +318,8 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private static readonly Delayer instance = new Delayer();
 
+        private static bool isInitialized = false;
+
         // -------------------------------------------
         // Initialization
         // -------------------------------------------
@@ -320,13 +327,21 @@ namespace EnhancedFramework.Core {
         // Called after the first scene Awake.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void Initialize() {
+
+            if (isInitialized)
+                return;
+
+            calls.Clear();
             pool.Initialize(instance);
+
             UpdateManager.Instance.Register(instance, UpdateRegistration.Stable);
+            isInitialized = true;
         }
 
         #if UNITY_EDITOR
         // Editor constructor.
         static Delayer() {
+
             calls.Clear();
             pool.Initialize(instance);
 
@@ -344,6 +359,7 @@ namespace EnhancedFramework.Core {
 
         #region Behaviour
         private static readonly EnhancedCollection<DelayedCall> calls = new EnhancedCollection<DelayedCall>();
+        private static int lastFrameUpdate = -1;
 
         // -----------------------
 
@@ -355,22 +371,42 @@ namespace EnhancedFramework.Core {
             DelayedCall _call = GetCall();
             calls.Add(_call);
 
+            if (Time.frameCount > lastFrameUpdate) {
+                _delay += _realTime ? ChronosUtility.RealDeltaTime : ChronosUtility.DeltaTime;
+            }
+
             return _call.DelayCall(_delay, _callback, _realTime);
         }
 
         // -----------------------
 
         public void Update() {
-            // Execute calls in registered order.
-            for (int i = 0; i < calls.Count; i++) {
 
-                DelayedCall _call = calls[i];
+            List<DelayedCall> _callSpan = calls.collection;
+            int _count = _callSpan.Count;
+
+            if (_count == 0)
+                return;
+
+            float realDeltaTime = ChronosUtility.RealDeltaTime;
+            float deltaTime     = ChronosUtility.DeltaTime;
+
+            // Execute calls in registered order.
+            for (int i = 0; i < _count; i++) {
 
                 // Index management.
-                if (_call.Update()) {
-                    i--;
+                try {
+                    if (_callSpan[i].Update(deltaTime, realDeltaTime)) {
+
+                        _count--;
+                        i--;
+                    }
+                } catch (ArgumentOutOfRangeException) {
+                    _count = _callSpan.Count;
                 }
             }
+
+            lastFrameUpdate = Time.frameCount;
         }
         #endregion
 
@@ -382,39 +418,51 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Get a <see cref="DelayedCall"/> instance from the pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Get"/>
+        /// <inheritdoc cref="ObjectPool{T}.GetPoolInstance"/>
         private static DelayedCall GetCall() {
-            return pool.Get();
+
+            Initialize();
+            return pool.GetPoolInstance();
         }
 
         /// <summary>
         /// Releases a specific <see cref="DelayedCall"/> instance and sent it back to the pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Release(T)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ReleasePoolInstance(T)"/>
         internal static bool ReleaseCall(DelayedCall _call) {
 
             calls.Remove(_call);
-            return pool.Release(_call);
+            return pool.ReleasePoolInstance(_call);
         }
 
         /// <summary>
         /// Clears the <see cref="DelayedCall"/> pool content.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Clear(int)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ClearPool(int)"/>
         public static void ClearPool(int _capacity = 1) {
-            pool.Clear(_capacity);
+            pool.ClearPool(_capacity);
         }
 
         // -------------------------------------------
         // Manager
         // -------------------------------------------
 
-        /// <inheritdoc cref="IObjectPoolManager{DelayedCall}.CreateInstance"/>
+        DelayedCall IObjectPool<DelayedCall>.GetPoolInstance() {
+            return GetCall();
+        }
+
+        bool IObjectPool<DelayedCall>.ReleasePoolInstance(DelayedCall _instance) {
+            return ReleaseCall(_instance);
+        }
+
+        void IObjectPool.ClearPool(int _capacity) {
+            ClearPool(_capacity);
+        }
+
         DelayedCall IObjectPoolManager<DelayedCall>.CreateInstance() {
             return new DelayedCall();
         }
 
-        /// <inheritdoc cref="IObjectPoolManager{DelayedCall}.DestroyInstance(DelayedCall)"/>
         void IObjectPoolManager<DelayedCall>.DestroyInstance(DelayedCall _call) {
             // Cannot destroy the instance, so simply ignore the object and wait for the garbage collector to pick it up.
         }

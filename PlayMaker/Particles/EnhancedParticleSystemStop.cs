@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Stops a Particle System Asset.")]
     [ActionCategory(ActionCategory.Effects)]
-    public class EnhancedParticleSystemStop : FsmStateAction {
+    public sealed class EnhancedParticleSystemStop : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Particle
@@ -44,8 +44,8 @@ namespace EnhancedFramework.PlayMaker {
         // -----------------------
 
         private void Stop() {
-            if (Particle.Value is ParticleSystemAsset _audio) {
-                _audio.Stop();
+            if (Particle.Value is ParticleSystemAsset _particle) {
+                _particle.Stop();
             }
         }
         #endregion

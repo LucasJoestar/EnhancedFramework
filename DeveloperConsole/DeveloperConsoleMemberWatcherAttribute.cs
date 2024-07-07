@@ -13,7 +13,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// </summary>
     [Conditional("DEVELOPER_CONSOLE")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class DeveloperConsoleMemberWatcherAttribute : Attribute {
+    public sealed class DeveloperConsoleMemberWatcherAttribute : Attribute {
         #region Global Members
         /// <summary>
         /// Name used to reference this watcher.
@@ -45,10 +45,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         /// <param name="_startEnabled"><inheritdoc cref="StartEnabled" path="/summary"/></param>
         /// <inheritdoc cref="DeveloperConsoleCommandAttribute"/>
         public DeveloperConsoleMemberWatcherAttribute(string _name, string _description, bool _startEnabled = true, int _order = 0) {
-            Name = _name;
-            Description = _description;
+            Name         = _name;
+            Description  = _description;
             StartEnabled = _startEnabled;
-            Order = _order;
+            Order        = _order;
         }
         #endregion
     }

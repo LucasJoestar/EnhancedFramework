@@ -15,7 +15,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// <summary>
     /// <see cref="DeveloperConsole"/>-related command wrapper, with all related callback informations.
     /// </summary>
-    public class DeveloperConsoleCommand : IComparer<DeveloperConsoleCommand> {
+    public sealed class DeveloperConsoleCommand : IComparer<DeveloperConsoleCommand> {
         #region Global Members
         public const char AliasSeparator = ',';
 
@@ -211,7 +211,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                 _parameters[i] = _parameter;
             }
 
-            Action _defaultDelegate = () => _method.Invoke(null, null);
+            Action _defaultDelegate    = () => _method.Invoke(null, null);
             Action<object[]> _delegate = (p) => _method.Invoke(null, p);
 
             DeveloperConsoleCommand _command = new DeveloperConsoleCommand(_name, _aliases, _description, _defaultDelegate, _delegate, _parameters);

@@ -8,6 +8,7 @@ using EnhancedEditor;
 using EnhancedFramework.Core.GameStates;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -19,15 +20,17 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public enum LoadingState {
         Inactive                = 0,
-        Request,
-        Prepare,
-        Start,
+        Request                 = 1,
+        Prepare                 = 2,
+        Start                   = 3,
+
         Loading                 = 20,
-        Unloading,
-        FreeMemory,
-        MinimumDuration,
-        WaitForInitialization,
-        Ready,
+        Unloading               = 21,
+        FreeMemory              = 22,
+        MinimumDuration         = 23,
+        WaitForInitialization   = 24,
+        Ready                   = 25,
+
         Complete                = 99,
     }
 
@@ -36,13 +39,15 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public enum UnloadingState {
         Inactive                = 0,
-        Request,
-        Prepare,
-        Start,
+        Request                 = 1,
+        Prepare                 = 2,
+        Start                   = 3,
+
         Unloading               = 20,
-        FreeMemory,
-        WaitForInitialization,
-        Ready,
+        FreeMemory              = 21,
+        WaitForInitialization   = 22,
+        Ready                   = 23,
+
         Complete                = 99
     }
 
@@ -74,7 +79,7 @@ namespace EnhancedFramework.Core {
     /// allowing to pause the game when entering in a loading state.
     /// </summary>
     [Serializable, DisplayName("<Default>")]
-    public class DefaultSceneManagerBehaviour : SceneManagerBehaviour {
+    public sealed class DefaultSceneManagerBehaviour : SceneManagerBehaviour {
         #region Global Members
         [SerializeField] private bool pauseGameOnLoading = true;
         #endregion
@@ -117,7 +122,7 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-950)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "General/Scene Manager"), DisallowMultipleComponent]
-    public class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager>, IGameStateLifetimeCallback {
+    public sealed class EnhancedSceneManager : EnhancedSingleton<EnhancedSceneManager>, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
@@ -163,10 +168,6 @@ namespace EnhancedFramework.Core {
         [SerializeField] private PolymorphValue<SceneManagerBehaviour> behaviour = new PolymorphValue<SceneManagerBehaviour>(SerializedTypeConstraint.None,
                                                                                                                              typeof(DefaultSceneManagerBehaviour));
 
-        // -----------------------
-
-        private readonly EnhancedCollection<ILoadingProcessor> processors = new EnhancedCollection<ILoadingProcessor>();
-
         // -------------------------------------------
         // Accessors
         // -------------------------------------------
@@ -191,6 +192,13 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public SceneManagerBehaviour Behaviour {
             get { return behaviour.Value; }
+        }
+
+        /// <summary>
+        /// Total count of currently loaded <see cref="SceneBundle"/>.
+        /// </summary>
+        public int LoadedBundleCount {
+            get { return loadedBundles.Count; }
         }
 
         // -------------------------------------------
@@ -228,6 +236,11 @@ namespace EnhancedFramework.Core {
         public static event Action<UnloadingState> OnUnloadingState = null;
 
         /// <summary>
+        /// Called whenever before loading a <see cref="SceneBundle"/>.
+        /// </summary>
+        public static event Action<SceneBundle> OnPreLoadBundle     = null;
+
+        /// <summary>
         /// Called whenever after a <see cref="SceneBundle"/> has been loaded.
         /// </summary>
         public static event Action<SceneBundle> OnPostLoadBundle    = null;
@@ -236,6 +249,11 @@ namespace EnhancedFramework.Core {
         /// Called whenever before unloading a <see cref="SceneBundle"/>.
         /// </summary>
         public static event Action<SceneBundle> OnPreUnloadBundle   = null;
+
+        /// <summary>
+        /// Called whenever after a <see cref="SceneBundle"/> has been unloaded.
+        /// </summary>
+        public static event Action<SceneBundle> OnPostUnloadBundle  = null;
         #endregion
 
         #region Enhanced Behaviour
@@ -250,8 +268,9 @@ namespace EnhancedFramework.Core {
                 // If all scenes are already loaded, enters in a loading state as soon as possible.
                 // Used to prepare the scene and wait for all objects to be fully initialized.
                 BuildSceneDatabase _database = BuildSceneDatabase.Database;
+                int _sceneBundleCount = _database.SceneBundleCount;
 
-                for (int i = 0; i < _database.SceneBundleCount; i++) {
+                for (int i = 0; i < _sceneBundleCount; i++) {
                     SceneBundle _bundle = _database.GetSceneBundleAt(i);
 
                     // Simulate scene loading; a scene cannot be loaded twice anyway.
@@ -269,7 +288,7 @@ namespace EnhancedFramework.Core {
                 }
 
                 // Simulate game loading if another scene than core or than the first game scene is loaded.
-                if ((loadingBundles.Count != 2) || !loadingBundles.Exists(p => p.First == firstScene)) {
+                if ((loadingBundles.Count != 2) || !IsFirstSceneLoaded()) {
                     Behaviour.OnEnterPlayModeEditor(loadingBundles, LoadingSettings);
                 }
             }
@@ -278,6 +297,18 @@ namespace EnhancedFramework.Core {
             #endif
 
             // ----- Local Methods ----- \\
+
+            bool IsFirstSceneLoaded() {
+
+                List<Pair<SceneBundle, LoadSceneMode>> _loadingBundles = loadingBundles.collection;
+                for (int i = _loadingBundles.Count; i-- > 0;) {
+
+                    if (_loadingBundles[i].First == firstScene)
+                        return true;
+                }
+
+                return false;
+            }
 
             void LoadFirstScene() {
                 // Get this object scene bundle.
@@ -293,6 +324,10 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Registration
+        private readonly EnhancedCollection<ILoadingProcessor> processors = new EnhancedCollection<ILoadingProcessor>();
+
+        // -----------------------
+        
         /// <summary>
         /// Registers a new <see cref="ILoadingProcessor"/> instance.
         /// <para/>
@@ -318,12 +353,12 @@ namespace EnhancedFramework.Core {
         void IGameStateLifetimeCallback.OnInit(GameState _state) {
             switch (_state) {
                 // Start loading.
-                case ILoadingState _:
+                case ILoadingState:
                     StartLoading(_state);
                     break;
 
                 // Start unloading.
-                case IUnloadingState _:
+                case IUnloadingState:
                     StartUnloading(_state);
                     break;
 
@@ -335,12 +370,12 @@ namespace EnhancedFramework.Core {
         void IGameStateLifetimeCallback.OnTerminate(GameState _state) {
             switch (_state) {
                 // Stop loading.
-                case ILoadingState _:
+                case ILoadingState:
                     StopLoading();
                     break;
 
                 // Stop unloading.
-                case IUnloadingState _:
+                case IUnloadingState:
                     StopUnloading();
                     break;
 
@@ -384,7 +419,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_bundle">The <see cref="SceneBundle"/> to load.</param>
         /// <param name="_mode">The mode used to load the bundle.</param>
         public void LoadSceneBundle(SceneBundle _bundle, LoadSceneMode _mode) {
-            loadingBundles.Add(new Pair<SceneBundle, LoadSceneMode>(_bundle, _mode));
+            loadingBundles.Add(_bundle, _mode);
             DoPerformLoading();
         }
 
@@ -487,20 +522,24 @@ namespace EnhancedFramework.Core {
 
             // Cache the yield instruction to avoid garbage.
             var _interval = new WaitForSecondsRealtime(LoadBundleInterval);
+            int _loadingBundleCount = loadingBundles.Count;
 
-            for (int i = 0; i < loadingBundles.Count; i++) {
+            for (int i = 0; i < _loadingBundleCount; i++) {
                 var _pair = loadingBundles[i];
                 SceneBundle _toLoad = _pair.First;
                 LoadSceneMode _mode = _pair.Second;
 
                 Behaviour.OnPreLoadBundle(_toLoad, _mode);
+                OnPreLoadBundle?.Invoke(_toLoad);
 
                 // When wanting to load a bundle all alone,
                 // simply unload all scenes except for core, then load it additively.
                 if (_mode == LoadSceneMode.Single) {
                     SetLoadingState(LoadingState.Unloading);
 
-                    foreach (SceneBundle _toUnload in loadedBundles) {
+                    for (int j = 0; j < loadedBundles.Count; j++) {
+
+                        SceneBundle _toUnload = loadedBundles[j];
                         if (!_toUnload.IsCoreBundle()) {
                             UnloadSceneBundle(_toUnload, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
                         }
@@ -516,12 +555,14 @@ namespace EnhancedFramework.Core {
 
                 // Loading operation.
                 var _operation = _toLoad.LoadAsync(LoadSceneMode.Additive);
-                Behaviour.OnLoadBundle(_operation, i, loadingBundles.Count);
+                Behaviour.OnLoadBundle(_operation, i, _loadingBundleCount);
 
                 yield return _operation;
                 yield return _interval;
 
                 loadedBundles.Add(_toLoad);
+
+                Behaviour.OnPostLoadBundle(_toLoad, _mode);
                 OnPostLoadBundle?.Invoke(_toLoad);
             }
 
@@ -611,7 +652,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_bundle">The <see cref="SceneBundle"/> to unload.</param>
         /// <param name="_options">The options used to unload the bundle.</param>
         public void UnloadSceneBundle(SceneBundle _bundle, UnloadSceneOptions _options = UnloadSceneOptions.None) {
-            unloadingBundles.Add(new Pair<SceneBundle, UnloadSceneOptions>(_bundle, _options));
+            unloadingBundles.Add(_bundle, _options);
             DoPerformUnloading();
         }
 
@@ -707,9 +748,10 @@ namespace EnhancedFramework.Core {
 
             // Cache the yield instruction to avoid garbage.
             var _interval = new WaitForSecondsRealtime(UnloadBundleInterval);
+            int _unloadingBundleCount = unloadingBundles.Count;
 
             // Unload bundles.
-            for (int i = 0; i < unloadingBundles.Count; i++) {
+            for (int i = 0; i < _unloadingBundleCount; i++) {
                 var _pair = unloadingBundles[i];
                 SceneBundle _bundle = _pair.First;
                 UnloadSceneOptions _options = _pair.Second;
@@ -732,7 +774,9 @@ namespace EnhancedFramework.Core {
                 yield return _interval;
 
                 loadedBundles.Remove(_bundle);
-                OnPostLoadBundle?.Invoke(_bundle);
+
+                Behaviour.OnPostUnloadBundle(_bundle, _options);
+                OnPostUnloadBundle?.Invoke(_bundle);
             }
 
             unloadingBundles.Clear();
@@ -805,17 +849,39 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// Get the loaded <see cref="SceneBundle"/> at the given index.
+        /// </summary>
+        /// <param name="_index">Index to get the loaded <see cref="SceneBundle"/> at.</param>
+        /// <returns>The loaded <see cref="SceneBundle"/> at the given index.</returns>
+        public SceneBundle GetLoadedBundleAt(int _index) {
+            return loadedBundles[_index];
+        }
+
+        /// <summary>
         /// Indicates if any <see cref="ILoadingProcessor"/> is currently processing or not.
         /// </summary>
         public bool IsAnyProcessorActive() {
-            int _index = processors.FindIndex(b => b.IsProcessing);
 
-            if (_index != -1) {
-                //this.Log("Waiting for " + processors[_index].LogObject.name);
-                return true;
+            List<ILoadingProcessor> _processorsSpan = processors.collection;
+            for (int i = _processorsSpan.Count; i-- > 0;) {
+
+                if (_processorsSpan[i].IsProcessing) {
+                    //this.Log("Waiting for " + processors[_index].LogObject.name);
+                    return true;
+                }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Moves a given <see cref="GameObject"/> instance to the core scene.
+        /// </summary>
+        /// <param name="_gameObject">The <see cref="GameObject"/> to move.</param>
+        public void MoveGameObjectToCoreScene(GameObject _gameObject) {
+            // Security.
+            gameObject.transform.SetParent(null);
+            SceneManager.MoveGameObjectToScene(_gameObject, gameObject.scene);
         }
 
         /// <summary>

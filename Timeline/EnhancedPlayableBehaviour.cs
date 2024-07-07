@@ -31,7 +31,7 @@ namespace EnhancedFramework.Timeline {
         [Section("Clip Settings")]
 
         [Tooltip("Indicates whether this behaviour should be executed in edit mode or not")]
-        [Enhanced, ShowIf("CanExecuteInEditMode")] public bool ExecuteInEditMode = true;
+        [Enhanced, ShowIf(nameof(CanExecuteInEditMode))] public bool ExecuteInEditMode = true;
 
         // -----------------------
 

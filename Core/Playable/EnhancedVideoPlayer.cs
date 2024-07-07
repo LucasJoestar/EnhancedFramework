@@ -22,8 +22,22 @@ namespace EnhancedFramework.Core {
     [RequireComponent(typeof(VideoPlayer))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Enhanced Video Player"), DisallowMultipleComponent]
     #pragma warning disable 0414
-    public class EnhancedVideoPlayer : EnhancedPlayer, ISkippableElement, IStableUpdate, ILoadingProcessor {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Play;
+    public sealed class EnhancedVideoPlayer : EnhancedPlayer, ISkippableElement, IStableUpdate, ILoadingProcessor {
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+
+                if (prepareOnInit) {
+                    _value |= UpdateRegistration.Init;
+                }
+
+                if (playAfterLoading) {
+                    _value |= UpdateRegistration.Play;
+                }
+
+                return _value;
+            }
+        }
 
         #region Loading Processor
         public override bool IsLoadingProcessor => true;
@@ -31,7 +45,19 @@ namespace EnhancedFramework.Core {
         // True while not yet prepared.
         public bool IsProcessing {
             get {
-                return prepareOnInit && !IsPrepared;
+
+                if (!prepareOnInit)
+                    return false;
+
+                // Best solution is to perform this check here, as the video event can never be called.
+                // When prepared, forget this behaviour.
+
+                bool isProcessing = !IsPrepared;
+                if (!isProcessing) {
+                    prepareOnInit = false;
+                }
+
+                return isProcessing;
             }
         }
         #endregion
@@ -40,14 +66,14 @@ namespace EnhancedFramework.Core {
         [Section("Enhanced Video Player")]
 
         #if UNITY_EDITOR
-        [SerializeField, Enhanced, DrawMember("VideoClip"), ValidationMember("VideoClip")]
+        [SerializeField, Enhanced, DrawMember(nameof(VideoClip)), ValidationMember(nameof(VideoClip))]
         private VideoClip videoClip = null; // Should never be used outside of the inspector.
         #endif
 
         [Space(5f)]
 
         [Tooltip("If true, the video will start playing right after the scene finished loading")]
-        [SerializeField, Enhanced, ValidationMember("PlayAfterLoading")]
+        [SerializeField, Enhanced, ValidationMember(nameof(PlayAfterLoading))]
         private bool playAfterLoading = false;
 
         [Tooltip("If true, the video will initiate playaback engine preparation on initialization")]
@@ -62,21 +88,21 @@ namespace EnhancedFramework.Core {
         [SerializeField] private bool isSkippable = false;
 
         [Tooltip("Time (in seconds) where skip is available and where to advance the video to when being skipped")]
-        [SerializeField, Enhanced, ShowIf("isSkippable"), MinMax("playRange")] private Vector2 skipInterval = new Vector2();
+        [SerializeField, Enhanced, ShowIf(nameof(isSkippable)), MinMax(nameof(playRange))] private Vector2 skipInterval = new Vector2();
 
         [Space(10f)]
 
         [Tooltip("Use this to automatically show a CanvasGroup when the video start playing, and hide it when it stops")]
         [SerializeField] private bool manageRenderingCanvas = false;
-        [SerializeField, Enhanced, ShowIf("manageRenderingCanvas")] private CrossSceneReference<FadingObjectBehaviour> renderingCanvas = null;
+        [SerializeField, Enhanced, ShowIf(nameof(manageRenderingCanvas))] private CrossSceneReference<FadingObjectBehaviour> renderingCanvas = null;
 
         [Space(10f)]
 
         [Tooltip("The total range used to play the video (from start to end)")]
-        [SerializeField, Enhanced/*, DrawMember("PlayRange")*/, MinMax("TimeRange")] private Vector2 playRange = new Vector2(0f, 0f);
+        [SerializeField, Enhanced/*, DrawMember("PlayRange")*/, MinMax(nameof(TimeRange))] private Vector2 playRange = new Vector2(0f, 0f);
 
         #if UNITY_EDITOR
-        [SerializeField, Enhanced, DrawMember("Time"), Range("playRange"), ValidationMember("Time")]
+        [SerializeField, Enhanced, DrawMember(nameof(Time)), Range(nameof(playRange)), ValidationMember(nameof(Time))]
         private double time = 0d; // Should never be used outside of the inspector.
         #endif
 
@@ -87,9 +113,13 @@ namespace EnhancedFramework.Core {
                                                                                          new Type[] { typeof(IBoundGameState),
                                                                                                       typeof(IBoundGameState<ISkippableElement>),
                                                                                                       typeof(IBoundGameState<EnhancedVideoPlayer>) });
+        // -----------------------
+
+        [SerializeField, HideInInspector] private VideoPlayer videoPlayer = null;
 
         // -----------------------
 
+        /// <inheritdoc/>
         public bool IsSkippable {
             get { return isSkippable; }
             set {
@@ -181,13 +211,13 @@ namespace EnhancedFramework.Core {
         #if UNITY_EDITOR
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("Duration"), ReadOnly] private double duration    = 0d;
+        [SerializeField, Enhanced, DrawMember(nameof(Duration)), ReadOnly] private double duration    = 0d;
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("IsPlaying"), ReadOnly] private bool isPlaying    = false;
-        [SerializeField, Enhanced, DrawMember("IsPaused"), ReadOnly] private bool isPaused      = false;
-        [SerializeField, Enhanced, DrawMember("IsPrepared"), ReadOnly] private bool isPrepared  = false;
+        [SerializeField, Enhanced, DrawMember(nameof(IsPlaying)),  ReadOnly] private bool isPlaying   = false;
+        [SerializeField, Enhanced, DrawMember(nameof(IsPaused)),   ReadOnly] private bool isPaused    = false;
+        [SerializeField, Enhanced, DrawMember(nameof(IsPrepared)), ReadOnly] private bool isPrepared  = false;
         #endif
 
         /// <summary>
@@ -217,10 +247,6 @@ namespace EnhancedFramework.Core {
         public bool IsPrepared {
             get { return videoPlayer.isPrepared || !videoPlayer.isActiveAndEnabled; }
         }
-
-        // -----------------------
-
-        [SerializeField, HideInInspector] private VideoPlayer videoPlayer = null;
 
         // -----------------------
 
@@ -298,10 +324,13 @@ namespace EnhancedFramework.Core {
                 playRange = TimeRange;
             }
         }
-        #endif
+#endif
         #endregion
 
         #region Player
+        private VideoPlayer.FrameReadyEventHandler sendFrameReadyEventsCallback = null;
+        private VideoPlayer.EventHandler onLoopPointReachedCallback = null;
+
         private GameState gameState = null;
         private bool isActive       = false;
 
@@ -346,16 +375,20 @@ namespace EnhancedFramework.Core {
             SetRenderCanvasAlpha(true);
 
             // Stop callback.
-            videoPlayer.loopPointReached -= OnStop;
-            videoPlayer.loopPointReached += OnStop;
+            onLoopPointReachedCallback ??= OnStop;
+
+            videoPlayer.loopPointReached -= onLoopPointReachedCallback;
+            videoPlayer.loopPointReached += onLoopPointReachedCallback;
 
             #if UNITY_EDITOR
             // Editor behaviour.
             if (!Application.isPlaying) {
+
+                sendFrameReadyEventsCallback ??= OnFrameReady;
                 videoPlayer.sendFrameReadyEvents = true;
 
-                videoPlayer.frameReady -= OnFrameReady;
-                videoPlayer.frameReady += OnFrameReady;
+                videoPlayer.frameReady -= sendFrameReadyEventsCallback;
+                videoPlayer.frameReady += sendFrameReadyEventsCallback;
                 return;
             }
             #endif
@@ -417,7 +450,7 @@ namespace EnhancedFramework.Core {
         /// Skips the video by setting its current time to <see cref="SkipTime"/>.
         /// </summary>
         /// <returns>True if this playable could be successfully skipped, false otherwise.</returns>
-        [Button("IsSkippable", ConditionType.True, SuperColor.Lavender)]
+        [Button(nameof(IsSkippable), ConditionType.True, SuperColor.Lavender)]
         public bool Skip() {
             if (IsSkippable && skipInterval.Contains((float)Time)) {
                 Time = skipInterval.y;
@@ -434,6 +467,7 @@ namespace EnhancedFramework.Core {
         }
 
         private void OnPlayerUpdate() {
+
             if (Time >= playRange.y) {
                 Stop();
 
@@ -455,7 +489,7 @@ namespace EnhancedFramework.Core {
             isActive = false;
             Stopped?.Invoke(videoPlayer);
 
-            _player.loopPointReached -= OnStop;
+            _player.loopPointReached -= onLoopPointReachedCallback;
 
             SetRenderCanvasAlpha(false);
 
@@ -469,7 +503,7 @@ namespace EnhancedFramework.Core {
             if (!Application.isPlaying) {
 
                 videoPlayer.sendFrameReadyEvents = false;
-                videoPlayer.frameReady -= OnFrameReady;
+                videoPlayer.frameReady -= sendFrameReadyEventsCallback;
                 return;
             }
             #endif

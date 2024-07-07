@@ -17,7 +17,7 @@ namespace EnhancedFramework.Localization {
     /// Waits until the localization selected locale is changed.
     /// </summary>
     [Serializable, DisplayName("Language Selection")]
-    public class LanguageSelectionSplashAnimation : SplashAnimation {
+    public sealed class LanguageSelectionSplashAnimation : SplashAnimation {
         #region Behaviour
         public override IEnumerator Play() {
             LocalizationManager.OnSelectLocale += OnLocaleChanged;
@@ -31,7 +31,6 @@ namespace EnhancedFramework.Localization {
 
             void OnLocaleChanged(Locale _locale) {
                 LocalizationManager.OnSelectLocale -= OnLocaleChanged;
-
                 _isWaiting = false;
             }
         }

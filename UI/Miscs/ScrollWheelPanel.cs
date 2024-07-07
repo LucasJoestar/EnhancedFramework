@@ -1,8 +1,8 @@
-// ===== Enhanced Editor - https://github.com/LucasJoestar/EnhancedEditor ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ============================================================================ //
+// ================================================================================== //
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
@@ -18,7 +18,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Miscs/Scroll Wheel Panel"), DisallowMultipleComponent]
-    public class ScrollWheelPanel : EnhancedBehaviour, IScrollHandler {
+    public sealed class ScrollWheelPanel : EnhancedBehaviour, IScrollHandler {
         #region Global Members
         [Section("Scroll Wheel Panel")]
 
@@ -28,6 +28,10 @@ namespace EnhancedFramework.UI {
 
         #region Enhanced Behaviour
         #if UNITY_EDITOR
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
         protected override void OnValidate() {
             base.OnValidate();
 

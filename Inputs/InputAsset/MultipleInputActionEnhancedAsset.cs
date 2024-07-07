@@ -5,7 +5,6 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using System;
 using UnityEngine;
 
 namespace EnhancedFramework.Inputs {
@@ -14,18 +13,25 @@ namespace EnhancedFramework.Inputs {
     /// <br/> being performed when all specified inputs are being performed together.
     /// </summary>
     [CreateAssetMenu(fileName = FilePrefix + "MultiInputAction", menuName = MenuPath + "Multi Action", order = MenuOrder)]
-    public class MultipleInputActionEnhancedAsset : InputActionEnhancedAsset {
+    public sealed class MultipleInputActionEnhancedAsset : InputActionEnhancedAsset {
         public const string FilePrefix  = "IPX_";
 
         #region Global Members
         [Space(10f)]
 
-        [SerializeField] private SingleInputActionEnhancedAsset[] inputs = new SingleInputActionEnhancedAsset[] { };
+        [SerializeField] private SingleInputActionEnhancedAsset[] inputs = new SingleInputActionEnhancedAsset[0];
 
         // -----------------------
 
         public override bool IsEnabled {
-            get { return Array.TrueForAll(inputs, i => i.IsEnabled); }
+            get {
+                for (int i = 0; i < inputs.Length; i++) {
+                    if (!inputs[i].IsEnabled)
+                        return false;
+                }
+
+                return true;
+            }
             set {
                 if (value == IsEnabled) {
                     return;
@@ -43,21 +49,17 @@ namespace EnhancedFramework.Inputs {
         #region Initialization
         protected override void OnInit(InputDatabase _database) {
             // Event setup.
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
-                _input.OnStarted += (InputActionEnhancedAsset _) => CallOnStarted();
-            }
+            for (int i = 0; i < inputs.Length; i++) {
+                SingleInputActionEnhancedAsset _input = inputs[i];
 
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
-                _input.OnCanceled += (InputActionEnhancedAsset _) => CallOnCanceled();
-            }
-
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
+                _input.OnStarted   += (InputActionEnhancedAsset _) => CallOnStarted();
+                _input.OnCanceled  += (InputActionEnhancedAsset _) => CallOnCanceled();
                 _input.OnPerformed += OnInputPerformed;
             }
 
             // ----- Local Methods ----- \\
 
-            void OnInputPerformed(InputActionEnhancedAsset _input) {
+            void OnInputPerformed(InputActionEnhancedAsset _) {
                 if (Performed()) {
                     CallOnPerformed();
                 }
@@ -69,7 +71,9 @@ namespace EnhancedFramework.Inputs {
         public override bool Performed() {
             bool _isPerformed = false;
 
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
+            for (int i = 0; i < inputs.Length; i++) {
+                SingleInputActionEnhancedAsset _input = inputs[i];
+
                 if (_input.Performed()) {
                     _isPerformed = true;
                     continue;
@@ -86,7 +90,9 @@ namespace EnhancedFramework.Inputs {
         public override bool Pressed() {
             bool _isPressed = false;
 
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
+            for (int i = 0; i < inputs.Length; i++) {
+                SingleInputActionEnhancedAsset _input = inputs[i];
+
                 if (_input.Pressed()) {
                     _isPressed = true;
                     continue;
@@ -101,7 +107,12 @@ namespace EnhancedFramework.Inputs {
         }
 
         public override bool Holding() {
-            return Array.TrueForAll(inputs, i => i.Holding());
+            for (int i = 0; i < inputs.Length; i++) {
+                if (!inputs[i].Holding())
+                    return false;
+            }
+
+            return true;
         }
 
         // -----------------------
@@ -124,14 +135,14 @@ namespace EnhancedFramework.Inputs {
 
         #region Utility
         public override void Enable() {
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
-                _input.Enable();
+            for (int i = 0; i < inputs.Length; i++) {
+                inputs[i].Enable();
             }
         }
 
         public override void Disable() {
-            foreach (SingleInputActionEnhancedAsset _input in inputs) {
-                _input.Disable();
+            for (int i = 0; i < inputs.Length; i++) {
+                inputs[i].Disable();
             }
         }
         #endregion

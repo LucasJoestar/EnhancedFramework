@@ -30,6 +30,8 @@ namespace EnhancedFramework.UI {
         [Tooltip("If true, automatically saves this option values whenever it changes")]
         [SerializeField] private bool saveOnChange = false;
 
+        // -----------------------
+
         /// <summary>
         /// The option associated with this UI element.
         /// </summary>

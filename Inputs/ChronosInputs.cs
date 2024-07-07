@@ -17,7 +17,7 @@ namespace EnhancedFramework.Inputs {
     [ScriptingDefineSymbol("CHRONOS_INPUT", "Chronos runtime inputs")]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Chronos/Chronos Inputs Controller"), DisallowMultipleComponent]
     #pragma warning disable
-    public class ChronosInputs : EnhancedBehaviour {
+    public sealed class ChronosInputs : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members

@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Compare the tags of a Game Object with a Multi Tags Behaviour Variable.")]
     [ActionCategory(ActionCategory.Logic)]
-    public class GameObjectCompareMultiTags : FsmStateAction {
+    public sealed class GameObjectCompareMultiTags : FsmStateAction {
         #region Global Members
         // --------------------------------------------------------
         // Variable - Compare - True - False - Store - Every Frame
@@ -49,12 +49,12 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            GameObject = null;
-            MultiTags = null;
-            TrueEvent = null;
-            FalseEvent = null;
+            GameObject  = null;
+            MultiTags   = null;
+            TrueEvent   = null;
+            FalseEvent  = null;
             StoreResult = null;
-            EveryFrame = false;
+            EveryFrame  = false;
         }
 
         public override void OnEnter() {
@@ -80,7 +80,12 @@ namespace EnhancedFramework.PlayMaker {
             bool _hasTags = false;
 
             if (_gameObject.IsValid() && (MultiTags.Value is MultiTagsBehaviour _behaviour)) {
-                _hasTags = _gameObject.GetTags().ContainsAll(_behaviour.Tags);
+
+                if (_gameObject.GetTags(out TagGroup _tags)) {
+                    _hasTags = _tags.ContainsAll(_behaviour.Tags);
+                } else {
+                    _hasTags = _behaviour.Tags.Count == 0;
+                }
             }
 
             StoreResult.Value = _hasTags;

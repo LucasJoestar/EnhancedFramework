@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Transform Controller")]
-    public class TransformEditorController : EnhancedBehaviour {
+    public sealed class TransformEditorController : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members

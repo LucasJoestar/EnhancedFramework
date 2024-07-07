@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when an Enhanced Video Player starts being played")]
     [ActionCategory("Video")]
-    public class EnhancedVideoStartedEvent : FsmStateAction {
+    public sealed class EnhancedVideoStartedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event

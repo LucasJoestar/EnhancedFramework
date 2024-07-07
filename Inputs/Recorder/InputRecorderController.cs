@@ -41,7 +41,7 @@ namespace EnhancedFramework.Inputs {
     [ScriptingDefineSymbol("INPUT_RECORDER", "Input Recording in both Editor and Builds")]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Input/Input Recorder Controller"), DisallowMultipleComponent]
     #pragma warning disable
-    public class InputRecorderController : EnhancedBehaviour, ILoadingProcessor {
+    public sealed class InputRecorderController : EnhancedBehaviour, ILoadingProcessor {
         #region Quit Build Behaviour
         /// <summary>
         /// Behaviour when quitting a build.
@@ -92,10 +92,10 @@ namespace EnhancedFramework.Inputs {
         [Space(10f)]
 
         [Tooltip("Behaviour to execute when quitting a build exe")]
-        [SerializeField, Enhanced, ShowIf("autoRecordBuild")] private QuitBuildBehaviour quitBuildBehaviour = QuitBuildBehaviour.None;
+        [SerializeField, Enhanced, ShowIf(nameof(autoRecordBuild))] private QuitBuildBehaviour quitBuildBehaviour = QuitBuildBehaviour.None;
 
         [Tooltip("Selected capture to replay using the button below")]
-        [SerializeField, Enhanced, Popup("GetCaptureFileNames"), DisplayName("Capture")] private int selectedCapture = 0;
+        [SerializeField, Enhanced, Popup(nameof(GetCaptureFileNames)), DisplayName("Capture")] private int selectedCapture = 0;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 

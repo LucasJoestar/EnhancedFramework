@@ -11,5 +11,5 @@ namespace EnhancedFramework.Core {
     /// <see cref="AudioAsset"/> related <see cref="AssetMaterialDatabase{T}"/>.
     /// </summary>
     [CreateAssetMenu(fileName = MenuPrefix + "AudioMaterialDatabase", menuName = MenuPath + "Audio", order = MenuOrder)]
-    public class AudioMaterialDatabase : AssetMaterialDatabase<AudioAsset> { }
+    public sealed class AudioMaterialDatabase : AssetMaterialDatabase<AudioAsset> { }
 }

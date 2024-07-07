@@ -13,8 +13,8 @@ namespace EnhancedFramework.UI {
     /// Plays an <see cref="AudioAsset"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Audio UI Effect")]
-    public class AudioUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Audio UI Effect")]
+    public sealed class AudioUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Audio Effect")]
 

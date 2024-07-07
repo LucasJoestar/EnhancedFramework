@@ -6,16 +6,16 @@
 
 #if TEXT_MESH_PRO_PACKAGE
 using EnhancedEditor;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 namespace EnhancedFramework.UI {
     /// <summary>
     /// Set the font styles of the button text.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Font UI Effect"), DisallowMultipleComponent]
-    public class FontStyleUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Font UI Effect"), DisallowMultipleComponent]
+    public sealed class FontStyleUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Font Style Effect")]
 

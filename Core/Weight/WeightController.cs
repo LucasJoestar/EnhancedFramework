@@ -44,7 +44,7 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        public int ID {
+        public readonly int ID {
             get { return handler.ID; }
         }
 
@@ -139,6 +139,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public enum State {
             Inactive    = 0,
+
             Active      = 1,
             Paused      = 2,
         }
@@ -191,6 +192,9 @@ namespace EnhancedFramework.Core {
 
         #region Controller
         private static int lastID = 0;
+
+        private Action<float> fadeWeightSetter = null;
+        private Action<float> weightSetter     = null;
 
         private TweenHandler weightTween = default;
         private TweenHandler fadeTween = default;
@@ -307,8 +311,10 @@ namespace EnhancedFramework.Core {
                 FadeIn();
             }
 
+            weightSetter ??= SetWeight;
+
             weightTween.Stop();
-            weightTween = Tweener.Tween(weight, _weight, SetWeight, _transitionDuration, true);
+            weightTween = Tweener.Tween(weight, _weight, weightSetter, _transitionDuration, true);
 
             // ----- Local Method ----- \\
 
@@ -351,8 +357,10 @@ namespace EnhancedFramework.Core {
 
         private void Fade(float _min, float _max, float _duration, AnimationCurve _curve, Action<bool> _onComplete = null) {
 
+            fadeWeightSetter ??= SetWeight;
+
             fadeTween.Stop();
-            fadeTween = Tweener.Tween(_min, _max, SetWeight, _duration, _curve, true, OnComplete);
+            fadeTween = Tweener.Tween(_min, _max, fadeWeightSetter, _duration, _curve, true, OnComplete);
 
             // ----- Local Methods ----- \\
 

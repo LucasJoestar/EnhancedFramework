@@ -41,6 +41,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public T DefaultValue {
             get { return defaultValue; }
+            set { defaultValue = value; }
         }
 
         /// <summary>
@@ -57,7 +58,9 @@ namespace EnhancedFramework.Core {
             get { return GetFullValue(); }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="Buffer{T, U, V}(int, T, bool, Action{T, T})"/>
         public Buffer(T _defaultValue, bool _stableSort, Action<T, T> _onValueChanged) {
@@ -92,7 +95,7 @@ namespace EnhancedFramework.Core {
 
             T _newValue = GetValue(_value);
 
-            if (!Equals(value, _newValue)) {
+            if (!EqualityUtility.Equals(value, _newValue)) {
                 OnValueChanged?.Invoke(_newValue, value);
                 value = _newValue;
             }
@@ -235,7 +238,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     /// <typeparam name="T">Key / value type.</typeparam>
     [Serializable]
-    public class BufferR<T> : Buffer<T, T, int> {
+    public sealed class BufferR<T> : Buffer<T, T, int> {
         #region Constructor
         /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, bool, Action{T, T})"/>
         public BufferR(T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) :
@@ -268,7 +271,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     /// <typeparam name="T">Value type.</typeparam>
     [Serializable]
-    public class BufferI<T> : Buffer<T, int, T> {
+    public sealed class BufferI<T> : Buffer<T, int, T> {
         #region Constructor
         /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, bool, Action{T, T})"/>
         public BufferI(T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) : base(_defaultValue, _stableSort, _onValueChanged) { }
@@ -300,7 +303,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     /// <typeparam name="T">Value type.</typeparam>
     [Serializable]
-    public class BufferV<T> : Buffer<T, int, Pair<T, int>> {
+    public sealed class BufferV<T> : Buffer<T, int, Pair<T, int>> {
         #region Constructor
         /// <inheritdoc cref="Buffer{T, U, V}.Buffer(T, bool, Action{T, T})"/>
         public BufferV(T _defaultValue = default, bool _stableSort = true, Action<T, T> _onValueChanged = null) :

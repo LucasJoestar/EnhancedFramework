@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Deactivates an Audio Snapshot.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class AudioSnapshotDeactivate : FsmStateAction {
+    public sealed class AudioSnapshotDeactivate : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Snapshot - Instant

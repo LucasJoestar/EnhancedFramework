@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when an Enhanced Video Player is being resumed")]
     [ActionCategory("Video")]
-    public class EnhancedVideoResumedEvent : FsmStateAction {
+    public sealed class EnhancedVideoResumedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event

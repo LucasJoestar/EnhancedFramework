@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Stops an Enhanced Playable Player")]
     [ActionCategory("Playable")]
-    public class EnhancedPlayableStop : FsmStateAction {
+    public sealed class EnhancedPlayableStop : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable

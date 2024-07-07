@@ -4,8 +4,8 @@
 //
 // ================================================================================== //
 
-
 using EnhancedEditor;
+using System.Runtime.CompilerServices;
 
 #if DOTWEEN_ENABLED
 using DG.Tweening;
@@ -20,10 +20,15 @@ namespace EnhancedFramework.Core {
 	public static class TweenExtensions {
         #region Extensions
         #if DOTWEEN_ENABLED
+        // -------------------------------------------
+        // Tween
+        // -------------------------------------------
+
         /// <param name="_tween"><inheritdoc cref="Extensions.Complete(Tween, bool)" path="/param[@name='t']"/></param>
         /// <param name="_withCallbacks"><inheritdoc cref="Extensions.Complete(Tween, bool)" path="/param[@name='withCallbacks']"/></param>
         /// <returns>NULL tween value: use it to assign your tween variable with</returns>
         /// <inheritdoc cref="Extensions.Complete(Tween, bool)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Tween DoComplete(this Tween _tween, bool _withCallbacks = true) {
             if (_tween.IsActive()) {
                 _tween.Complete(_withCallbacks);
@@ -36,6 +41,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_complete"><inheritdoc cref="Extensions.Kill(Tween, bool)" path="/param[@name='complete']"/></param>
         /// <returns>NULL tween value: use it to assign your tween variable with</returns>
         /// <inheritdoc cref="Extensions.Kill(Tween, bool)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Tween DoKill(this Tween _tween, bool _complete = false) {
             if (_tween.IsActive()) {
                 _tween.Kill(_complete);
@@ -44,12 +50,15 @@ namespace EnhancedFramework.Core {
             return null;
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Sequence
+        // -------------------------------------------
 
         /// <param name="_sequence"><inheritdoc cref="Extensions.Complete(Tween, bool)" path="/param[@name='t']"/></param>
         /// <param name="_withCallbacks"><inheritdoc cref="Extensions.Complete(Tween, bool)" path="/param[@name='withCallbacks']"/></param>
         /// <returns>NULL sequence value: use it to assign your sequence variable with</returns>
         /// <inheritdoc cref="Extensions.Complete(Tween, bool)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Sequence DoComplete(this Sequence _sequence, bool _withCallbacks = true) {
             if (_sequence.IsActive()) {
                 _sequence.Complete(_withCallbacks);
@@ -62,6 +71,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_complete"><inheritdoc cref="Extensions.Kill(Tween, bool)" path="/param[@name='complete']"/></param>
         /// <returns>NULL sequence value: use it to assign your sequence variable with</returns>
         /// <inheritdoc cref="Extensions.Kill(Tween, bool)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Sequence DoKill(this Sequence _sequence, bool _complete = false) {
             if (_sequence.IsActive()) {
                 _sequence.Kill(_complete);

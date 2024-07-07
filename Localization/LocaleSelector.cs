@@ -16,7 +16,7 @@ namespace EnhancedFramework.Localization {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Localization/Locale Selector"), DisallowMultipleComponent]
-    public class LocaleSelector : EnhancedBehaviour {
+    public sealed class LocaleSelector : EnhancedBehaviour {
         #region Global Members
         [Tooltip("Locale to select")]
         [SerializeField, Enhanced, Required] private Locale locale = null;

@@ -13,7 +13,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Out of Bounds Teleporter"), SelectionBase, DisallowMultipleComponent]
-    public class OutOfBoundsTeleporter : MonoBehaviour {
+    public sealed class OutOfBoundsTeleporter : EnhancedBehaviour {
         #region Enhanced Behaviour
         [Section("Teleporter")]
 
@@ -30,7 +30,7 @@ namespace EnhancedFramework.Core {
             // Don't inherit from the ITrigger interface or EnhancedTrigger component
             // to avoid catching every target object without requiring to setup any script on it.
 
-            if (!detectionMask.Contains(_collider.gameObject.layer) || _collider.isTrigger) {
+            if (_collider.isTrigger || !detectionMask.Contains(_collider.gameObject.layer)) {
                 return;
             }
 

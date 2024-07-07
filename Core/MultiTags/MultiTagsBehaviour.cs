@@ -5,8 +5,6 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace EnhancedFramework.Core {
@@ -15,7 +13,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Tag/Multi Tags")]
-    public class MultiTagsBehaviour : EnhancedBehaviour, IEnumerable<Tag> {
+    public sealed class MultiTagsBehaviour : EnhancedBehaviour {
         #region Global Members
         [Section("Mutli-Tags")]
 
@@ -38,18 +36,6 @@ namespace EnhancedFramework.Core {
 
         public Tag this[int _index] {
             get { return Tags[_index]; }
-        }
-        #endregion
-
-        #region IEnumerable
-        public IEnumerator<Tag> GetEnumerator() {
-            for (int i = 0; i < Count; i++) {
-                yield return this[i];
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return GetEnumerator();
         }
         #endregion
     }

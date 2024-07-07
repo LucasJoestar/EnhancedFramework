@@ -23,7 +23,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Footstep Player"), DisallowMultipleComponent]
-    public class FootstepPlayer : EnhancedBehaviour, ILateUpdate {
+    public sealed class FootstepPlayer : EnhancedBehaviour, ILateUpdate {
         #region Mode
         /// <summary>
         /// Determines how this player events are triggered.
@@ -40,7 +40,19 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Late;
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration | UpdateRegistration.Init;
+
+                #if !UNITY_EDITOR
+                if (!UseFootPositionMode)
+                    return _value;
+                #endif
+
+                _value |= UpdateRegistration.Late;
+                return _value;
+            }
+        }
 
         #region Global Members
         [Section("Footstep Player")]
@@ -81,7 +93,7 @@ namespace EnhancedFramework.Core {
         [SerializeField, Enhanced, Range(0f, 2f)] private float minInterval = .2f;
 
         [Tooltip("Distances used to detect if a foot is on ground: first value for entering in contact, second for exiting contact")]
-        [SerializeField, Enhanced, ShowIf("UseFootPositionMode"), MinMax(0f, .2f)] private Vector2 groundDetectionTolerance = new Vector2(.02f, .025f);
+        [SerializeField, Enhanced, ShowIf(nameof(UseFootPositionMode)), MinMax(0f, .2f)] private Vector2 groundDetectionTolerance = new Vector2(.02f, .025f);
 
         // -----------------------
 
@@ -98,15 +110,17 @@ namespace EnhancedFramework.Core {
             base.OnInit();
 
             // Cooldown init.
-            GetFootCooldown(Foot.Left).Reload(minInterval);
+            GetFootCooldown(Foot.Left) .Reload(minInterval);
             GetFootCooldown(Foot.Right).Reload(minInterval);
         }
 
         void ILateUpdate.Update() {
 
-            if (mode != Mode.FootPosition) {
+            #if UNITY_EDITOR
+            if (!UseFootPositionMode) {
                 return;
             }
+            #endif
 
             UpdateFootsteps();
         }
@@ -130,7 +144,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Mode Callbacks
-        private bool isLeftFootGrounded = true;
+        private bool isLeftFootGrounded  = true;
         private bool isRightFootGrounded = true;
 
         // -----------------------
@@ -153,7 +167,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private void UpdateFootsteps() {
 
-            UpdateFoot(Foot.Left, ref isLeftFootGrounded);
+            UpdateFoot(Foot.Left,  ref isLeftFootGrounded);
             UpdateFoot(Foot.Right, ref isRightFootGrounded);
 
             // ----- Local Method ----- \\
@@ -227,8 +241,8 @@ namespace EnhancedFramework.Core {
             }
 
             // Feedbacks.
-            foreach (EnhancedAssetFeedback _feedback in feedbacks) {
-                _feedback.Play(_transform, FeedbackPlayOptions.PlayAtPosition);
+            for (int i = 0; i < feedbacks.Length; i++) {
+                feedbacks[i].Play(_transform, FeedbackPlayOptions.PlayAtPosition);
             }
 
             return true;
@@ -335,7 +349,7 @@ namespace EnhancedFramework.Core {
             UnityEditor.Undo.RecordObject(this, "Setup Foot Bones");
             #endif
 
-            leftFoot = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+            leftFoot  = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
             rightFoot = _animator.GetBoneTransform(HumanBodyBones.RightFoot);
         }
         #endregion

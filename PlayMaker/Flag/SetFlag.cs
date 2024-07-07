@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Set the value of a Flag")]
     [ActionCategory("Flag")]
-    public class SetFlag : FsmStateAction {
+    public sealed class SetFlag : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Value

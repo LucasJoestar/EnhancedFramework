@@ -13,7 +13,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag Controller")]
-    public class FlagController : EventTrigger {
+    public sealed class FlagController : EventTrigger {
         #region Mode
         /// <summary>
         /// Determines when this object flags are set.
@@ -149,6 +149,11 @@ namespace EnhancedFramework.Core {
             #endif
 
             return _value;
+        }
+
+        /// <inheritdoc cref="FlagValueGroup.SetValues"/>
+        public void SetFlags() {
+            Flags.SetValues();
         }
 
         /// <inheritdoc cref="FlagValueGroup.SetValues(bool)"/>

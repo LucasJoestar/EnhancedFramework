@@ -5,8 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using System.Collections;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace EnhancedFramework.Core {
@@ -15,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag Group")]
-    public class FlagGroupBehaviour : EnhancedBehaviour, IEnumerable<Flag> {
+    public sealed class FlagGroupBehaviour : EnhancedBehaviour {
         #region Global Members
         [Section("Flag Group")]
 
@@ -27,6 +26,7 @@ namespace EnhancedFramework.Core {
         /// The total amount of flag in this object group.
         /// </summary>
         public int Count {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Flags.Count; }
         }
         #endregion
@@ -37,39 +37,32 @@ namespace EnhancedFramework.Core {
         }
 
         public Flag this[int _index] {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return Flags[_index]; }
-        }
-        #endregion
-
-        #region IEnumerable
-        public IEnumerator<Flag> GetEnumerator() {
-            for (int i = 0; i < Count; i++) {
-                yield return this[i];
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return GetEnumerator();
         }
         #endregion
 
         #region Management
         /// <inheritdoc cref="FlagGroup.AddFlag(Flag)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddFlag(Flag _flag) {
             Flags.AddFlag(_flag);
         }
 
         /// <inheritdoc cref="FlagGroup.RemoveFlag(Flag)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveFlag(Flag _flag) {
             Flags.RemoveFlag(_flag);
         }
 
         /// <inheritdoc cref="FlagGroup.RemoveFlagAt(int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveFlagAt(int _index) {
             Flags.RemoveFlagAt(_index);
         }
 
         /// <inheritdoc cref="FlagGroup.ContainFlag(Flag, out int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainFlag(Flag _flag, out int _index) {
             return Flags.ContainFlag(_flag, out _index);
         }
@@ -89,9 +82,14 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="FlagValueGroup.SetValues"/>
-        [Button(ActivationMode.Play, SuperColor.Orange, IsDrawnOnTop = false)]
         public void SetFlags() {
             Flags.SetValues();
+        }
+
+        /// <inheritdoc cref="FlagValueGroup.SetValues(bool)"/>
+        [Button(ActivationMode.Play, SuperColor.Orange, IsDrawnOnTop = false)]
+        public void SetFlags(bool _valid = true) {
+            Flags.SetValues(_valid);
         }
         #endregion
     }

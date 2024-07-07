@@ -1,8 +1,8 @@
-// ===== Enhanced Editor - https://github.com/LucasJoestar/EnhancedEditor ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ============================================================================ //
+// ================================================================================== //
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
@@ -15,7 +15,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Miscs/Resizable Panel"), DisallowMultipleComponent]
-    public class ResizablePanel : EnhancedBehaviour, IPointerDownHandler, IDragHandler {
+    public sealed class ResizablePanel : EnhancedBehaviour, IPointerDownHandler, IDragHandler {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
@@ -40,11 +40,11 @@ namespace EnhancedFramework.UI {
             initialiSize = SetSize(GetSize());
         }
 
+        #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
         // -------------------------------------------
 
-        #if UNITY_EDITOR
         protected override void OnValidate() {
             base.OnValidate();
 

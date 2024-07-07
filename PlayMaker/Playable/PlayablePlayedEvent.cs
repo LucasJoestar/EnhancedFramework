@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when a Playable is being played (started or resumed)")]
     [ActionCategory("Playable")]
-    public class PlayablePlayedEvent : FsmStateAction {
+    public sealed class PlayablePlayedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event

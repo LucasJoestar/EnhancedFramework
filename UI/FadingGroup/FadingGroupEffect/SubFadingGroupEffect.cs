@@ -18,12 +18,12 @@ namespace EnhancedFramework.UI {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(MenuPath + "Sub Fading Group Effect")]
     #pragma warning disable
-    public class SubFadingGroupEffect : FadingGroupEffect {
+    public sealed class SubFadingGroupEffect : FadingGroupEffect {
         /// <summary>
         /// Wrapper for a sub group and its parameters.
         /// </summary>
         [Serializable]
-        public class SubGroup {
+        public sealed class SubGroup {
             #region Global Members
             #if UNITY_EDITOR
             [SerializeField] private string name = "Group";
@@ -65,7 +65,11 @@ namespace EnhancedFramework.UI {
             #endregion
 
             #region Utility
-            private DelayHandler delay;
+            private Action updateCallback = null;
+            private DelayHandler delay    = default;
+
+            private bool updateVisibility = false;
+            private bool updateInstant    = false;
 
             // -----------------------
 
@@ -92,14 +96,18 @@ namespace EnhancedFramework.UI {
                 }
 
                 float _delay = _visible ? ShowDelay : HideDelay;
+                updateCallback ??= OnComplete;
+
+                updateVisibility = _visible;
+                updateInstant    = _instant;
 
                 delay.Cancel();
-                delay = Delayer.Call(_delay, OnComplete, RealTime);
+                delay = Delayer.Call(_delay, updateCallback, RealTime);
 
                 // ----- Local Method ----- \\
 
                 void OnComplete() {
-                    Group.SetVisibility(_visible, _instant);
+                    Group.SetVisibility(updateVisibility, updateInstant);
                 }
             }
             #endregion
@@ -116,8 +124,8 @@ namespace EnhancedFramework.UI {
         internal protected override void OnSetVisibility(bool _visible, bool _instant) {
 
             // Sub group(s).
-            foreach (SubGroup _group in subGroups) {
-                _group.Update(_visible, _instant);
+            for (int i = 0; i < subGroups.Length; i++) {
+                subGroups[i].Update(_visible, _instant);
             }
         }
         #endregion

@@ -13,7 +13,7 @@ using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.Video;
 
-using Min = EnhancedEditor.MinAttribute;
+using Min   = EnhancedEditor.MinAttribute;
 using Range = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Core {
@@ -34,7 +34,7 @@ namespace EnhancedFramework.Core {
     /// Waits for a given amount of time, in second(s).
     /// </summary>
     [Serializable, DisplayName("Wait")]
-    public class WaitSplashAnimation : SplashAnimation {
+    public sealed class WaitSplashAnimation : SplashAnimation {
         #region Global Members
         [Enhanced, Min(0f)] public float Duration = 1f;
         #endregion
@@ -50,7 +50,7 @@ namespace EnhancedFramework.Core {
     /// Instantly triggers a <see cref="UnityEvent"/>.
     /// </summary>
     [Serializable, DisplayName("Unity Event")]
-    public class UnityEventSplashAnimation : SplashAnimation {
+    public sealed class UnityEventSplashAnimation : SplashAnimation {
         #region Global Members
         public UnityEvent Event = new UnityEvent();
         #endregion
@@ -67,7 +67,7 @@ namespace EnhancedFramework.Core {
     /// Plays a specific <see cref="EnhancedVideoPlayer"/>.
     /// </summary>
     [Serializable, DisplayName("Video")]
-    public class VideoSplashAnimation : SplashAnimation {
+    public sealed class VideoSplashAnimation : SplashAnimation {
         #region Global Members
         [Enhanced, Required] public EnhancedVideoPlayer VideoPlayer = null;
         #endregion
@@ -97,7 +97,7 @@ namespace EnhancedFramework.Core {
     /// Plays a specific <see cref="PlayableDirector"/>.
     /// </summary>
     [Serializable, DisplayName("Playable")]
-    public class PlayableSplashAnimation : SplashAnimation {
+    public sealed class PlayableSplashAnimation : SplashAnimation {
         #region Global Members
         [Enhanced, Required] public EnhancedPlayablePlayer Playable = null;
         #endregion
@@ -127,12 +127,12 @@ namespace EnhancedFramework.Core {
     /// Set the visibility of a specific <see cref="IFadingObject"/>.
     /// </summary>
     [Serializable, DisplayName("Fading Object")]
-    public class FadingObjectSplashAnimation : SplashAnimation {
+    public sealed class FadingObjectSplashAnimation : SplashAnimation {
         #region Global Members
         public SerializedInterface<IFadingObject> FadingObject = new SerializedInterface<IFadingObject>();
         public FadingMode Mode = FadingMode.Show;
         public bool WaitForCompletion = true;
-        [Enhanced, ShowIf("ShowWait"), Range(0f, 5f)] public float WaitDuration = .5f;
+        [Enhanced, ShowIf(nameof(ShowWait)), Range(0f, 5f)] public float WaitDuration = .5f;
 
         public bool ShowWait {
             get { return Mode == FadingMode.FadeInOut; }
@@ -163,11 +163,11 @@ namespace EnhancedFramework.Core {
     /// Fades the 
     /// </summary>
     [Serializable, DisplayName("Screen Fade")]
-    public class FadingSingletonSplashAnimation : SplashAnimation {
+    public sealed class FadingSingletonSplashAnimation : SplashAnimation {
         #region Global Members
         public FadingMode Mode = FadingMode.Show;
         public bool WaitForCompletion = true;
-        [Enhanced, ShowIf("ShowWait"), Range(0f, 5f)] public float WaitDuration = .5f;
+        [Enhanced, ShowIf(nameof(ShowWait)), Range(0f, 5f)] public float WaitDuration = .5f;
 
         public bool ShowWait {
             get { return Mode == FadingMode.FadeInOut; }

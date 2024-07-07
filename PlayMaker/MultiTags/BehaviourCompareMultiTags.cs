@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Compare the tags of two Multi Tags Behaviours.")]
     [ActionCategory(ActionCategory.Logic)]
-    public class BehaviourCompareMultiTags : FsmStateAction {
+    public sealed class BehaviourCompareMultiTags : FsmStateAction {
         #region Global Members
         // --------------------------------------------------------
         // Variable - Compare - True - False - Store - Every Frame
@@ -48,12 +48,12 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            Variable = null;
-            Value = null;
-            TrueEvent = null;
-            FalseEvent = null;
+            Variable    = null;
+            Value       = null;
+            TrueEvent   = null;
+            FalseEvent  = null;
             StoreResult = null;
-            EveryFrame = false;
+            EveryFrame  = false;
         }
 
         public override void OnEnter() {

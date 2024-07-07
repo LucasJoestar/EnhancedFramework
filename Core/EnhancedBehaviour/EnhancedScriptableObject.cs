@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System.Diagnostics;
 using UnityEngine;
 
@@ -84,7 +85,6 @@ namespace EnhancedFramework.Core {
             if (!Application.isPlaying) {
 
                 EnhancedObjectID _objectID = new EnhancedObjectID(this);
-
                 if (objectID == _objectID) {
                     return;
                 }

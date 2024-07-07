@@ -16,7 +16,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(MenuPath + "Size - Fading Group Effect")]
-    public class SizeFadingGroupEffect : FadingGroupEffect {
+    public sealed class SizeFadingGroupEffect : FadingGroupEffect {
         #region Global Members
         [Section("Size Effect"), PropertyOrder(0)]
 
@@ -30,11 +30,18 @@ namespace EnhancedFramework.UI {
 
         [Space(10f)]
 
-        [SerializeField] private EaseTween<Vector2> showSizeTween   = new EaseTween<Vector2>();
-        [SerializeField] private EaseTween<Vector2> hideSizeTween   = new EaseTween<Vector2>();
+        [SerializeField] private EaseTween<Vector2> showSizeTween = new EaseTween<Vector2>();
+        [SerializeField] private EaseTween<Vector2> hideSizeTween = new EaseTween<Vector2>();
         #endregion
 
         #region Enhanced Behaviour
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
+            // Stop.
+            sequence.DoKill();
+        }
+
         #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
@@ -51,6 +58,7 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Effect
+        private TweenCallback onKilledCallback = null;
         private Sequence sequence = null;
 
         // -----------------------
@@ -71,7 +79,8 @@ namespace EnhancedFramework.UI {
                     sequence.Join(hideSizeTween.SizeDelta(rectTransform, false));
                 }
 
-                sequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnKilled);
+                onKilledCallback ??= OnKilled;
+                sequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKilledCallback);
             }
 
             if (_instant) {

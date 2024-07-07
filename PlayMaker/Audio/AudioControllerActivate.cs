@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Activates an Audio Controller.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class AudioControllerActivate : FsmStateAction {
+    public sealed class AudioControllerActivate : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Audio - Instant - Reset

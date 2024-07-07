@@ -7,6 +7,7 @@
 using EnhancedEditor;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace EnhancedFramework.Core {
     /// <summary>
@@ -49,7 +50,7 @@ namespace EnhancedFramework.Core {
         /// <br/> Modify its value if an entry with the same key is found.
         /// </summary>
         /// <inheritdoc cref="Set(T, U)"/>
-        public virtual int Add(T _key, U _value) {
+        public int Add(T _key, U _value) {
             return Set(_key, _value);
         }
 
@@ -58,7 +59,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_key">The key to remove.</param>
         /// <returns>True if an entry with this key could be found and removed, false otherwise.</returns>
-        public virtual bool Remove(T _key) {
+        public bool Remove(T _key) {
             if (ContainsKey(_key, out int _index)) {
                 RemoveAt(_index);
                 return true;
@@ -86,8 +87,9 @@ namespace EnhancedFramework.Core {
         /// <returns>-1 if the key could not be found in this collection, or its index otheriwse.</returns>
         public int IndexOfKey(T _key) {
 
-            for (int i = 0; i < Count; i++) {
-                if (Compare(collection[i].First, _key)) {
+            int _count = Count;
+            for (int i = 0; i < _count; i++) {
+                if (EqualityUtility.Equals(collection[i].First, _key)) {
                     return i;
                 }
             }
@@ -102,8 +104,9 @@ namespace EnhancedFramework.Core {
         /// <returns>-1 if the value could not be found in this collection, or its index otheriwse.</returns>
         public int IndexOfValue(U _value) {
 
-            for (int i = 0; i < Count; i++) {
-                if (Compare(collection[i].Second, _value)) {
+            int _count = Count;
+            for (int i = 0; i < _count; i++) {
+                if (EqualityUtility.Equals(collection[i].Second, _value)) {
                     return i;
                 }
             }
@@ -112,6 +115,7 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="ContainsKey(T, out int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(T _key) {
             return ContainsKey(_key, out _);
         }
@@ -128,6 +132,7 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="ContainsValue(U, out int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsValue(U _value) {
             return ContainsValue(_value, out _);
         }
@@ -164,6 +169,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_index">Index to get the element at.</param>
         /// <returns>The key of the element at the given index.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetKeyAt(int _index) {
             return collection[_index].First;
         }
@@ -173,6 +179,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_index">Index to get the element at.</param>
         /// <returns>The value of the element at the given index.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public U GetValueAt(int _index) {
             return collection[_index].Second;
         }

@@ -1,8 +1,8 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ================================================================================================ //
+// ================================================================================== //
 
 #if TIMELINE_ENABLED
 using EnhancedFramework.Timeline;
@@ -22,7 +22,7 @@ namespace EnhancedFramework.Editor {
     /// <br/> Displays an waveform preview of the audio clips.
     /// </summary>
     [CustomTimelineEditor(typeof(AudioEnhancedPlayableAsset))]
-    public class AudioEnhancedPlayableAssetEditor : EnhancedPlayableAssetEditor {
+    public sealed class AudioEnhancedPlayableAssetEditor : EnhancedPlayableAssetEditor {
         #region Editor
         private const string NoAudioErrorMessage    = "No Audio assigned";
 
@@ -30,7 +30,7 @@ namespace EnhancedFramework.Editor {
         // Reflection
         // -------------------------------------------
 
-        private const BindingFlags StaticFlags      = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        private const BindingFlags StaticFlags      = BindingFlags.Static   | BindingFlags.Public | BindingFlags.NonPublic;
         private const BindingFlags InstanceFlags    = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static readonly Type waveformPreviewType        = typeof(EditorWindow).Assembly.GetType("UnityEditor.WaveformPreview");

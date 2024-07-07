@@ -8,6 +8,7 @@
 using DG.Tweening;
 using EnhancedEditor;
 using EnhancedFramework.Core;
+using System;
 using UnityEngine;
 
 using Range = EnhancedEditor.RangeAttribute;
@@ -19,7 +20,7 @@ namespace EnhancedFramework.UI {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(MenuPath + "Blink - Fading Group Effect")]
     #pragma warning disable
-    public class BlinkFadingGroupEffect : FadingGroupEffect {
+    public sealed class BlinkFadingGroupEffect : FadingGroupEffect {
         #region Global Members
         [Section("Blink Effect"), PropertyOrder(0)]
 
@@ -49,6 +50,14 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Enhanced Behaviour
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
+            // Stop.
+            delay.Cancel();
+            tween.DoKill();
+        }
+
         #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
@@ -61,10 +70,13 @@ namespace EnhancedFramework.UI {
                 group = GetComponent<CanvasGroup>();
             }
         }
-        #endif
+#endif
         #endregion
 
         #region Effect
+        private TweenCallback onKilledCallback = null;
+        private Action stopAnimationCallback   = null;
+
         private DelayHandler delay  = default;
         private Tween tween = null;
 
@@ -76,7 +88,9 @@ namespace EnhancedFramework.UI {
 
                 // Stop.
                 if (!delay.IsValid && tween.IsActive()) {
-                    delay = Delayer.Call(stopDelay, StopAnimation, true);
+
+                    stopAnimationCallback ??= StopAnimation;
+                    delay = Delayer.Call(stopDelay, stopAnimationCallback, true);
                 }
 
                 return;
@@ -98,8 +112,10 @@ namespace EnhancedFramework.UI {
             // Blink.
             group.alpha = 0f;
 
+            onKilledCallback ??= OnKilled;
+
             tween = group.DOFade(1f, duration).SetEase(blinkCurve).SetLoops(-1, LoopType.Restart);
-            tween.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(false).OnKill(OnKilled);
+            tween.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(false).OnKill(onKilledCallback);
 
             isActive = true;
 
@@ -109,7 +125,7 @@ namespace EnhancedFramework.UI {
 
                 group.alpha = 0f;
 
-                tween = null;
+                tween    = null;
                 isActive = false;
             }
         }

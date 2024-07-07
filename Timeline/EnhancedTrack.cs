@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -22,8 +23,9 @@ namespace EnhancedFramework.Timeline {
 
                 // Get binding object.
                 Object _binding = _playable.GetGenericBinding(this);
+                IEnumerable<TimelineClip> _clips = GetClips();
 
-                foreach (TimelineClip _clip in GetClips()) {
+                foreach (TimelineClip _clip in _clips) {
                     if (_clip.asset is IBindingPlayableAsset _asset) {
                         _asset.BindingObject = _binding;
                     }

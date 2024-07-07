@@ -82,10 +82,10 @@ namespace EnhancedFramework.Core.GameStates {
         /// Used to indicate the current life state of a <see cref="GameState"/>.
         /// </summary>
         public enum Lifetime {
-            Created,
-            Pending,
-            OnStack,
-            Inactive
+            Created  = 0,
+            Pending  = 1,
+            OnStack  = 2,
+            Inactive = 3,
         }
         #endregion
 
@@ -211,14 +211,14 @@ namespace EnhancedFramework.Core.GameStates {
         /// <summary>
         /// Removes this state from the game stack.
         /// </summary>
-        public void RemoveState() {
+        public void RemoveState(bool _fallbackOnNextFrame = false) {
             if (LifeState != Lifetime.Inactive) {
 
-                if (PopOnNextFrame) {
-                    GameStateManager.Instance.PopStateOnNextFrame(this);
-                } else {
-                    GameStateManager.Instance.PopState(this);
+                if (!PopOnNextFrame && (GameStateManager.Instance.PopState(this) || !_fallbackOnNextFrame)) {
+                    return;
                 }
+
+                GameStateManager.Instance.PopStateOnNextFrame(this);
             }
         }
 
@@ -267,7 +267,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// <param name="_priority">The priority of this chronos (only the one with the highest priority will be applied).</param>
         /// <returns>True to override the game chronos, false otheriwse.</returns>
         public virtual bool OverrideChronos(out float _chronos, out int _priority) {
-            _chronos = 1f;
+            _chronos  = 1f;
             _priority = -1;
 
             return false;
@@ -375,6 +375,8 @@ namespace EnhancedFramework.Core.GameStates {
         public virtual void OnStateOverride(T _state) { }
         #endregion
     }
+
+    // ===== Extensions ===== \\
 
     /// <summary>
     /// Contains <see cref="GameState"/>-related extension utility method(s).

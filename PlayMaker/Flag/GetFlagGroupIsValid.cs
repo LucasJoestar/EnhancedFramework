@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Get if all values of a Flag Group are valid")]
     [ActionCategory("Flag")]
-    public class GetFlagGroupIsValid : FsmStateAction {
+    public sealed class GetFlagGroupIsValid : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - True - False - Store
@@ -41,8 +41,8 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            FlagGroup = null;
-            TrueEvent = null;
+            FlagGroup  = null;
+            TrueEvent  = null;
             FalseEvent = null;
             StoreValue = null;
         }

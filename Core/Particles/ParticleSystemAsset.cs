@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace EnhancedFramework.Core {
@@ -13,7 +14,7 @@ namespace EnhancedFramework.Core {
 	/// <see cref="EnhancedAssetFeedback"/> used to play various <see cref="ParticleSystem"/>.
 	/// </summary>
 	[CreateAssetMenu(fileName = "PSA_Particle", menuName = MenuPath + "Particle", order = MenuOrder)]
-	public class ParticleSystemAsset : EnhancedAssetFeedback, IObjectPoolManager<EnhancedParticleSystemPlayer> {
+	public sealed class ParticleSystemAsset : EnhancedAssetFeedback, IObjectPoolManager<EnhancedParticleSystemPlayer> {
 		#region Global Members
 		[Section("Particle System Asset")]
 
@@ -64,6 +65,7 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         /// <inheritdoc cref="PlayParticle(Transform)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ParticleHandler PlayParticle(Vector3 _position) {
             return ParticleSystemManager.Instance.Play(this, _position);
         }
@@ -72,6 +74,7 @@ namespace EnhancedFramework.Core {
         /// Plays this particle system.
         /// </summary>
         /// <inheritdoc cref="ParticleSystemManager.Play(ParticleSystemAsset, Transform)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ParticleHandler PlayParticle(Transform _transform) {
             return ParticleSystemManager.Instance.Play(this, _transform);
         }
@@ -102,17 +105,17 @@ namespace EnhancedFramework.Core {
         // Feedback
         // -------------------------------------------
 
-        public override void Play(Transform _transform, FeedbackPlayOptions _options) {
+        protected override void DoPlay(Transform _transform, Vector3 _position, FeedbackPlayOptions _options) {
             // Instant play (delay managed in the player).
-            OnPlay(_transform, _options);
+            OnPlay(_transform, _position, _options);
         }
 
-        protected override void OnPlay(Transform _transform, FeedbackPlayOptions _options) {
+        protected override void OnPlay(Transform _transform, Vector3 _position, FeedbackPlayOptions _options) {
             switch (_options) {
 
                 // Play at position.
                 case FeedbackPlayOptions.PlayAtPosition:
-                    PlayParticle(_transform.position);
+                    PlayParticle(_position);
                     break;
 
                 // Follow transform.
@@ -123,7 +126,7 @@ namespace EnhancedFramework.Core {
                 // Vanilla.
                 case FeedbackPlayOptions.None:
                 default:
-                    this.LogErrorMessage("Particles cannot be played without a proper Transform reference");
+                    this.LogErrorMessage("Particles cannot be played without a position or a proper Transform reference");
                     break;
             }
         }
@@ -134,16 +137,16 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        private ObjectPool<EnhancedParticleSystemPlayer> particlePool = new ObjectPool<EnhancedParticleSystemPlayer>(0);
-        private bool isInitialize = false;
+        [NonSerialized] private readonly ObjectPool<EnhancedParticleSystemPlayer> particlePool = new ObjectPool<EnhancedParticleSystemPlayer>(0);
+        [NonSerialized] private bool isInitialize = false;
 
         // -----------------------
 
         /// <summary>
         /// Get a <see cref="EnhancedParticleSystemPlayer"/> instance from this pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Get"/>
-        public EnhancedParticleSystemPlayer GetInstance() {
+        /// <inheritdoc cref="ObjectPool{T}.GetPoolInstance"/>
+        public EnhancedParticleSystemPlayer GetPoolInstance() {
 
             if (!isInitialize) {
 
@@ -151,23 +154,23 @@ namespace EnhancedFramework.Core {
                 isInitialize = true;
             }
 
-            return particlePool.Get();
+            return particlePool.GetPoolInstance();
         }
 
         /// <summary>
         /// Releases a specific <see cref="EnhancedParticleSystemPlayer"/> instance and sent it back to this pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Release(T)"/>
-        public bool ReleaseInstance(EnhancedParticleSystemPlayer _player) {
-            return particlePool.Release(_player);
+        /// <inheritdoc cref="ObjectPool{T}.ReleasePoolInstance(T)"/>
+        public bool ReleasePoolInstance(EnhancedParticleSystemPlayer _player) {
+            return particlePool.ReleasePoolInstance(_player);
         }
 
         /// <summary>
         /// Clears this <see cref="EnhancedParticleSystemPlayer"/> pool content and destroys all its instances.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Clear(int)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ClearPool(int)"/>
         public void ClearPool(int _capacity = 1) {
-            particlePool.Clear(_capacity);
+            particlePool.ClearPool(_capacity);
         }
 
         // -------------------------------------------

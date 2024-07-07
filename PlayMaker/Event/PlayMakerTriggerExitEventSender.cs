@@ -15,7 +15,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Trigger Exit Event Sender")]
-    public class PlayMakerTriggerExitEventSender : EnhancedTrigger {
+    public sealed class PlayMakerTriggerExitEventSender : EnhancedTrigger {
         #region Global Members
         [Section("On Exit Trigger - Event Sender")]
 

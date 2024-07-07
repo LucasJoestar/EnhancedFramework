@@ -28,10 +28,10 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-955)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Audio Manager"), DisallowMultipleComponent]
-    public class AudioManager : EnhancedSingleton<AudioManager>, IStableUpdate, IGameStateOverrideCallback,
-                                IObjectPoolManager<EnhancedAudioPlayer>, IObjectPoolManager<MusicPlayer>, 
-                                IObjectPoolManager<AmbientController>,   IObjectPoolManager<AmbientSoundPlayer>,
-                                IObjectPoolManager<SnapshotController> {
+    public sealed class AudioManager : EnhancedSingleton<AudioManager>, IStableUpdate, IGameStateOverrideCallback,
+                                       IObjectPoolManager<EnhancedAudioPlayer>, IObjectPoolManager<MusicPlayer>, 
+                                       IObjectPoolManager<AmbientController>,   IObjectPoolManager<AmbientSoundPlayer>,
+                                       IObjectPoolManager<SnapshotController> {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
@@ -104,11 +104,11 @@ namespace EnhancedFramework.Core {
             base.OnInit();
 
             // Initialization.
-            audioPool.Initialize(this);
-            musicPool.Initialize(this);
+            audioPool            .Initialize(this);
+            musicPool            .Initialize(this);
             ambientControllerPool.Initialize(this);
-            ambientSoundPool.Initialize(this);
-            snapshotPool.Initialize(this);
+            ambientSoundPool     .Initialize(this);
+            snapshotPool         .Initialize(this);
 
             ResetSnapshots();
 
@@ -145,8 +145,10 @@ namespace EnhancedFramework.Core {
         private void OnStartLoading() {
 
             // Stop non persistent players.
-            for (int i = audioPlayers.Count; i-- > 0;) {
-                EnhancedAudioPlayer _player = audioPlayers[i];
+            List<EnhancedAudioPlayer> _playersSpan = audioPlayers;
+
+            for (int i = _playersSpan.Count; i-- > 0;) {
+                EnhancedAudioPlayer _player = _playersSpan[i];
 
                 if (!_player.IsPersistent) {
                     _player.Stop(false);
@@ -158,7 +160,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
         // Editor
         // -------------------------------------------
-        private ManualCooldown editorCooldown = new ManualCooldown(.1f);
+        private readonly ManualCooldown editorCooldown = new ManualCooldown(.1f);
 
         protected override void OnEnable() {
             base.OnEnable();
@@ -195,7 +197,6 @@ namespace EnhancedFramework.Core {
 
         #region Game State
         void IGameStateOverrideCallback.OnGameStateOverride(in GameStateOverride _state) {
-
             // Pause.
             Pause(_state.IsPaused);
         }
@@ -217,8 +218,10 @@ namespace EnhancedFramework.Core {
             // Player pause.
             if (pauseAudioPlayers) {
 
-               foreach (EnhancedAudioPlayer _player in audioPlayers) {
+                List<EnhancedAudioPlayer> _playersSpan = audioPlayers;
+                for (int i = _playersSpan.Count; i-- > 0;) {
 
+                    EnhancedAudioPlayer _player = _playersSpan[i];
                     if (!_player.IgnorePause) {
 
                         // Pause / Resume.
@@ -233,6 +236,8 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
+        // ===== Pool, Players & Controllers ===== \\
+
         #region Audio Player
         private const int AudioPlayerPoolInitialCapacity = 10;
 
@@ -243,8 +248,7 @@ namespace EnhancedFramework.Core {
 
         /// <inheritdoc cref="Play(AudioAsset, AudioAssetSettings, Vector3)"/>
         public AudioHandler Play(AudioAsset _audio, AudioAssetSettings _settings) {
-            Vector3 _position = ListenerPosition;
-            return Play(_audio, _settings, _position);
+            return Play(_audio, _settings, ListenerPosition);
         }
 
         /// <param name="_position">Position (in world space) where to play this audio.</param>
@@ -272,8 +276,10 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private void UpdateAudioPlayers() {
 
-            for (int i = audioPlayers.Count; i-- > 0;) {
-                audioPlayers[i].AudioUpdate();
+            List<EnhancedAudioPlayer> _playersSpan = audioPlayers;
+
+            for (int i = _playersSpan.Count; i-- > 0;) {
+                _playersSpan[i].AudioUpdate();
             }
         }
 
@@ -338,18 +344,26 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private EnhancedAudioPlayer GetAudioPlayerFromPool() {
-            return audioPool.Get();
+            return audioPool.GetPoolInstance();
         }
 
         internal bool ReleaseAudioPlayerToPool(EnhancedAudioPlayer _player) {
-            return audioPool.Release(_player);
+            return audioPool.ReleasePoolInstance(_player);
         }
 
         private void ClearAudioPlayerPool() {
-            audioPool.Clear(AudioPlayerPoolInitialCapacity);
+            audioPool.ClearPool(AudioPlayerPoolInitialCapacity);
         }
 
         // -----------------------
+
+        EnhancedAudioPlayer IObjectPool<EnhancedAudioPlayer>.GetPoolInstance() {
+            return GetAudioPlayerFromPool();
+        }
+
+        bool IObjectPool<EnhancedAudioPlayer>.ReleasePoolInstance(EnhancedAudioPlayer _instance) {
+            return ReleaseAudioPlayerToPool(_instance);
+        }
 
         EnhancedAudioPlayer IObjectPoolManager<EnhancedAudioPlayer>.CreateInstance() {
             Transform _transform = new GameObject("ADP_NewPlayer").transform;
@@ -412,9 +426,12 @@ namespace EnhancedFramework.Core {
             int _playerIndex = -1;
             int _index;
 
-            for (_index = 0; _index < musicBuffer.Count; _index++) {
+            List<MusicPlayer> _musicSpans = musicBuffer.collection;
+            int _count = _musicSpans.Count;
 
-                MusicPlayer _musicPlayer = musicBuffer[_index];
+            for (_index = 0; _index < _count; _index++) {
+
+                MusicPlayer _musicPlayer = _musicSpans[_index];
                 AudioLayer _musicLayer = _musicPlayer.Layer;
 
                 // Lower priority.
@@ -446,11 +463,11 @@ namespace EnhancedFramework.Core {
             if (_playerIndex == -1) {
 
                 _player = GetMusicPlayerFromPool().Setup(_music, _layer, _interruptionMode);
-                musicBuffer.Insert(_index, _player);
+                _musicSpans.Insert(_index, _player);
 
             } else {
 
-                _player = musicBuffer[_playerIndex];
+                _player = _musicSpans[_playerIndex];
                 musicBuffer.Move(_playerIndex, _index);
             }
 
@@ -468,8 +485,23 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="StopMusic(AudioMusicAsset, AudioLayer, bool)"/>
         public void StopMusic(AudioMusicAsset _music, bool _instant = false) {
 
-            while (musicBuffer.FindIndex(m => m.Music == _music, out int _index)) {
+            List<MusicPlayer> _musicSpan = musicBuffer.collection;
+
+            while (FindIndex(out int _index)) {
                 StopMusic_Internal(_index, _instant);
+            }
+
+            // ----- Local Method ----- \\
+
+            bool FindIndex(out int _index) {
+
+                for (_index = _musicSpan.Count; _index-- > 0;) {
+                    if (_musicSpan[_index].Music == _music) {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -479,8 +511,23 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="StopMusic(AudioMusicAsset, AudioLayer, bool)"/>
         public void StopMusic(AudioLayer _layer, bool _instant = false) {
 
-            while (musicBuffer.FindIndex(m => m.Layer == _layer, out int _index)) {
+            List<MusicPlayer> _musicSpan = musicBuffer.collection;
+
+            while (FindIndex(out int _index)) {
                 StopMusic_Internal(_index, _instant);
+            }
+
+            // ----- Local Method ----- \\
+
+            bool FindIndex(out int _index) {
+
+                for (_index = _musicSpan.Count; _index-- > 0;) {
+                    if (_musicSpan[_index].Layer == _layer) {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -492,8 +539,25 @@ namespace EnhancedFramework.Core {
         /// <param name="_instant">If true, instantly stops the music.</param>
         public void StopMusic(AudioMusicAsset _music, AudioLayer _layer, bool _instant = false) {
 
-            if (musicBuffer.FindIndex(m => (m.Music == _music) && (m.Layer == _layer), out int _index)) {
+            List<MusicPlayer> _musicSpan = musicBuffer.collection;
+            
+            if (FindIndex(out int _index)) {
                 StopMusic_Internal(_index, _instant);
+            }
+
+            // ----- Local Method ----- \\
+
+            bool FindIndex(out int _index) {
+
+                for (_index = _musicSpan.Count; _index-- > 0;) {
+
+                    MusicPlayer _player = _musicSpan[_index];
+                    if ((_player.Music == _music) && (_player.Layer == _layer)) {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -521,8 +585,10 @@ namespace EnhancedFramework.Core {
             bool _instant = false;
             float _volume = 1f;
 
-            for (int i = musicBuffer.Count; i-- > 0;) {
-                _volume *= musicBuffer[i].Update(ref _interruption, ref _instant, _volume);
+            List<MusicPlayer> _musicSpan = musicBuffer.collection;
+
+            for (int i = _musicSpan.Count; i-- > 0;) {
+                _volume *= _musicSpan[i].Update(ref _interruption, ref _instant, _volume);
             }
         }
 
@@ -537,13 +603,15 @@ namespace EnhancedFramework.Core {
         /// <returns>True if any music is playing on a lower layer, false otherwise.</returns>
         internal bool IsMusicPlayingOnLowerLayer(MusicPlayer _player) {
 
-            int _index = musicBuffer.IndexOf( _player);
+            List<MusicPlayer> _musicSpan = musicBuffer.collection;
+            int _index = _musicSpan.IndexOf( _player);
+
             if (_index == -1) {
                 return false;
             }
 
             for (int i = _index; i-- > 0;) {
-                if (musicBuffer[i].IsPlaying) {
+                if (_musicSpan[i].IsPlaying) {
                     return true;
                 }
             }
@@ -574,18 +642,26 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private MusicPlayer GetMusicPlayerFromPool() {
-            return musicPool.Get();
+            return musicPool.GetPoolInstance();
         }
 
         private bool ReleaseMusicPlayerToPool(MusicPlayer _player) {
-            return musicPool.Release(_player);
+            return musicPool.ReleasePoolInstance(_player);
         }
 
         private void ClearMusicPlayerPool() {
-            musicPool.Clear(MusicPlayerPoolInitialCapacity);
+            musicPool.ClearPool(MusicPlayerPoolInitialCapacity);
         }
 
         // -----------------------
+
+        MusicPlayer IObjectPool<MusicPlayer>.GetPoolInstance() {
+            return GetMusicPlayerFromPool();
+        }
+
+        bool IObjectPool<MusicPlayer>.ReleasePoolInstance(MusicPlayer _instance) {
+            return ReleaseMusicPlayerToPool(_instance);
+        }
 
         MusicPlayer IObjectPoolManager<MusicPlayer>.CreateInstance() {
             return new MusicPlayer();
@@ -619,17 +695,18 @@ namespace EnhancedFramework.Core {
 
             // Because the ambient might not instantly be removed from the buffer when unregistered (fade out duration),
             // check if its associated controller already exist.
-            int _ambientIndex = ambientBuffer.FindIndex(s => s.Object == _ambient);
-            int _index = ambientBuffer.FindIndex(s => s.Priority > _priority);
-
-            if (_index == -1) {
+            if (!GetPriorityController(out int _index)) {
                 _index = ambientBuffer.Count;
             }
 
-            AmbientController _controller;
-
             // Insert in buffer.
-            if (_ambientIndex == -1) {
+            if (GetAmbientController(_ambient, out AmbientController _controller, out int _ambientIndex)) {
+
+                _controller.SetWeight(_ambient.Weight, _instant ? 0f : _ambient.FadeInDuration);
+
+                ambientBuffer.Move(_ambientIndex, _index);
+
+            } else {
 
                 _controller = GetAmbientFromPool();
                 _controller.Initialize(_ambient, 0f, _priority, _instant);
@@ -637,15 +714,27 @@ namespace EnhancedFramework.Core {
                 _ambient.SetAmbientWeight(0f);
 
                 ambientBuffer.Insert(_index, _controller);
-            } else {
-
-                _controller = ambientBuffer[_ambientIndex];
-                _controller.SetWeight(_ambient.Weight, _instant ? 0f : _ambient.FadeInDuration);
-
-                ambientBuffer.Move(_ambientIndex, _index);
             }
 
             this.LogMessage($"Play Ambient - {_ambient.name.Bold()}   ({_priority})");
+
+            // ----- Local Method ----- \\
+
+            bool GetPriorityController(out int _index) {
+
+                List<AmbientController> _ambientSpan = ambientBuffer.collection;
+                int _count = _ambientSpan.Count;
+
+                for (_index = 0; _index < _count; _index++) {
+
+                    if (_ambientSpan[_index].Priority > _priority) {
+                        return true;
+                    }
+                }
+
+                _index = -1;
+                return false;
+            }
         }
 
         /// <summary>
@@ -655,9 +744,8 @@ namespace EnhancedFramework.Core {
         /// <param name="_instant">If true, instantly fades out this ambient.</param>
         public void PopAmbient(AudioAmbientController _ambient, bool _instant = false) {
 
-            if (!ambientBuffer.Find(s => s.Object == _ambient, out AmbientController _controller)) {
+            if (!GetAmbientController(_ambient, out AmbientController _controller, out _))
                 return;
-            }
 
             _controller.Stop(_instant, OnComplete);
             this.LogMessage($"Stop Ambient - {_ambient.name.Bold()}");
@@ -666,9 +754,9 @@ namespace EnhancedFramework.Core {
 
             void OnComplete(bool _success) {
 
-                if (_success && ambientBuffer.FindIndex(s => s.Object == _ambient, out int _index)) {
+                if (_success && GetAmbientController(_ambient, out AmbientController _controller, out int _index)) {
 
-                    ReleaseAmbientToPool(ambientBuffer[_index]);
+                    ReleaseAmbientToPool(_controller);
                     ambientBuffer.RemoveAt(_index);
                 }
             }
@@ -682,11 +770,28 @@ namespace EnhancedFramework.Core {
         /// <param name="_duration">Transition duration from the current weight to its new value (in seconds).</param>
         public void SetAmbientWeight(AudioAmbientController _ambient, float _weight, float _duration) {
 
-            if (!ambientBuffer.Find(s => s.Object == _ambient, out AmbientController _controller)) {
+            if (!GetAmbientController(_ambient, out AmbientController _controller, out _))
                 return;
-            }
 
             _controller.SetWeight(_weight, _duration);
+        }
+
+        // -----------------------
+
+        private bool GetAmbientController(AudioAmbientController _ambient, out AmbientController _controller, out int _index) {
+            List<AmbientController> _ambientSpan = ambientBuffer.collection;
+            int _count = _ambientSpan.Count;
+
+            for (_index = 0; _index < _count; _index++) {
+
+                _controller = _ambientSpan[_index];
+                if (_controller.Object == _ambient) {
+                    return true;
+                }
+            }
+
+            _controller = null;
+            return false;
         }
 
         // -------------------------------------------
@@ -698,17 +803,20 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private void UpdateAmbients() {
 
-            if (ambientBuffer.Count == 0) {
+            List<AmbientController> _ambientSpan = ambientBuffer.collection;
+            int _count = _ambientSpan.Count;
+
+            if (_count == 0) {
                 return;
             }
 
-            float _priority = ambientBuffer.Last().Priority;
+            float _priority = _ambientSpan.Last().Priority;
             float _weightCoef = 1f;
 
             // Weight blend.
-            for (int i = ambientBuffer.Count; i-- > 0;) {
+            for (int i = _count; i-- > 0;) {
 
-                AmbientController _ambient = ambientBuffer[i];
+                AmbientController _ambient = _ambientSpan[i];
                 if (_ambient.Priority != _priority) {
 
                     _weightCoef *= (_ambient.Priority == 0) ? 0f : (_ambient.Priority / _priority);
@@ -725,18 +833,26 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private AmbientController GetAmbientFromPool() {
-            return ambientControllerPool.Get();
+            return ambientControllerPool.GetPoolInstance();
         }
 
         private bool ReleaseAmbientToPool(AmbientController _ambient) {
-            return ambientControllerPool.Release(_ambient);
+            return ambientControllerPool.ReleasePoolInstance(_ambient);
         }
 
         private void ClearAmbientPool() {
-            ambientControllerPool.Clear(AmbientControllerPoolInitialCapacity);
+            ambientControllerPool.ClearPool(AmbientControllerPoolInitialCapacity);
         }
 
         // -----------------------
+
+        AmbientController IObjectPool<AmbientController>.GetPoolInstance() {
+            return GetAmbientFromPool();
+        }
+
+        bool IObjectPool<AmbientController>.ReleasePoolInstance(AmbientController _instance) {
+            return ReleaseAmbientToPool(_instance);
+        }
 
         AmbientController IObjectPoolManager<AmbientController>.CreateInstance() {
             return new AmbientController();
@@ -751,18 +867,26 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         internal AmbientSoundPlayer GetAmbientSoundFromPool() {
-            return ambientSoundPool.Get();
+            return ambientSoundPool.GetPoolInstance();
         }
 
         internal bool ReleaseAmbientSoundToPool(AmbientSoundPlayer _sound) {
-            return ambientSoundPool.Release(_sound);
+            return ambientSoundPool.ReleasePoolInstance(_sound);
         }
 
         private void ClearAmbientSoundPool() {
-            ambientSoundPool.Clear(AmbientSoundPoolInitialCapacity);
+            ambientSoundPool.ClearPool(AmbientSoundPoolInitialCapacity);
         }
 
         // -----------------------
+
+        AmbientSoundPlayer IObjectPool<AmbientSoundPlayer>.GetPoolInstance() {
+            return GetAmbientSoundFromPool();
+        }
+
+        bool IObjectPool<AmbientSoundPlayer>.ReleasePoolInstance(AmbientSoundPlayer _instance) {
+            return ReleaseAmbientSoundToPool(_instance);
+        }
 
         AmbientSoundPlayer IObjectPoolManager<AmbientSoundPlayer>.CreateInstance() {
             return new AmbientSoundPlayer();
@@ -809,11 +933,34 @@ namespace EnhancedFramework.Core {
                 return;
             }
 
-            int _snapshotIndex = snapshotBuffer.FindIndex(s => s.Object == _snapshot);
-            int _index = snapshotBuffer.FindIndex(s => s.Priority > _priority);
+            List<SnapshotController> _snapshotSpan = snapshotBuffer.collection;
+            int _snapshotCount = _snapshotSpan.Count;
+
+            // Find indexes.
+            int _snapshotIndex = -1;
+            int _index = -1;
+
+            for (int i = 0; i < _snapshotCount; i++) {
+
+                SnapshotController _temp = _snapshotSpan[i];
+
+                if ((_snapshotIndex == -1) && (_temp.Object == _snapshot)) {
+                    _snapshotIndex = i;
+
+                    if (_index != -1)
+                        break;
+                }
+
+                if ((_index == -1) && (_temp.Priority > _priority)) {
+                    _index = i;
+
+                    if (_snapshotIndex != -1)
+                        break;
+                }
+            }
 
             if (_index == -1) {
-                _index = snapshotBuffer.Count;
+                _index = _snapshotCount;
             }
 
             SnapshotController _controller;
@@ -847,7 +994,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_instant">If true, instantly fades out this snapshot.</param>
         public void PopSnapshot(AudioSnapshotAsset _snapshot, bool _instant = false) {
 
-            if (!snapshotBuffer.Find(s => s.Object == _snapshot, out SnapshotController _controller)) {
+            if (!GetSnapshotController(_snapshot, out SnapshotController _controller)) {
                 return;
             }
 
@@ -861,15 +1008,60 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// Replaces all snapshots with a specific priority by a new snapshot.
+        /// </summary>
+        /// <param name="_priority">Priority of the existing snapshot to replace, and of the new snapshot to apply.</param>
+        /// <inheritdoc cref="PushSnapshot(AudioSnapshotAsset, float, int, bool)"/>
+        public void ReplaceSnapshot(AudioSnapshotAsset _snapshot, float _weight, int _priority, bool _instant = false) {
+
+            List<SnapshotController> _snapshotSpan = snapshotBuffer.collection;
+
+            // Remove snapshots with the same priority.
+            for (int i = _snapshotSpan.Count; i-- > 0;) {
+
+                SnapshotController _temp = _snapshotSpan[i];
+                if ((_temp.Priority == _priority) && (_temp.Object != defaultSnapshot)) {
+
+                    _temp.Stop(_instant);
+                }
+            }
+
+            // Apply snapshot.
+            PushSnapshot(_snapshot, _weight, _priority, _instant);
+        }
+
+        /// <summary>
         /// Resets the <see cref="AudioSnapshotAsset"/> buffer back to default.
         /// </summary>
         public void ResetSnapshots(bool _instant = false) {
 
-            for (int i = snapshotBuffer.Count; i-- > 0;) {
-                snapshotBuffer[i].Stop(_instant);
+            this.LogMessage($"Resets Snapshot ({snapshotBuffer.Count})");
+
+            List<SnapshotController> _snapshotSpan = snapshotBuffer.collection;
+
+            for (int i = _snapshotSpan.Count; i-- > 0;) {
+                _snapshotSpan[i].Stop(_instant);
             }
 
             PushSnapshot(defaultSnapshot);
+        }
+
+        // -----------------------
+
+        private bool GetSnapshotController(AudioSnapshotAsset _snapshot, out SnapshotController _controller) {
+
+            List<SnapshotController> _snapshotSpan = snapshotBuffer.collection;
+            int _snapshotCount = _snapshotSpan.Count;
+
+            for (int i = 0; i < _snapshotCount; i++) {
+
+                _controller = _snapshotSpan[i];
+                if (_controller.Object == _snapshot)
+                    return true;
+            }
+
+            _controller = null;
+            return false;
         }
 
         // -------------------------------------------
@@ -881,7 +1073,9 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private void UpdateSnapshots() {
 
-            int _count = snapshotBuffer.Count;
+            List<SnapshotController> _snapshotSpan = snapshotBuffer.collection;
+            int _count = _snapshotSpan.Count;
+
             float _totalWeight = 1f;
             bool _update = false;
 
@@ -895,25 +1089,25 @@ namespace EnhancedFramework.Core {
             }
 
             // Blender.
-            for (int i = snapshotBuffer.Count; i-- > 0;) {
+            for (int i = _count; i-- > 0;) {
 
-                var _snapshot = snapshotBuffer[i];
+                SnapshotController _snapshot = _snapshotSpan[i];
 
                 float _weight = Mathf.Max(0f, _snapshot.Weight * _totalWeight);
-                _totalWeight = Mathf.Max(0f, _totalWeight - _weight);
+                _totalWeight  = Mathf.Max(0f, _totalWeight - _weight);
 
                 // Check if any value changed.
                 if (!_update && (snapshotMixerParameters[i] != _snapshot.Object.MixerSnapshot) || !Mathf.Approximately(snapshotWeightParameters[i], _weight)) {
                     _update = true;
                 }
 
-                snapshotMixerParameters[i] = _snapshot.Object.MixerSnapshot;
+                snapshotMixerParameters[i]  = _snapshot.Object.MixerSnapshot;
                 snapshotWeightParameters[i] = _weight;
 
                 // Pop if not active.
                 if ((_snapshot.Weight == 0f) && !_snapshot.IsFading) {
 
-                    snapshotBuffer.RemoveAt(i);
+                    _snapshotSpan.RemoveAt(i);
                     ReleaseSnapshotToPool(_snapshot);
                 }
             }
@@ -928,18 +1122,26 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private SnapshotController GetSnapshotFromPool() {
-            return snapshotPool.Get();
+            return snapshotPool.GetPoolInstance();
         }
 
         private bool ReleaseSnapshotToPool(SnapshotController _player) {
-            return snapshotPool.Release(_player);
+            return snapshotPool.ReleasePoolInstance(_player);
         }
 
         private void ClearSnapshotPool() {
-            snapshotPool.Clear(SnapshotPoolInitialCapacity);
+            snapshotPool.ClearPool(SnapshotPoolInitialCapacity);
         }
 
         // -----------------------
+
+        SnapshotController IObjectPool<SnapshotController>.GetPoolInstance() {
+            return GetSnapshotFromPool();
+        }
+
+        bool IObjectPool<SnapshotController>.ReleasePoolInstance(SnapshotController _instance) {
+            return ReleaseSnapshotToPool(_instance);
+        }
 
         SnapshotController IObjectPoolManager<SnapshotController>.CreateInstance() {
             return new SnapshotController();
@@ -949,6 +1151,41 @@ namespace EnhancedFramework.Core {
             // Cannot destroy the instance, so simply ignore the object and wait for the garbage collector to pick it up.
         }
         #endregion
+
+        #region Pool
+        IPoolableObject IObjectPool.GetPoolInstance() {
+            return null;
+        }
+
+        bool IObjectPool.ReleasePoolInstance(IPoolableObject _instance) {
+
+            if (_instance is EnhancedAudioPlayer _audioPlayer) {
+                return ReleaseAudioPlayerToPool(_audioPlayer);
+            }
+
+            if (_instance is MusicPlayer _musicPlayer) {
+                return ReleaseMusicPlayerToPool(_musicPlayer);
+            }
+
+            if (_instance is AmbientController _ambientController) {
+                return ReleaseAmbientToPool(_ambientController);
+            }
+
+            if (_instance is AmbientSoundPlayer _soundPlayer) {
+                return ReleaseAmbientSoundToPool(_soundPlayer);
+            }
+
+            if (_instance is SnapshotController _snapshotController) {
+                return ReleaseSnapshotToPool(_snapshotController);
+            }
+
+            return false;
+        }
+
+        void IObjectPool.ClearPool(int _capacity) { }
+        #endregion
+
+        // ===== Other ===== \\
 
         #region Utility
         /// <summary>

@@ -20,7 +20,7 @@ namespace EnhancedFramework.Timeline {
     [TrackClipType(typeof(IAudioEnhancedPlayableAsset))]
     [TrackBindingType(typeof(AudioSource), TrackBindingFlags.AllowCreateComponent)]
     [DisplayName("Enhanced Framework/Audio Track")]
-    public class EnhancedAudioTrack : AudioTrack {
+    public sealed class EnhancedAudioTrack : AudioTrack {
         #region Behaviour
         public override Playable CreateTrackMixer(PlayableGraph _graph, GameObject _go, int _inputCount) {
 

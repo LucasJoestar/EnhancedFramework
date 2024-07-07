@@ -8,11 +8,11 @@ using EnhancedEditor;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.Experimental.SceneManagement;
 using UnityEditor.SceneManagement;
 #endif
 
@@ -23,7 +23,7 @@ namespace EnhancedFramework.Core {
     /// Serializable <see cref="EnhancedBehaviour"/> data.
     /// </summary>
     [Serializable]
-    public class PlayModeEnhancedObjectData : PlayModeObjectData {
+    public sealed class PlayModeEnhancedObjectData : PlayModeObjectData {
         #region Global Members
         [SerializeField] public List<Vector3> Vectors   = new List<Vector3>();
         [SerializeField] public List<string> Strings    = new List<string>();
@@ -31,7 +31,9 @@ namespace EnhancedFramework.Core {
         [SerializeField] public List<bool> Bools        = new List<bool>();
         [SerializeField] public List<int> Ints          = new List<int>();
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         public PlayModeEnhancedObjectData() : base() { }
         #endregion
@@ -85,7 +87,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Override this to specify this object update registration.
         /// <para/>
-        /// Use "base.UpdateRegistration | <see cref="EnhancedFramework.UpdateRegistration"/>.value"
+        /// Use "base.UpdateRegistration | <see cref="Core.UpdateRegistration"/>.value"
         /// to add a new registration or override its value
         /// </summary>
         public virtual UpdateRegistration UpdateRegistration => 0;
@@ -175,9 +177,7 @@ namespace EnhancedFramework.Core {
         /// Uses an overridable property for optimization purpose.
         /// </summary>
         public virtual Transform Transform {
-            get {
-                return transform;
-            }
+            get { return transform; }
         }
 
         /// <summary>
@@ -401,7 +401,7 @@ namespace EnhancedFramework.Core {
 
             // Runtime assignement.
             if (AutoRegenerateID) {
-                objectID.InitSceneObject();
+                objectID.InitSceneObject(this);
             }
         }
         #endregion
@@ -435,7 +435,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_event">Event to call.</param>
         public void AnimationEvent(ScriptableObject _event) {
 
-            if (!(_event is IEnhancedAnimationEvent _animationEvent)) {
+            if (_event is not IEnhancedAnimationEvent _animationEvent) {
 
                 this.LogWarningMessage($"{_event.name} is not of AnimationEvent type", _event);
                 return;
@@ -459,7 +459,7 @@ namespace EnhancedFramework.Core {
         public void OnEnterTrigger(ITriggerActor _actor) {
 
             // Security.
-            if (!(this is ITrigger _trigger)) {
+            if (this is not ITrigger _trigger) {
 
                 this.LogWarningMessage("Object is no Trigger");
                 return;
@@ -531,11 +531,13 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <inheritdoc cref="TransformExtensions.RelativeVector(Transform, Vector3)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetRelativeVector(Vector3 _vector) {
             return Transform.RelativeVector(_vector);
         }
 
         /// <inheritdoc cref="TransformExtensions.WorldVector(Transform, Vector3)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetWorldVector(Vector3 _vector) {
             return Transform.WorldVector(_vector);
         }
@@ -551,6 +553,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_rotation">Rotation of the object.</param>
         /// <inheritdoc cref="GetRelativeVector(Vector3)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetRelativeVector(Vector3 _vector, Quaternion _rotation) {
             return _vector.RotateInverse(_rotation);
         }
@@ -564,6 +567,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_rotation">Rotation of the object.</param>
         /// <inheritdoc cref="GetWorldVector(Vector3)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetWorldVector(Vector3 _vector, Quaternion _rotation) {
             return _vector.Rotate(_rotation);
         }

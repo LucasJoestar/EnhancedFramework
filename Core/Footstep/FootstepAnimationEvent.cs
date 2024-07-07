@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// Can be used as a parameter on an animation event to trigger various footstep feedbacks.
     /// </summary>
     [CreateAssetMenu(fileName = "ANFT_FootstepEvent", menuName = FrameworkUtility.MenuPath + "Animation Event/Footstep", order = FrameworkUtility.MenuOrder)]
-    public class FootstepAnimationEvent : EnhancedAnimationEvent<FootstepPlayer> {
+    public sealed class FootstepAnimationEvent : EnhancedAnimationEvent<FootstepPlayer> {
         #region Global Members
         [Section("Footstep Animation Event")]
 

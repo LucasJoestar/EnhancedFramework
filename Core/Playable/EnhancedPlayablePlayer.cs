@@ -20,14 +20,23 @@ namespace EnhancedFramework.Core {
     [RequireComponent(typeof(PlayableDirector))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Enhanced Playable Player"), DisallowMultipleComponent]
     #pragma warning disable 0414
-    public class EnhancedPlayablePlayer : EnhancedPlayer, ISkippableElement {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
+    public sealed class EnhancedPlayablePlayer : EnhancedPlayer, ISkippableElement {
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+                if (playAfterLoading) {
+                    _value |= UpdateRegistration.Play;
+                }
+
+                return _value;
+            }
+        }
 
         #region Global Members
         [Section("Enhanced Video Player")]
 
         [Tooltip("If true, the Playable will start playing right after the scene finished loading")]
-        [SerializeField, Enhanced, ValidationMember("PlayAfterLoading")]
+        [SerializeField, Enhanced, ValidationMember(nameof(PlayAfterLoading))]
         private bool playAfterLoading = false;
 
         [Space(10f)]
@@ -36,12 +45,12 @@ namespace EnhancedFramework.Core {
         [SerializeField] private bool isSkippable = false;
 
         [Tooltip("The time (in seconds) where to advance the Playable to when being skipped.")]
-        [SerializeField, Enhanced, ShowIf("isSkippable"), MinMax("TimeRange")] private Vector2 skipInterval = new Vector2();
+        [SerializeField, Enhanced, ShowIf(nameof(IsSkippable)), MinMax(nameof(TimeRange))] private Vector2 skipInterval = new Vector2();
 
         [Space(10f)]
 
         #if UNITY_EDITOR
-        [SerializeField, Enhanced, DrawMember("Time"), Range("TimeRange"), ValidationMember("Time")]
+        [SerializeField, Enhanced, DrawMember(nameof(Time)), Range(nameof(TimeRange)), ValidationMember(nameof(Time))]
         private double time = 0d; // Should never be used outside of the inspector.
         #endif
 
@@ -50,9 +59,13 @@ namespace EnhancedFramework.Core {
                                                                                          new Type[] { typeof(IBoundGameState),
                                                                                                       typeof(IBoundGameState<ISkippableElement>),
                                                                                                       typeof(IBoundGameState<EnhancedPlayablePlayer>) });
+        // -----------------------
+
+        [SerializeField, HideInInspector] private PlayableDirector playableDirector = null;
 
         // -----------------------
 
+        /// <inheritdoc/>
         public bool IsSkippable {
             get { return isSkippable; }
             set {
@@ -128,12 +141,12 @@ namespace EnhancedFramework.Core {
         #if UNITY_EDITOR
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("Duration"), ReadOnly] private double duration    = 0d;
+        [SerializeField, Enhanced, DrawMember(nameof(Duration)), ReadOnly] private double duration  = 0d;
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("IsPlaying"), ReadOnly] private bool isPlaying    = false;
-        [SerializeField, Enhanced, DrawMember("IsPaused"), ReadOnly] private bool isPaused      = false;
+        [SerializeField, Enhanced, DrawMember(nameof(IsPlaying)), ReadOnly] private bool isPlaying  = false;
+        [SerializeField, Enhanced, DrawMember(nameof(IsPaused)), ReadOnly] private bool isPaused    = false;
         #endif
 
         /// <summary>
@@ -157,10 +170,6 @@ namespace EnhancedFramework.Core {
         public bool IsPaused {
             get { return playableDirector.state == PlayState.Paused; }
         }
-
-        // -----------------------
-
-        [SerializeField, HideInInspector] private PlayableDirector playableDirector = null;
         #endregion
 
         #region Enhanced Behaviour
@@ -195,10 +204,12 @@ namespace EnhancedFramework.Core {
                 playableDirector.playOnAwake = false;
             }
         }
-        #endif
+#endif
         #endregion
 
         #region Player
+        private Action<PlayableDirector> onStopCallback = null;
+
         private GameState gameState = null;
         private bool isActive       = false;
 
@@ -224,8 +235,10 @@ namespace EnhancedFramework.Core {
             isActive = true;
 
             // Stop and pause callback.
-            playableDirector.stopped -= OnStop;
-            playableDirector.stopped += OnStop;
+            onStopCallback ??= OnStop;
+
+            playableDirector.stopped -= onStopCallback;
+            playableDirector.stopped += onStopCallback;
 
             #if UNITY_EDITOR
             if (!Application.isPlaying) {
@@ -284,7 +297,7 @@ namespace EnhancedFramework.Core {
         /// Skips the Playable by setting its current time to <see cref="SkipTime"/>.
         /// </summary>
         /// <returns>True if this playable could be successfully skipped, false otherwise.</returns>
-        [Button("IsSkippable", ConditionType.True, SuperColor.Lavender)]
+        [Button(nameof(IsSkippable), ConditionType.True, SuperColor.Lavender)]
         public bool Skip() {
             if (IsSkippable && skipInterval.Contains((float)Time)) {
                 Time = skipInterval.y;
@@ -309,7 +322,7 @@ namespace EnhancedFramework.Core {
 
             isActive = false;
 
-            _playable.stopped -= OnStop;
+            _playable.stopped -= onStopCallback;
 
             #if UNITY_EDITOR
             if (!Application.isPlaying) {

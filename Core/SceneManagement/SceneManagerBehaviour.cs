@@ -6,7 +6,6 @@
 
 using EnhancedEditor;
 using System;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace EnhancedFramework.Core {
@@ -78,6 +77,13 @@ namespace EnhancedFramework.Core {
         /// <param name="_index">The index of the current loading operation.</param>
         /// <param name="_count">The total count of all loading operations to come.</param>
         public virtual void OnLoadBundle(LoadBundleAsyncOperation _operation, int _index, int _count) { }
+
+        /// <summary>
+        /// Called just after a given <see cref="SceneBundle"/> loading is complete.
+        /// </summary>
+        /// <param name="_bundle">The loaded <see cref="SceneBundle"/>.</param>
+        /// <param name="_mode"><see cref="LoadSceneMode"/> used to load this bundle.</param>
+        public virtual void OnPostLoadBundle(SceneBundle _bundle, LoadSceneMode _mode) { }
 
         // -------------------------------------------
         // Completion
@@ -166,6 +172,13 @@ namespace EnhancedFramework.Core {
         /// <param name="_index">The index of the current unloading operation.</param>
         /// <param name="_count">The total count of all unloading operations to come.</param>
         public virtual void OnUnloadBundle(UnloadBundleAsyncOperation _operation, int _index, int _count) { }
+
+        /// <summary>
+        /// Called just after a given <see cref="SceneBundle"/> unloading is complete.
+        /// </summary>
+        /// <param name="_bundle">The unloaded <see cref="SceneBundle"/>.</param>
+        /// <param name="_mode"><see cref="UnloadSceneOptions"/> used to unload this bundle.</param>
+        public virtual void OnPostUnloadBundle(SceneBundle _bundle, UnloadSceneOptions _mode) { }
 
         // -------------------------------------------
         // Completion

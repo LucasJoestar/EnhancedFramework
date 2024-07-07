@@ -14,8 +14,9 @@ namespace EnhancedFramework.Core {
     /// <br/> and used to load the associated <see cref="CrossSceneReference{T}"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
+    [DefaultExecutionOrder(-900)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Cross Scene/Cross Scene Reference Manager"), DisallowMultipleComponent]
-    public class CrossSceneReferenceManager : EnhancedSingleton<CrossSceneReferenceManager> {
+    public sealed class CrossSceneReferenceManager : EnhancedSingleton<CrossSceneReferenceManager> {
         #region Global Members
         [Section("Cross Scene Reference Manager")]
 
@@ -48,14 +49,19 @@ namespace EnhancedFramework.Core {
         /// <param name="_reference">The <see cref="CrossSceneObject"/> associated with this id.</param>
         /// <returns>True if the associated <see cref="CrossSceneObject"/> could be found, false otherwise.</returns>
         public bool GetReference(EnhancedObjectID _id, out CrossSceneObject _reference) {
-            foreach (var _ref in references) {
-                if (_ref.ID == _id) {
-                    _reference = _ref;
+
+            List<CrossSceneObject> _referencesSpan = references;
+            int _count = _referencesSpan.Count;
+
+            for (int i = 0; i < _count; i++) {
+
+                _reference = _referencesSpan[i];
+                if (_reference.ID == _id) {
                     return true;
                 }
             }
 
-            this.LogErrorMessage($"Not Found ({references.Count})");
+            this.LogErrorMessage($"CrossScene reference not found ({references.Count})");
 
             _reference = null;
             return false;

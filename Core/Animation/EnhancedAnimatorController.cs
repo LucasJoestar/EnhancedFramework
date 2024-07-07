@@ -29,7 +29,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [CreateAssetMenu(fileName = "ANIC_AnimatorController", menuName = FrameworkUtility.MenuPath + "Animation/Animator Controller", order = FrameworkUtility.MenuOrder)]
     #pragma warning disable
-    public class EnhancedAnimatorController : EnhancedScriptableObject {
+    public sealed class EnhancedAnimatorController : EnhancedScriptableObject {
         #region Global Members
         [Section("Animator Controller")]
 
@@ -117,7 +117,6 @@ namespace EnhancedFramework.Core {
             if (optimizeRig && _animator.isOptimizable) {
 
                 string[] _exposedTransforms = Array.ConvertAll(exposedTransforms, t => {
-
                     Transform _transform = _animator.GetBoneTransform(t);
                     return _transform.IsValid() ? _transform.name : string.Empty;
 

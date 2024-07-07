@@ -1,16 +1,16 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Physics3D ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
 //
 // Notes:
 //
-// ============================================================================================ //
+// ================================================================================== //
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
 using System;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
 using UnityEngine.Rendering;
+using UnityEngine.Timeline;
 
 namespace EnhancedFramework.Timeline {
     /// <summary>
@@ -46,7 +46,7 @@ namespace EnhancedFramework.Timeline {
             // Register object properties.
             IFadingObject _bindingObject = Template.FadingObject;
 
-            if ((_bindingObject != null) && !ReferenceEquals(_bindingObject, null) && (_bindingObject is Component _component) && (_component != null)) {
+            if ((_bindingObject != null) && !EqualityUtility.Equals(_bindingObject, null) && (_bindingObject is Component _component) && (_component != null)) {
                 _driver.AddFromComponent(_component.gameObject, _component);
 
                 CanvasGroup _group = _component.GetComponentInChildren<CanvasGroup>();
@@ -81,12 +81,12 @@ namespace EnhancedFramework.Timeline {
         public bool EnterVisibility = true;
 
         [Tooltip("Visibility of this object when exiting this clip")]
-        public bool ExitVisibility   = false;
+        public bool ExitVisibility  = false;
 
         [Space(5f)]
 
         public bool EnterInstant = false;
-        public bool ExitInstant = false;
+        public bool ExitInstant  = false;
 
         // -----------------------
 

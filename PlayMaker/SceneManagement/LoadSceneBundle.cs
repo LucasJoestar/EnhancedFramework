@@ -18,7 +18,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Loads a Scene Bundle")]
     [ActionCategory("SceneBundle")]
-    public class LoadSceneBundle : FsmStateAction {
+    public sealed class LoadSceneBundle : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Mode
@@ -37,7 +37,7 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            SceneBundle = null;
+            SceneBundle   = null;
             LoadSceneMode = null;
         }
 

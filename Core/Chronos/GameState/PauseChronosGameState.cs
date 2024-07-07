@@ -31,7 +31,9 @@ namespace EnhancedFramework.Core.GameStates {
             get { return ChronosManager.Instance; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="PauseChronosGameState{T}"/>
         public PauseChronosGameState() : base(false) { }
@@ -44,10 +46,10 @@ namespace EnhancedFramework.Core.GameStates {
             // Set the cursor free.
             #if UNITY_EDITOR
             _state.IsCursorVisible = true;
-            _state.CursorLockMode = CursorLockMode.None;
+            _state.CursorLockMode  = CursorLockMode.None;
             #endif
 
-            _state.IsPaused = true;
+            _state.IsPaused      = true;
             _state.FreezeChronos = true;
         }
         #endregion
@@ -57,7 +59,7 @@ namespace EnhancedFramework.Core.GameStates {
     /// Defualt state used to completely pauses the game and set its chronos to 0 while active.
     /// </summary>
     [Serializable, DisplayName("Chronos/Pause [Default]")]
-    public class DefaultPauseChronosGameState : PauseChronosGameState<GameStateOverride> {
+    public sealed class DefaultPauseChronosGameState : PauseChronosGameState<GameStateOverride> {
         #region Global Members
         /// <summary>
         /// One of the highest priority, to prevent most of the other states to continue updating.

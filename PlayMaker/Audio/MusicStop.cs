@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Stops a Music.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class MusicStop : FsmStateAction {
+    public sealed class MusicStop : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Music - Instant

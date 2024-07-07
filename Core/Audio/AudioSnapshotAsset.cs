@@ -5,6 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -15,7 +16,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="ScriptableObject"/> encapsulated <see cref="AudioMixerSnapshot"/>.
     /// </summary>
     [CreateAssetMenu(fileName = "ASP_AudioSnapshot", menuName = FrameworkUtility.MenuPath + "Audio/Snapshot", order = FrameworkUtility.MenuOrder)]
-    public class AudioSnapshotAsset : EnhancedScriptableObject, IWeightControl {
+    public sealed class AudioSnapshotAsset : EnhancedScriptableObject, IWeightControl {
         #region Global Members
         [Section("Audio Snapshot")]
 
@@ -117,11 +118,13 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="AudioManager.PushSnapshot(AudioSnapshotAsset, float, int, bool)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Push(float _weight, int _priority, bool _instant = false)  {
             AudioManager.Instance.PushSnapshot(this, _weight, _priority, _instant);
         }
 
         /// <inheritdoc cref="AudioManager.PopSnapshot(AudioSnapshotAsset, bool)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Button(ActivationMode.Play, SuperColor.Crimson, IsDrawnOnTop = false)]
         public void Pop() {
             AudioManager.Instance.PopSnapshot(this);

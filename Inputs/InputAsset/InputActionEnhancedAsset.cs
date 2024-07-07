@@ -13,7 +13,7 @@ namespace EnhancedFramework.Inputs {
     /// Base class to inherit all input action related <see cref="ScriptableObject"/> assets.
     /// </summary>
     public abstract class InputActionEnhancedAsset : InputEnhancedAsset {
-        public new const int MenuOrder      = FrameworkUtility.MenuOrder;
+        public new const int MenuOrder = FrameworkUtility.MenuOrder;
 
         #region Global Members
         [PropertyOrder(9)]

@@ -5,8 +5,6 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using EnhancedFramework.Core;
-using System;
 using UnityEngine;
 
 namespace EnhancedFramework.Inputs {
@@ -15,7 +13,7 @@ namespace EnhancedFramework.Inputs {
     /// <br/> always using the last pressed input as the winning side.
     /// </summary>
     [CreateAssetMenu(fileName = FilePrefix + "AxisInputAction", menuName = MenuPath + "Axis Action", order = MenuOrder)]
-    public class AxisInputActionEnhancedAsset : InputActionEnhancedAsset {
+    public sealed class AxisInputActionEnhancedAsset : InputActionEnhancedAsset {
         public const string FilePrefix  = "IPA_";
 
         #region Global Members
@@ -49,11 +47,11 @@ namespace EnhancedFramework.Inputs {
         #region Initialization
         protected override void OnInit(InputDatabase _database) {
             // Event setup.
-            positive.OnStarted += OnInputStarted;
-            negative.OnStarted += OnInputStarted;
+            positive.OnStarted   += OnInputStarted;
+            negative.OnStarted   += OnInputStarted;
 
-            positive.OnCanceled += OnInputCanceled;
-            negative.OnCanceled += OnInputCanceled;
+            positive.OnCanceled  += OnInputCanceled;
+            negative.OnCanceled  += OnInputCanceled;
 
             positive.OnPerformed += OnInputPerformed;
             negative.OnPerformed += OnInputPerformed;

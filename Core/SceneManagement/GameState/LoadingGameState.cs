@@ -31,7 +31,9 @@ namespace EnhancedFramework.Core.GameStates {
             get { return EnhancedSceneManager.Instance; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="LoadingGameState{T}"/>
         public LoadingGameState() : base(false) { }
@@ -50,7 +52,7 @@ namespace EnhancedFramework.Core.GameStates {
     /// Default <see cref="GameState"/> applied when the game is performing a <see cref="SceneBundle"/> loading operation.
     /// </summary>
     [Serializable, DisplayName("Loading/Loading [Default]")]
-    public class DefaultLoadingGameState : LoadingGameState<GameStateOverride> {
+    public sealed class DefaultLoadingGameState : LoadingGameState<GameStateOverride> {
         #region Global Members
         /// <summary>
         /// Uses a high priority to make sure the state is the active one.

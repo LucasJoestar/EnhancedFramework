@@ -35,7 +35,7 @@ namespace EnhancedFramework.Core {
     /// Wrapper utility class for an <see cref="DG.Tweening.Ease"/> type settings.
     /// </summary>
     [Serializable]
-    public class EaseSettings : EaseCurveSettings {
+    public sealed class EaseSettings : EaseCurveSettings {
         #region Content
         [Tooltip("Evaluation ease preset")]
         public Ease Ease = Ease.OutSine;
@@ -47,10 +47,10 @@ namespace EnhancedFramework.Core {
     /// Wrapper utility class for an <see cref="AnimationCurve"/> type settings.
     /// </summary>
     [Serializable]
-    public class CurveSettings : EaseCurveSettings {
+    public sealed class CurveSettings : EaseCurveSettings {
         #region Content
         [Tooltip("Evaluation curve")]
-        [Enhanced, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Lime)] public AnimationCurve Ease = AnimationCurve.Constant(0f, 1f, 0f);
+        [Enhanced, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Lime)] public AnimationCurve Curve = AnimationCurve.Constant(0f, 1f, 0f);
         #endregion
     }
 }

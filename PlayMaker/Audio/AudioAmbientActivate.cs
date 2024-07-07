@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Activates an Audio Ambient.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class AudioAmbientActivate : FsmStateAction {
+    public sealed class AudioAmbientActivate : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Ambient - Instant - Reset

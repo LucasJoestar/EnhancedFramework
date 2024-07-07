@@ -1,8 +1,8 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Physics3D ===== //
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
 //
 // Notes:
 //
-// ============================================================================================ //
+// ================================================================================== //
 
 #if TEXT_MESH_PRO_PACKAGE
 using TMPro;

@@ -13,7 +13,7 @@ namespace EnhancedFramework.Core.Settings {
     /// Audio related global settings.
     /// </summary>
     [CreateAssetMenu(fileName = MenuPrefix + "AudioSettings", menuName = MenuPath + "Audio", order = MenuOrder)]
-    public class AudioSettings : BaseSettings<AudioSettings> {
+    public sealed class AudioSettings : BaseSettings<AudioSettings> {
         #region Global Members
         [Section("Audio Settings")]
 

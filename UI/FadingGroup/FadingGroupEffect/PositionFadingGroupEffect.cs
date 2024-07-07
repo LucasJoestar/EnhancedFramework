@@ -16,7 +16,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(MenuPath + "Position - Fading Group Effect")]
-    public class PositionFadingGroupEffect : FadingGroupEffect {
+    public sealed class PositionFadingGroupEffect : FadingGroupEffect {
         #region Global Members
         [Section("Position Effect"), PropertyOrder(0)]
 
@@ -42,6 +42,14 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Enhanced Behaviour
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
+            // Stop.
+            sequence.DoKill();
+        }
+
+
         #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
@@ -54,10 +62,11 @@ namespace EnhancedFramework.UI {
                 rectTransform = GetComponent<RectTransform>();
             }
         }
-        #endif
+#endif
         #endregion
 
         #region Effect
+        private TweenCallback onKilledCallback = null;
         private Sequence sequence = null;
 
         // -----------------------
@@ -82,7 +91,8 @@ namespace EnhancedFramework.UI {
                     sequence.Join(hideAnchorMaxTween.AnchorMax(rectTransform));
                 }
 
-                sequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnKilled);
+                onKilledCallback ??= OnKilled;
+                sequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKilledCallback);
             }
 
             if (_instant) {

@@ -9,7 +9,7 @@ namespace EnhancedFramework.Core {
     /// Base audio <see cref="WeightController{T}"/> class.
     /// </summary>
     /// <typeparam name="T">Audio controlled object type.</typeparam>
-    public class AudioWeightController<T> : WeightController<T>, IPoolableObject where T : IWeightControl {
+    public sealed class AudioWeightController<T> : WeightController<T>, IPoolableObject where T : IWeightControl {
         #region Global Members
         private int priority = 0;
 
@@ -33,7 +33,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        void IPoolableObject.OnCreated() { }
+        void IPoolableObject.OnCreated(IObjectPool _pool) { }
 
         void IPoolableObject.OnRemovedFromPool() { }
 

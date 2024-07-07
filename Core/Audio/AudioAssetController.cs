@@ -15,7 +15,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="AudioAsset"/>-related <see cref="EnhancedBehaviour"/> controller.
     /// </summary>
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Audio Controller"), DisallowMultipleComponent]
-    public class AudioAssetController : AudioWeightControllerBehaviour {
+    public sealed class AudioAssetController : AudioWeightControllerBehaviour {
         #region Global Members
         [Section("Audio Asset Controller"), PropertyOrder(0)]
 
@@ -36,7 +36,7 @@ namespace EnhancedFramework.Core {
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
         [Tooltip("Settings used to play this audio")]
-        [SerializeField, Enhanced, ShowIf("overrideSettings"), Range(0f, 99f)] private AudioAssetSettings settings = null;
+        [SerializeField, Enhanced, ShowIf(nameof(overrideSettings)), Range(0f, 99f)] private AudioAssetSettings settings = null;
 
         [Tooltip("If true, overrides the default settings of this audio")]
         [SerializeField] private bool overrideSettings = false;
@@ -56,8 +56,10 @@ namespace EnhancedFramework.Core {
             // Play audios.
             Transform _transform = transform;
 
-            foreach (AudioAsset _audio in playAudios) {
+            int _count = playAudios.Count;
+            for (int i = 0; i < _count; i++) {
 
+                AudioAsset _audio = playAudios[i];
                 AudioHandler _handler = AudioManager.Instance.Play(_audio, GetSettings(_audio), _transform);
                 handlers.Add(_handler);
 
@@ -78,17 +80,22 @@ namespace EnhancedFramework.Core {
             base.OnDeactivation();
 
             bool _active = isActiveAndEnabled;
+            int _count;
 
             // Stop fade out.
-            foreach (AudioAsset _audio in fadeOutAudios) {
+            _count = fadeOutAudios.Count;
+            for (int i = 0; i < _count; i++) {
 
-                if (_audio.GetHandler(out AudioHandler _handler) && _handler.GetHandle(out EnhancedAudioPlayer _player)) {
+                if (fadeOutAudios[i].GetHandler(out AudioHandler _handler) && _handler.GetHandle(out EnhancedAudioPlayer _player)) {
                     _player.PopVolumeModifier(AudioPlayerModifier.ControllerFadeOut);
                 }
             }
 
             // Stop audios.
-            foreach (AudioHandler _handler in handlers) {
+            _count = handlers.Count;
+            for (int i = 0; i < _count; i++) {
+
+                AudioHandler _handler = handlers[i];
                 _handler.Stop();
 
                 // In case object is being destroyed.
@@ -113,9 +120,10 @@ namespace EnhancedFramework.Core {
             // Fade out.
             _weight = 1f - (_weight * fadeOutWeightCoef);
 
-            foreach (AudioAsset _audio in fadeOutAudios) {
+            int _count = fadeOutAudios.Count;
+            for (int i = 0; i < _count; i++) {
 
-                if (_audio.GetHandler(out AudioHandler _handler) && _handler.GetHandle(out EnhancedAudioPlayer _player)) {
+                if (fadeOutAudios[i].GetHandler(out AudioHandler _handler) && _handler.GetHandle(out EnhancedAudioPlayer _player)) {
                     _player.TweenVolumeModifier(AudioPlayerModifier.ControllerFadeOut, _weight, TweenVolumeDuration);
                 }
             }
@@ -129,9 +137,10 @@ namespace EnhancedFramework.Core {
         /// <param name="_tweenDuration">Duration of the modifier transition (in seconds).</param>
         public void SetVolume(AudioPlayerModifier _modifier, float _volume, float _tweenDuration) {
 
-            foreach (AudioHandler _handler in handlers) {
+            int _count = handlers.Count;
+            for (int i = 0; i < _count; i++) {
 
-                if (_handler.GetHandle(out EnhancedAudioPlayer _player)) {
+                if (handlers[i].GetHandle(out EnhancedAudioPlayer _player)) {
                     _player.TweenVolumeModifier(_modifier, _volume, _tweenDuration);
                 }
             }

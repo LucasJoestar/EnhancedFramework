@@ -51,7 +51,7 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         /// <inheritdoc cref="IHandle.ID"/>
-        public int ID { get { return id; } }
+        public readonly int ID { get { return id; } }
 
         /// <inheritdoc cref="IHandler.IsValid"/>
         public bool IsValid {

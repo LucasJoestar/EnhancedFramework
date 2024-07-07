@@ -19,14 +19,14 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="InputRecorder"/> editor.
     /// </summary>
     [CustomEditor(typeof(InputRecorder), true)]
-    public class InputRecorderEditor : UnityObjectEditor {
+    public sealed class InputRecorderEditor : UnityObjectEditor {
         #region Styles
         public static class Styles {
-            public static readonly GUIContent PlayGUI           = EditorGUIUtility.TrIconContent("PlayButton",          "Play the current input capture");
-            public static readonly GUIContent PauseGUI          = EditorGUIUtility.TrIconContent("PauseButton",         "Pause the current input playback");
-            public static readonly GUIContent ResumeGUI         = EditorGUIUtility.TrIconContent("PauseButton On",      "Resume the current input playback");
-            public static readonly GUIContent StopGUI           = EditorGUIUtility.TrIconContent("PlayButton On",       "Stop the current input playback");
-            public static readonly GUIContent RecordGUI         = EditorGUIUtility.TrIconContent("Animation.Record",    "Start recording input");
+            public static readonly GUIContent PlayGUI   = EditorGUIUtility.TrIconContent("PlayButton",          "Play the current input capture");
+            public static readonly GUIContent PauseGUI  = EditorGUIUtility.TrIconContent("PauseButton",         "Pause the current input playback");
+            public static readonly GUIContent ResumeGUI = EditorGUIUtility.TrIconContent("PauseButton On",      "Resume the current input playback");
+            public static readonly GUIContent StopGUI   = EditorGUIUtility.TrIconContent("PlayButton On",       "Stop the current input playback");
+            public static readonly GUIContent RecordGUI = EditorGUIUtility.TrIconContent("Animation.Record",    "Start recording input");
         }
         #endregion
 

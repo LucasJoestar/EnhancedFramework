@@ -6,16 +6,16 @@
 
 #if TEXT_MESH_PRO_PACKAGE
 using EnhancedEditor;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 namespace EnhancedFramework.UI {
     /// <summary>
     /// Set the offset of the button text.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Offset UI Effect"), DisallowMultipleComponent]
-    public class OffsetUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Offset UI Effect"), DisallowMultipleComponent]
+    public sealed class OffsetUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Offset Effect")]
 

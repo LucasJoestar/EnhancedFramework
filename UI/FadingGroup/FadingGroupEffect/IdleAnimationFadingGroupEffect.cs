@@ -8,6 +8,7 @@
 using DG.Tweening;
 using EnhancedEditor;
 using EnhancedFramework.Core;
+using System;
 using UnityEngine;
 
 using Range = EnhancedEditor.RangeAttribute;
@@ -19,7 +20,7 @@ namespace EnhancedFramework.UI {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(MenuPath + "Idle Anim - Fading Group Effect")]
     #pragma warning disable
-    public class IdleAnimationFadingGroupEffect : FadingGroupEffect {
+    public sealed class IdleAnimationFadingGroupEffect : FadingGroupEffect {
         #region Global Members
         [Section("Idle Animation Effect"), PropertyOrder(0)]
 
@@ -60,7 +61,15 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Enhanced Behaviour
-#if UNITY_EDITOR
+        protected override void OnBehaviourDisabled() {
+            base.OnBehaviourDisabled();
+
+            // Stop.
+            delay.Cancel();
+            sequence.DoKill();
+        }
+
+        #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
         // -------------------------------------------
@@ -72,10 +81,16 @@ namespace EnhancedFramework.UI {
                 rectTransform = GetComponent<RectTransform>();
             }
         }
-        #endif
+#endif
         #endregion
 
         #region Effect
+        private TweenCallback onKilledCallback = null;
+        private Action stopAnimationCallback   = null;
+
+        private Vector2 originalPosition = Vector2.zero;
+        private Vector2 originalSize     = Vector2.zero;
+
         private Sequence sequence   = null;
         private DelayHandler delay  = default;
 
@@ -87,7 +102,9 @@ namespace EnhancedFramework.UI {
 
                 // Stop.
                 if (!delay.IsValid && sequence.IsActive()) {
-                    delay = Delayer.Call(stopDelay, StopAnimation, true);
+
+                    stopAnimationCallback ??= StopAnimation;
+                    delay = Delayer.Call(stopDelay, stopAnimationCallback, true);
                 }
 
                 return;
@@ -106,17 +123,19 @@ namespace EnhancedFramework.UI {
                 return;
             }
 
-            Vector2 _position = rectTransform.anchoredPosition;
-            Vector2 _size = rectTransform.sizeDelta;
+            originalPosition = rectTransform.anchoredPosition;
+            originalSize     = rectTransform.sizeDelta;
 
             // Animation.
             sequence = DOTween.Sequence(); {
 
-                sequence.Join(rectTransform.DOAnchorPos(_position + positionOffset, duration, false).SetEase(positionCurve));
-                sequence.Join(rectTransform.DOScale(_size + scale, duration).SetEase(scaleCurve));
+                onKilledCallback ??= OnKilled;
+
+                sequence.Join(rectTransform.DOAnchorPos(originalPosition + positionOffset, duration, false).SetEase(positionCurve));
+                sequence.Join(rectTransform.DOScale(originalSize + scale, duration).SetEase(scaleCurve));
 
                 sequence.SetLoops(-1, LoopType.Restart);
-                sequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(false).OnKill(OnKilled);
+                sequence.SetUpdate(realTime).SetRecyclable(true).SetAutoKill(false).OnKill(onKilledCallback);
             }
 
             isActive = true;
@@ -125,8 +144,8 @@ namespace EnhancedFramework.UI {
 
             void OnKilled() {
 
-                rectTransform.anchoredPosition = _position;
-                rectTransform.sizeDelta = _size;
+                rectTransform.anchoredPosition = originalPosition;
+                rectTransform.sizeDelta = originalSize;
 
                 sequence = null;
                 isActive = false;

@@ -13,7 +13,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag Dependant Object")]
-    public class FlagDependantObject : EnhancedBehaviour, IFlagCallback {
+    public sealed class FlagDependantObject : EnhancedBehaviour, IFlagCallback {
         #region State
         /// <summary>
         /// Activation mode of this object.
@@ -166,12 +166,12 @@ namespace EnhancedFramework.Core {
             }
 
             // Update state.
-            foreach (GameObject _object in managedObjects) {
-                _object.SetActive(_active);
+            for (int i = 0; i < managedObjects.Length; i++) {
+                managedObjects[i].SetActive(_active);
             }
 
-            foreach (GameObject _object in inverseObjects) {
-                _object.SetActive(!_active);
+            for (int i = 0; i < inverseObjects.Length; i++) {
+                inverseObjects[i].SetActive(!_active);
             }            
         }
 

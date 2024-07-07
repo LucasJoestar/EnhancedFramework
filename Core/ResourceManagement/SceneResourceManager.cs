@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-using Object = UnityEngine.Object;
+using Object  = UnityEngine.Object;
 using RLoader = EnhancedEditor.Reference<EnhancedFramework.Core.ResourceLoader>;
 
 [assembly: InternalsVisibleTo("EnhancedFramework.Editor")]
@@ -64,7 +64,9 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public abstract bool IsProcessing { get; }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <summary>
         /// Prevents inheriting from this class in other assemblies.
@@ -122,8 +124,8 @@ namespace EnhancedFramework.Core {
 
         #region Setup
         internal override bool RegisterBehaviour(IResourceBehaviour _behaviour) {
-            if (_behaviour is IResourceBehaviour<T> _tBehaviour) {
-                Behaviours.Add(new SerializedInterface<IResourceBehaviour<T>>(_tBehaviour));
+            if (_behaviour is IResourceBehaviour<T> _resourceBehaviour) {
+                Behaviours.Add(new SerializedInterface<IResourceBehaviour<T>>(_resourceBehaviour));
                 return true;
             }
 
@@ -131,8 +133,12 @@ namespace EnhancedFramework.Core {
         }
 
         internal protected override void Setup() {
-            foreach (SerializedInterface<IResourceBehaviour<T>> _behaviour in Behaviours) {
-                _behaviour.Interface.FillResource(this as T);
+
+            List<SerializedInterface<IResourceBehaviour<T>>> _behavioursSpan = Behaviours;
+            int _count = _behavioursSpan.Count;
+
+            for (int i = 0; i < _count; i++) {
+                _behavioursSpan[i].Interface.FillResource(this as T);
             }
         }
         #endregion
@@ -151,20 +157,29 @@ namespace EnhancedFramework.Core {
         #endregion
     }
 
+    // ===== Manager ===== \\
+
     /// <summary>
     /// Scene-depending manager class, used to automatically load and unload
     /// <br/> all resources associated with it following its lifetime.
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "General/Scene Resource Manager"), DisallowMultipleComponent]
-    public class SceneResourceManager : EnhancedBehaviour, ILoadingProcessor {
+    public sealed class SceneResourceManager : EnhancedBehaviour, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Loading Processor
         public override bool IsLoadingProcessor => true;
 
         public bool IsProcessing {
-            get { return resources.Exists(r => r.Value.IsProcessing); }
+            get {
+                for (int i = resources.Count; i-- > 0;) {
+                    if (resources[i].Value.IsProcessing)
+                        return true;
+                }
+
+                return false;
+            }
         }
         #endregion
 
@@ -187,7 +202,11 @@ namespace EnhancedFramework.Core {
             base.OnInit();
 
             // Get and load all resources during initialization.
-            foreach (ResourceLoader _resource in resources) {
+            List<RLoader> _resourcesSpan = resources;
+            int _count = _resourcesSpan.Count;
+
+            for (int i = 0; i < _count; i++) {
+                ResourceLoader _resource = (ResourceLoader)_resourcesSpan[i];
                 _resource.Setup();
                 _resource.Load();
             }
@@ -207,12 +226,25 @@ namespace EnhancedFramework.Core {
         private void OnPreUnloadBundle(SceneBundle _bundle) {
             // When this object scene is about to be unloaded, unload its associated resources.
             Scene _scene = gameObject.scene;
-            if (!_bundle.Scenes.Find(s => s.Scene == _scene, out _)) {
+            if (!IsSceneLoaded()) {
                 return;
             }
 
-            for (int i = resources.Count; i-- > 0;) {
-                resources[i].Value.Unload();
+            List<RLoader> _resourcesSpan = resources;
+            for (int i = _resourcesSpan.Count; i-- > 0;) {
+                _resourcesSpan[i].Value.Unload();
+            }
+
+            // ----- Local Method ----- \\
+
+            bool IsSceneLoaded() {
+
+                for (int i = 0; i < _bundle.Scenes.Length; i++) {
+                    if (_bundle.Scenes[i].Scene == _scene)
+                        return true;
+                }
+
+                return false;
             }
         }
         #endregion
@@ -235,7 +267,7 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            // ----- Local Methods ----- \\
+            // ----- Local Method ----- \\
 
             void RegisterBehaviour(IResourceBehaviour _behaviour) {
                 foreach (ResourceLoader _resource in resources) {
@@ -246,7 +278,8 @@ namespace EnhancedFramework.Core {
 
                 // If no appropriate loader could be found,
                 // find the behaviour interface and create a new instance of its loader.
-                foreach (Type _type in _behaviour.GetType().GetInterfaces()) {
+                Type[] _interfaceTypes = _behaviour.GetType().GetInterfaces();
+                foreach (Type _type in _interfaceTypes) {
 
                     if (_type.IsGenericType && _type.GetGenericTypeDefinition() == typeof(IResourceBehaviour<>)) {
 

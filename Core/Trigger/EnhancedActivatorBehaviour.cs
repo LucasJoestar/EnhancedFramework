@@ -5,6 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using System;
 using UnityEngine;
 
 using Range = EnhancedEditor.RangeAttribute;
@@ -27,7 +28,16 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+                if (ActivateOnPlay) {
+                    _value |= UpdateRegistration.Play;
+                }
+
+                return _value;
+            }
+        }
 
         #region Global Members
         [PropertyOrder(1), Space(10f)]
@@ -36,10 +46,10 @@ namespace EnhancedFramework.Core {
         [SerializeField] protected bool isTrigger = true;
 
         [Tooltip("If true, deactivates this controller on trigger exit")]
-        [SerializeField, Enhanced, ShowIf("isTrigger")] protected bool onlyWhileOnTrigger = true;
+        [SerializeField, Enhanced, ShowIf(nameof(isTrigger))] protected bool onlyWhileOnTrigger = true;
 
         [Tooltip("If true, activates this object right after loading")]
-        [SerializeField, Enhanced, ShowIf("isTrigger", ConditionType.False)] protected bool activateOnPlay = true;
+        [SerializeField, Enhanced, ShowIf(nameof(isTrigger), ConditionType.False)] protected bool activateOnPlay = true;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -106,6 +116,9 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Behaviour
+        private Action onDeactivationComplete = null;
+        private Action onActivationComplete   = null;
+
         protected DelayHandler delay = default;
 
         // -------------------------------------------
@@ -150,7 +163,9 @@ namespace EnhancedFramework.Core {
             }
 
             SetState(State.ActivateDelay);
-            delay = Delayer.Call(activationDelay, OnComplete, unscaledTime);
+
+            onActivationComplete ??= OnComplete;
+            delay = Delayer.Call(activationDelay, onActivationComplete, unscaledTime);
 
             // ----- Local Method ----- \\
 
@@ -197,7 +212,9 @@ namespace EnhancedFramework.Core {
             }
 
             SetState(State.DeactivateDelay);
-            delay = Delayer.Call(deactivationDelay, OnComplete, unscaledTime);
+
+            onDeactivationComplete ??= OnComplete;
+            delay = Delayer.Call(deactivationDelay, onDeactivationComplete, unscaledTime);
 
             // ----- Local Method ----- \\
 

@@ -36,7 +36,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Event
-        /// <inheritdoc cref="IEnhancedAnimationEvent.Invoke(EnhancedBehaviour)"/>
+        /// <inheritdoc/>
         public abstract void Invoke(EnhancedBehaviour _behaviour);
         #endregion
     }

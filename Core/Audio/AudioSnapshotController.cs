@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="AudioSnapshotAsset"/>-related <see cref="EnhancedBehaviour"/> controller.
     /// </summary>
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Snapshot Controller"), DisallowMultipleComponent]
-    public class AudioSnapshotController : AudioWeightControllerBehaviour {
+    public sealed class AudioSnapshotController : AudioWeightControllerBehaviour {
         #region Global Members
         [Section("Audio Snapshot Controller"), PropertyOrder(0)]
 
@@ -22,10 +22,18 @@ namespace EnhancedFramework.Core {
         [SerializeField, Enhanced, Required] private AudioSnapshotAsset snaphsot = null;
 
         [Tooltip("Priority of this snapshot. Only the snapshot with the highest priority is active")]
-        [SerializeField, Enhanced, ShowIf("overridePriority"), Range(0f, 99f)] private int priority = 0;
+        [SerializeField, Enhanced, ShowIf(nameof(overridePriority)), Range(0f, 99f)] private int priority = 0;
 
         [Tooltip("If true, overrides the default priority of this snaphsot")]
         [SerializeField] private bool overridePriority = false;
+
+        [Space(5f)]
+
+        [Tooltip("If true, replaces all snapshot with the same priority")]
+        [SerializeField] private bool replaceSnapshot = false;
+
+        [Tooltip("If true, preserves this snapshot after exiting this trigger")]
+        [SerializeField] private bool preserveOnExit = false;
 
         // -----------------------
 
@@ -38,14 +46,12 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Behaviour
-        protected override void OnActivation() {
-            base.OnActivation();
-        }
-
         protected override void OnDeactivation() {
             base.OnDeactivation();
 
-            AudioManager.Instance.PopSnapshot(snaphsot, false);
+            if (!preserveOnExit) {
+                AudioManager.Instance.PopSnapshot(snaphsot, false);
+            }
         }
 
         // -----------------------
@@ -53,7 +59,11 @@ namespace EnhancedFramework.Core {
         protected override void SetWeight(float _weight) {
             base.SetWeight(_weight);
 
-            AudioManager.Instance.PushSnapshot(snaphsot, weight, Priority, false);
+            if (replaceSnapshot) {
+                AudioManager.Instance.ReplaceSnapshot(snaphsot, weight, Priority, false);
+            } else {
+                AudioManager.Instance.PushSnapshot(snaphsot, weight, Priority, false);
+            }
         }
         #endregion
     }

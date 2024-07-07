@@ -71,9 +71,9 @@ namespace EnhancedFramework.Core {
         /// <param name="_isFixedDuration">If true, uses normalized time for both duration and offset. Otherwise, values are in seconds.</param>
         /// <inheritdoc cref="EnhancedAnimatorTransitionSettings"/>
         public EnhancedAnimatorTransitionSettings(float _duration, float _offset, bool _isFixedDuration = false) {
-            Duration = _duration;
-            Offset = _offset;
             IsFixedDuration = _isFixedDuration;
+            Duration        = _duration;
+            Offset          = _offset;
         }
         #endregion
 
@@ -83,7 +83,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_animation">Transition destination <see cref="AnimationClip"/>.</param>
         /// <returns>This transition normalized duration (from 0 to 1).</returns>
-        public float GetDuration(AnimationClip _animation) {
+        public readonly float GetDuration(AnimationClip _animation) {
             return GetNormalizedValue(Duration, _animation);
         }
 
@@ -92,13 +92,13 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_animation">Transition destination <see cref="AnimationClip"/>.</param>
         /// <returns>This transition normalized offset (from 0 to 1).</returns>
-        public float GetOffset(AnimationClip _animation) {
+        public readonly float GetOffset(AnimationClip _animation) {
             return GetNormalizedValue(Offset, _animation);
         }
 
         // -----------------------
 
-        private float GetNormalizedValue(float _value, AnimationClip _animation) {
+        private readonly float GetNormalizedValue(float _value, AnimationClip _animation) {
             if (IsFixedDuration) {
                 _value = (_animation.length != 0f) ? (_value / _animation.length) : 0f;
             }
@@ -112,7 +112,7 @@ namespace EnhancedFramework.Core {
     /// Wrapper for a <see cref="EnhancedAnimatorState"/> transition.
     /// </summary>
     [Serializable]
-    public class EnhancedAnimatorTransition {
+    public sealed class EnhancedAnimatorTransition {
         #region Global Members
         [Tooltip("This transition state behaviour")]
         [SerializeField] private StateTransitionMode mode = StateTransitionMode.CrossFade;
@@ -124,7 +124,7 @@ namespace EnhancedFramework.Core {
         /// Utility temporary transition used to perform quick operations.
         /// </summary>
         private static readonly EnhancedAnimatorTransition temp = new EnhancedAnimatorTransition() {
-            mode = StateTransitionMode.CrossFade,
+            mode     = StateTransitionMode.CrossFade,
             settings = new EnhancedAnimatorTransitionSettings(.5f, 0f, false),
         };
 
@@ -277,7 +277,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [Serializable]
     #pragma warning disable
-    public class EnhancedAnimatorStateTransition {
+    public sealed class EnhancedAnimatorStateTransition {
         #region Global Members
         #if UNITY_EDITOR
         [PropertyOrder(-1)]
@@ -317,10 +317,14 @@ namespace EnhancedFramework.Core {
         /// <returns>True if this transition contains the given state, false otherwise.</returns>
         public bool Contains(int _hash, out EnhancedAnimatorTransition _transition) {
 
-            if (Array.Exists(fromStates.Array, s => s.Hash == _hash)) {
+            ref EnhancedAnimatorState[] _statesSpan = ref fromStates.Array;
 
-                _transition = transition;
-                return true;
+            for (int i = 0; i < _statesSpan.Length; i++) {
+
+                if (_statesSpan[i].Hash == _hash) {
+                    _transition = transition;
+                    return true;
+                }
             }
 
             _transition = null;

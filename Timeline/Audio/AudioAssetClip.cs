@@ -1,8 +1,8 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ================================================================================================ //
+// ================================================================================== //
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
@@ -16,16 +16,16 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 using AudioAssetSettings = EnhancedFramework.Core.AudioAssetSettings;
-using DisplayName = System.ComponentModel.DisplayNameAttribute;
-using Object = UnityEngine.Object;
-using Range = EnhancedEditor.RangeAttribute;
+using DisplayName        = System.ComponentModel.DisplayNameAttribute;
+using Object             = UnityEngine.Object;
+using Range              = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Timeline {
     /// <summary>
     /// Plays an <see cref="AudioAsset"/> for the duration of the clip.
     /// </summary>
     [DisplayName("Audio/Audio Asset")]
-    public class AudioAssetClip : AudioEnhancedPlayableAsset, ITimelineClipAsset {
+    public sealed class AudioAssetClip : AudioEnhancedPlayableAsset, ITimelineClipAsset {
         #region Global Members
         [Section("Audio Clip")]
 
@@ -41,7 +41,7 @@ namespace EnhancedFramework.Timeline {
         public bool OverrideSettings = false;
 
         [Tooltip("Override audio settings used to play this asset")]
-        [Enhanced, ShowIf("OverrideSettings"), Required] public AudioAssetSettings Settings = null;
+        [Enhanced, ShowIf(nameof(OverrideSettings)), Required] public AudioAssetSettings Settings = null;
 
         // -----------------------
 

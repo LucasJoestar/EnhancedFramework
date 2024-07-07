@@ -19,14 +19,14 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-980)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "General/Game Manager"), DisallowMultipleComponent]
-    public class GameManager : EnhancedSingleton<GameManager> {
+    public sealed class GameManager : EnhancedSingleton<GameManager> {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
         [Section("Game Manager")]
 
         [Tooltip("Settings of the game")]
-        [SerializeField, Enhanced, Required] protected GameSettings settings = null;
+        [SerializeField, Enhanced, Required] private GameSettings settings = null;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -63,7 +63,14 @@ namespace EnhancedFramework.Core {
 
             // Initialization.
             settings.Init();
-            SetSeed(EnhancedUtility.GenerateGUID());
+
+            // Seed.
+            int _seed = seed;
+            if (_seed == 0) {
+                _seed = EnhancedUtility.GenerateGUID();
+            }
+
+            SetSeed(_seed);
         }
         #endregion
 
@@ -80,6 +87,22 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Utility
+        /// <summary>
+        /// Sets this game random generation seed.
+        /// </summary>
+        /// <param name="_seed">This game generation seed.</param>
+        public void SetSeed(int _seed) {
+
+            seed = _seed;
+            Random.InitState(_seed);
+
+            this.LogMessage($"Seed - {_seed}");
+        }
+
+        // -------------------------------------------
+        // Player
+        // -------------------------------------------
+
         /// <summary>
         /// Get the current player instance.
         /// <br/> Uses the <see cref="PlayerGetter"/> delegate.
@@ -107,18 +130,6 @@ namespace EnhancedFramework.Core {
 
             _player = null;
             return false;
-        }
-
-        /// <summary>
-        /// Sets this game random generation seed.
-        /// </summary>
-        /// <param name="_seed">This game generation seed.</param>
-        public void SetSeed(int _seed) {
-
-            seed = _seed;
-            Random.InitState(_seed);
-
-            this.LogMessage($"Seed - {_seed}");
         }
         #endregion
 

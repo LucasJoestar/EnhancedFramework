@@ -17,5 +17,5 @@ namespace EnhancedFramework.PlayMaker.Timeline {
     [TrackClipType(typeof(IPlayMakerPlayableAsset))]
     [TrackBindingType(typeof(PlayMakerFSM), TrackBindingFlags.None)]
     [DisplayName("PlayMaker/PlayMaker Track")]
-    public class PlayMakerTrack : EnhancedTrack { }
+    public sealed class PlayMakerTrack : EnhancedTrack { }
 }

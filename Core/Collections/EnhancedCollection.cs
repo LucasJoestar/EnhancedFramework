@@ -4,9 +4,11 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace EnhancedFramework.Core {
@@ -18,33 +20,50 @@ namespace EnhancedFramework.Core {
     public class EnhancedCollection<T> : IEnumerable<T>, IList<T> {
         #region Global Members
         /// <summary>
+        /// Whether this collection elements should be compared using reference equality or not.
+        /// </summary>
+        public static readonly bool UseReferenceEquality = EqualityUtility.ShouldUseReferenceEquality<T>();
+        
+        /// <summary>
         /// The <see cref="List{T}"/> wrapped in this collection.
         /// </summary>
-        [SerializeField] internal List<T> collection = new List<T>();
+        [SerializeField] public List<T> collection = new List<T>();
 
         // -----------------------
 
         /// <summary>
+        /// Comparer used for this collection type.
+        /// </summary>
+        public static EnhancedEqualityComparer<T> Comparer {
+            get { return EnhancedEqualityComparer<T>.Default; }
+        }
+
+        /// <summary>
         /// The total amount of element in this collection.
         /// </summary>
-        public virtual int Count {
+        public int Count {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return collection.Count; }
         }
 
         /// <summary>
         /// The total capacity of this collcetion.
         /// </summary>
-        public virtual int Capacity {
+        public int Capacity {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return collection.Capacity; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { collection.Capacity = value; }
         }
 
         bool ICollection<T>.IsReadOnly {
             get { return false; }
         }
-        #endregion
 
-        #region Constructor
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
+
         /// <inheritdoc cref="Set{T}"/>
         public EnhancedCollection() {
             collection = new List<T>();
@@ -64,19 +83,18 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Operator
-        public virtual T this[int _index] {
-            get {
-                return collection[_index];
-            }
-            set {
-                collection[_index] = value;
-            }
+        public T this[int _index] {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return collection[_index]; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set { collection[_index] = value; }
         }
         #endregion
 
         #region IEnumerable
         public IEnumerator<T> GetEnumerator() {
-            for (int i = 0; i < Count; i++) {
+            int _count = Count;
+            for (int i = 0; i < _count; i++) {
                 yield return collection[i];
             }
         }
@@ -87,6 +105,10 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Collection
+        // -------------------------------------------
+        // Add
+        // -------------------------------------------
+
         /// <summary>
         /// Adds a new element in this collection.
         /// </summary>
@@ -112,12 +134,103 @@ namespace EnhancedFramework.Core {
             collection.Insert(_index, _element);
         }
 
+        // -------------------------------------------
+        // Remove
+        // -------------------------------------------
+
+        /// <summary>
+        /// Removes a specific element from this collection.
+        /// </summary>
+        /// <param name="_element">The element to remove.</param>
+        /// <returns>True if the element was part of this collection and could be removed, false otherwise.</returns>
+        public virtual bool Remove(T _element) {
+
+            // Reference comparison.
+            if (UseReferenceEquality) {
+
+                int _index = IndexOfReference(_element);
+                if (_index != -1) {
+
+                    collection.RemoveAt(_index);
+                    return true;
+                }
+
+                return false;
+            }
+
+            return collection.Remove(_element);
+        }
+
+        /// <summary>
+        /// Removes the element at a specific index from this collection.
+        /// </summary>
+        /// <param name="_index">The index of the element to remove.</param>
+        public virtual void RemoveAt(int _index) {
+            collection.RemoveAt(_index);
+        }
+
+        /// <summary>
+        /// Removes the first element from this collection.
+        /// </summary>
+        /// <returns>True if this collection is not empty and the first element could be removed, false otherwise.</returns>
+        public bool RemoveFirst() {
+            if (Count != 0) {
+                RemoveAt(0);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes the last element from this collection.
+        /// </summary>
+        /// <returns>True if this collection is not empty and the last element could be removed, false otherwise.</returns>
+        public bool RemoveLast() {
+
+            int _count = Count;
+            if (_count != 0) {
+
+                RemoveAt(_count - 1);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes all null entries from this collection.
+        /// </summary>
+        public void RemoveNull() {
+
+            for (int i = Count; i-- > 0;) {
+                T _element = collection[i];
+
+                if ((_element == null) || _element.Equals(null)) {
+                    RemoveAt(i);
+                }
+            }
+        }
+
+        // -------------------------------------------
+        // Other
+        // -------------------------------------------
+
+        /// <summary>
+        /// Copies the content of a specific array into this collection.
+        /// </summary>
+        /// <param name="_array">The array to copy the content in this collection.</param>
+        /// <param name="_arrayIndex">The index of this collection where to copy the array content.</param>
+        public virtual void CopyTo(T[] _array, int _arrayIndex) {
+            collection.CopyTo(_array, _arrayIndex);
+        }
+
         /// <summary>
         /// Moves an element in this collection to a new index.
         /// </summary>
         /// <param name="_oldIndex">Index of the element to move.</param>
         /// <param name="_newIndex">New index where to move the element.</param>
-        public virtual void Move(int _oldIndex, int _newIndex) {
+        public void Move(int _oldIndex, int _newIndex) {
             if (_oldIndex == _newIndex) {
                 return;
             }
@@ -133,22 +246,13 @@ namespace EnhancedFramework.Core {
             collection.Insert(_newIndex, _element);
         }
 
-        /// <summary>
-        /// Copies the content of a specific array into this collection.
-        /// </summary>
-        /// <param name="_array">The array to copy the content in this collection.</param>
-        /// <param name="_arrayIndex">The index of this collection where to copy the array content.</param>
-        public virtual void CopyTo(T[] _array, int _arrayIndex) {
-            collection.CopyTo(_array, _arrayIndex);
-        }
-
         /// <param name="_element">Element of the array to move.</param>
         /// <returns>True if the element was part of this collection and could be moved, false otherwise.</returns>
         /// <inheritdoc cref="Shift(int, int)"/>
-        public virtual bool Shift(T _element, int _shiftIndex) {
+        public bool Shift(T _element, int _shiftIndex) {
             int _index = IndexOf(_element);
 
-            if (_index > -1) {
+            if (_index != -1) {
                 Shift(_index, _shiftIndex);
                 return true;
             }
@@ -169,12 +273,12 @@ namespace EnhancedFramework.Core {
             T _element = collection[_index];
 
             if (_index < _shiftIndex) {
-                for (int _i = _index; _i < _shiftIndex; _i++) {
-                    collection[_i] = collection[_i + 1];
+                for (int i = _index; i < _shiftIndex; i++) {
+                    collection[i] = collection[i + 1];
                 }
             } else {
-                for (int _i = _index; _i-- > _shiftIndex;) {
-                    collection[_i + 1] = collection[_i];
+                for (int i = _index; i-- > _shiftIndex;) {
+                    collection[i + 1] = collection[i];
                 }
             }
 
@@ -182,9 +286,11 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="Fill(T, int, int)"/>
-        public virtual void Fill(T _value) {
-            for (int _i = 0; _i < Count; _i++) {
-                collection[_i] = _value;
+        public void Fill(T _value) {
+
+            int _count = Count;
+            for (int i = 0; i < _count; i++) {
+                collection[i] = _value;
             }
         }
 
@@ -194,78 +300,11 @@ namespace EnhancedFramework.Core {
         /// <param name="_value">The element value to fill this collection with.</param>
         /// <param name="_index">The index at which to start filling this collection.</param>
         /// <param name="_count">The total amount of elements from this collection to fill.</param>
-        public virtual void Fill(T _value, int _index, int _count) {
+        public void Fill(T _value, int _index, int _count) {
             int _length = Math.Min(_index + _count, Count);
 
-            for (int _i = _index; _i < _length; _i++) {
-                collection[_i] = _value;
-            }
-        }
-
-        /// <summary>
-        /// Removes a specific element from this collection.
-        /// </summary>
-        /// <param name="_element">The element to remove.</param>
-        /// <returns>True if the element was part of this collection and could be removed, false otherwise.</returns>
-        public virtual bool Remove(T _element) {
-
-            // Instance comparison.
-            if (CompareInstance()) {
-                int _index = collection.FindIndex(e => ReferenceEquals(e, _element));
-
-                if (_index == -1) {
-                    return false;
-                }
-
-                collection.RemoveAt(_index);
-                return true;
-            }
-
-            return collection.Remove(_element);
-        }
-
-        /// <summary>
-        /// Removes the element at a specific index from this collection.
-        /// </summary>
-        /// <param name="_index">The index of the element to remove.</param>
-        public virtual void RemoveAt(int _index) {
-            collection.RemoveAt(_index);
-        }
-
-        /// <summary>
-        /// Removes the first element from this collection.
-        /// </summary>
-        /// <returns>True if this collection is not empty and the first element could be removed, false otherwise.</returns>
-        public virtual bool RemoveFirst() {
-            if (Count != 0) {
-                RemoveAt(0);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Removes the last element from this collection.
-        /// </summary>
-        /// <returns>True if this collection is not empty and the last element could be removed, false otherwise.</returns>
-        public virtual bool RemoveLast() {
-            if (Count != 0) {
-                RemoveAt(Count - 1);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Removes all null entries from this collection.
-        /// </summary>
-        public virtual void RemoveNull() {
-            for (int i = Count; i-- > 0;) {
-                if ((collection[i] == null) || collection[i].Equals(null)) {
-                    RemoveAt(i);
-                }
+            for (int i = _index; i < _length; i++) {
+                collection[i] = _value;
             }
         }
         #endregion
@@ -278,9 +317,9 @@ namespace EnhancedFramework.Core {
         /// <returns>-1 if the element could not be found in this collection, or its index otherwise.</returns>
         public virtual int IndexOf(T _element) {
 
-            // Instance comparison.
-            if (CompareInstance()) {
-                return collection.FindIndex(e => ReferenceEquals(e, _element));
+            // Reference comparison.
+            if (UseReferenceEquality) {
+                return IndexOfReference(_element);
             }
 
             return collection.IndexOf(_element);
@@ -292,7 +331,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_match">Used to know if an element match.</param>
         /// <param name="_match">The first matching element found (null if none).</param>
         /// <returns>True if the element is contained in the collection, false otherwise.</returns>
-        public virtual bool Find(Predicate<T> _match, out T _element) {
+        public bool Find(Predicate<T> _match, out T _element) {
             if (FindIndex(_match, out int _index)) {
                 _element = collection[_index];
                 return true;
@@ -307,7 +346,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_match">Used to know if an element match.</param>
         /// <returns>-1 if no matching element could be found, or the element index if found.</returns>
-        public virtual int FindIndex(Predicate<T> _match) {
+        public int FindIndex(Predicate<T> _match) {
             return collection.FindIndex(_match);
         }
 
@@ -317,7 +356,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_match">Used to know if an element match.</param>
         /// <param name="_index">-1 if no matching element could be found, or the element index if found.</param>
         /// <returns>True if the element is contained in the collection, false otherwise.</returns>
-        public virtual bool FindIndex(Predicate<T> _match, out int _index) {
+        public bool FindIndex(Predicate<T> _match, out int _index) {
             _index = FindIndex(_match);
             return _index != -1;
         }
@@ -330,8 +369,8 @@ namespace EnhancedFramework.Core {
         public virtual bool Contains(T _element) {
 
             // Instance comparison.
-            if (CompareInstance()) {
-                return collection.Exists(e => ReferenceEquals(e, _element));
+            if (UseReferenceEquality) {
+                return IndexOfReference(_element) != -1;
             }
 
             return collection.Contains(_element);
@@ -342,7 +381,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_match">Used to know if an element match.</param>
         /// <returns>True if any element in this collection matches the condition, false otherwise.</returns>
-        public virtual bool Exists(Predicate<T> _match) {
+        public bool Exists(Predicate<T> _match) {
             return collection.Exists(_match);
         }
 
@@ -350,7 +389,8 @@ namespace EnhancedFramework.Core {
         /// Get the first element int this collection.</typeparam>
         /// </summary>
         /// <returns>The first element from this collection.</returns>
-        public virtual T First() {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T First() {
             return collection[0];
         }
 
@@ -358,7 +398,8 @@ namespace EnhancedFramework.Core {
         /// Get the last element from this collection.
         /// </summary>
         /// <returns>The last element from this collection.</returns>
-        public virtual T Last() {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Last() {
             return collection[Count - 1];
         }
 
@@ -369,7 +410,14 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The first element from this collection, or its default value if empty.</param>
         /// <returns>True if the collection is not empty and an element could be found, false otherwise.</returns>
         public bool SafeFirst(out T _element) {
-            return SafeGetter(First, out _element);
+
+            if (Count == 0) {
+                _element = default;
+                return false;
+            }
+
+            _element = collection[0];
+            return true;
         }
 
         /// <summary>
@@ -379,19 +427,33 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The last element from this collection, or its default value if empty.</param>
         /// <returns>True if the collection is not empty and an element could be found, false otherwise.</returns>
         public bool SafeLast(out T _element) {
-            return SafeGetter(Last, out _element);
-        }
 
-        // -----------------------
+            int _count = Count;
 
-        private bool SafeGetter(Func<T> _getter, out T _element) {
-            if (Count == 0) {
+            if (_count == 0) {
                 _element = default;
                 return false;
             }
 
-            _element = _getter();
+            _element = collection[_count - 1];
             return true;
+        }
+
+        // -------------------------------------------
+        // Internal
+        // -------------------------------------------
+
+        private int IndexOfReference(T _element) {
+
+            int _count = collection.Count;
+            for (int i = 0; i < _count; i++) {
+
+                if (Comparer.ReferenceEquals(collection[i], _element)) {
+                    return i;
+                }
+            }
+
+            return -1;
         }
         #endregion
 
@@ -400,7 +462,7 @@ namespace EnhancedFramework.Core {
         /// Get a random element from this collection.
         /// </summary>
         /// <returns>A random element from this collection.</returns>
-        public virtual T Random() {
+        public T Random() {
             int _count = Count;
             if (_count == 0) {
                 return default;
@@ -416,11 +478,13 @@ namespace EnhancedFramework.Core {
 
         /// <param name="_comparison">Comparison used to sort each element.</param>
         /// <inheritdoc cref="Sort(int, int, IComparer{T})"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort(Comparison<T> _comparison) {
             collection.Sort(_comparison);
         }
 
         /// <inheritdoc cref="Sort(int, int, IComparer{T})"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort(IComparer<T> _comparer) {
             collection.Sort(_comparer);
         }
@@ -431,6 +495,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_index">The index where to start sorting elements.</param>
         /// <param name="_count">The total count of elements to sort.</param>
         /// <param name="_comparer">Comparer used to sort each element.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Sort(int _index, int _count, IComparer<T> _comparer) {
             collection.Sort(_index, _count, _comparer);
         }
@@ -439,6 +504,7 @@ namespace EnhancedFramework.Core {
         /// Get this collection content as a new array.
         /// </summary>
         /// <returns>This collection content as an array.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToArray() {
             return collection.ToArray();
         }
@@ -448,21 +514,6 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public virtual void Clear() {
             collection.Clear();
-        }
-
-        // -----------------------
-
-        protected bool CompareInstance() {
-            return typeof(T).IsInterface;
-        }
-
-        protected bool Compare<U>(U _first, U _second) {
-
-            if (typeof(U).IsInterface) {
-                return ReferenceEquals(_first, _second);
-            }
-
-            return EqualityComparer<U>.Default.Equals(_first, _second);
         }
         #endregion
     }

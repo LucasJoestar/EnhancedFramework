@@ -21,19 +21,19 @@ using UnityInputActionAsset = UnityEngine.InputSystem.InputActionAsset;
 
 namespace EnhancedFramework.Editor {
     /// <summary>
-    /// Generates an <see cref="SingleInputActionEnhancedAsset"/> for each action setup in the first <see cref="UnityEngine.InputSystem.InputActionAsset"/> in the project.
+    /// Generates an <see cref="SingleInputActionEnhancedAsset"/> for each action setup in the first <see cref="InputActionAsset"/> in the project.
     /// </summary>
     public static class InputAssetGenerator {
         #region Content
-        private const string DefaultInputAssetPath      = "Assets/Input Assets/";
-        private const string InputMapAssetFormat        = InputMapEnhancedAsset.FilePrefix + "{0}";
-        private const string InputActionAssetFormat     = SingleInputActionEnhancedAsset.FilePrefix + "{0}_{1}";
+        private const string DefaultInputAssetPath  = "Assets/Input Assets/";
+        private const string InputMapAssetFormat    = InputMapEnhancedAsset.FilePrefix + "{0}";
+        private const string InputActionAssetFormat = SingleInputActionEnhancedAsset.FilePrefix + "{0}_{1}";
 
         // -----------------------
 
         [MenuItem(FrameworkUtility.MenuItemPath + "Refresh Input Assets", false, 11)]
         private static void RefreshInputAssets() {
-            if (!EnhancedEditorUtility.LoadMainAsset(out UnityInputActionAsset _inputAsset)){
+            if (!EnhancedEditorUtility.LoadMainAsset(out UnityInputActionAsset _inputAsset)) {
                 return;
             }
 
@@ -98,7 +98,9 @@ namespace EnhancedFramework.Editor {
 
                 // Map setup.
                 for (int i = _inputList.Count; i-- > 0;) {
-                    if (_inputList[i].SetMap(_asset)) {
+                    SingleInputActionEnhancedAsset _input = _inputList[i];
+                    if (_input.SetMap(_asset)) {
+                        EditorUtility.SetDirty(_input);
                         _inputList.RemoveAt(i);
                     }
                 }
@@ -119,9 +121,12 @@ namespace EnhancedFramework.Editor {
 
             AssetDatabase.Refresh();
 
+            _database.Setup(EnhancedEditorUtility.LoadAssets<InputActionEnhancedAsset>(), EnhancedEditorUtility.LoadAssets<InputMapEnhancedAsset>());
+            EditorUtility.SetDirty(_database);
+
             // ----- Local Method ----- \\
 
-            string GetAssetPath<T>(List<T> _objects) where T : ScriptableObject {
+            static string GetAssetPath<T>(List<T> _objects) where T : ScriptableObject {
                 string _assetPath;
 
                 if (_objects.Count == 0) {

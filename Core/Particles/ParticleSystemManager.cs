@@ -15,7 +15,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Particles/Particle System Manager"), DisallowMultipleComponent]
-    public class ParticleSystemManager : EnhancedSingleton<ParticleSystemManager>, IStableUpdate, IGameStateOverrideCallback{
+    public sealed class ParticleSystemManager : EnhancedSingleton<ParticleSystemManager>, IStableUpdate, IGameStateOverrideCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
@@ -59,8 +59,10 @@ namespace EnhancedFramework.Core {
         void IStableUpdate.Update() {
 
             // Particles update.
-            for (int i = particles.Count; i-- > 0;) {
-                particles[i].ParticleUpdate();
+            List<EnhancedParticleSystemPlayer> _particlesSpan = particles;
+
+            for (int i = _particlesSpan.Count; i-- > 0;) {
+                _particlesSpan[i].ParticleUpdate();
             }
         }
 
@@ -71,28 +73,32 @@ namespace EnhancedFramework.Core {
             GameStateManager.Instance.UnregisterOverrideCallback(this);
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Callback
+        // -------------------------------------------
 
         private void OnStartLoading() {
 
             // Stop playing all particles.
-            for (int i = particles.Count; i-- > 0;) {
+            List<EnhancedParticleSystemPlayer> _particlesSpan = particles;
 
-                EnhancedParticleSystemPlayer _particle = particles[i];
-                _particle.Stop(ParticleSystemStopBehavior.StopEmittingAndClear);
+            for (int i = _particlesSpan.Count; i-- > 0;) {
+                _particlesSpan[i].Stop(ParticleSystemStopBehavior.StopEmittingAndClear);
             }
 
             // Clear pools.
-            for (int i = particlePools.Count; i-- > 0;) {
+            List<Pair<ParticleSystemAsset, Transform>> _poolSpan = particlePools.collection;
 
-                var _pair = particlePools[i];
+            for (int i = _poolSpan.Count; i-- > 0;) {
+
+                var _pair = _poolSpan[i];
                 ParticleSystemAsset _particle = _pair.First;
 
                 if (_particle.ClearOnLoading) {
                     _particle.ClearPool();
 
                     Destroy(_pair.Second.gameObject);
-                    particlePools.RemoveAt(i);
+                    _poolSpan.RemoveAt(i);
                 }
             }
         }
@@ -135,7 +141,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_position">Position (in world space) where to play this audio.</param>
         /// <inheritdoc cref="Play(ParticleSystemAsset, Transform)"/>
         public ParticleHandler Play(ParticleSystemAsset _particle, Vector3 _position) {
-            return _particle.GetInstance().Play(_position);
+            return _particle.GetPoolInstance().Play(_position);
         }
 
         /// <summary>
@@ -145,7 +151,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_transform"><see cref="Transform"/> reference for this particle to follow.</param>
         /// <returns><see cref="ParticleHandler"/> wrapper of the current play operation.</returns>
         public ParticleHandler Play(ParticleSystemAsset _particle, Transform _transform) {
-            return _particle.GetInstance().Play(_transform);
+            return _particle.GetPoolInstance().Play(_transform);
         }
 
         // -------------------------------------------
@@ -167,8 +173,11 @@ namespace EnhancedFramework.Core {
             }
 
             // Player pause.
-            foreach (EnhancedParticleSystemPlayer _particle in particles) {
+            List<EnhancedParticleSystemPlayer> _particlesSpan = particles;
+            int _count = _particlesSpan.Count;
 
+            for (int i = 0; i < _count; i++) {
+                EnhancedParticleSystemPlayer _particle = _particlesSpan[i];
                 if (!_particle.IgnorePause) {
 
                     // Pause / Resume.

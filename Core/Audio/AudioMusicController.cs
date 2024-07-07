@@ -12,7 +12,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="AudioMusicAsset"/>-related <see cref="EnhancedBehaviour"/> controller.
     /// </summary>
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Music Controller"), DisallowMultipleComponent]
-    public class AudioMusicController : AudioControllerBehaviour {
+    public sealed class AudioMusicController : AudioControllerBehaviour {
         #region Global Members
         [Section("Audio Music Controller"), PropertyOrder(0)]
 
@@ -22,10 +22,10 @@ namespace EnhancedFramework.Core {
         [Space(5f)]
 
         [Tooltip("Audio layer on which to play this music")]
-        [SerializeField, Enhanced, ShowIf("overrideSettings")] private AudioLayer layer = AudioLayer.Default;
+        [SerializeField, Enhanced, ShowIf(nameof(overrideSettings))] private AudioLayer layer = AudioLayer.Default;
 
         [Tooltip("Mode used to interrupt the current music(s) when playing this one")]
-        [SerializeField, Enhanced, ShowIf("overrideSettings")] private MusicInterruption interruptionMode = MusicInterruption.Pause;
+        [SerializeField, Enhanced, ShowIf(nameof(overrideSettings))] private MusicInterruption interruptionMode = MusicInterruption.Pause;
 
         [Space(5f)]
 

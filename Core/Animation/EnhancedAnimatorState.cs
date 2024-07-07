@@ -5,6 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
@@ -15,22 +16,21 @@ using UnityEditor.Animations;
 using Range = EnhancedEditor.RangeAttribute;
 
 namespace EnhancedFramework.Core {
-    #region Forward Constraint
     /// <summary>
     /// Constraints for a forward movement.
     /// </summary>
     public enum ForwardConstraint {
         None     = 0,
+
         Forward  = 1,
         Backward = 2,
     }
-    #endregion
 
     /// <summary>
     /// <see cref="Animator"/>-related state configuration asset.
     /// </summary>
     [CreateAssetMenu(fileName = "ANIS_AnimatorState", menuName = FrameworkUtility.MenuPath + "Animation/Animator State", order = FrameworkUtility.MenuOrder)]
-    public class EnhancedAnimatorState : EnhancedScriptableObject {
+    public sealed class EnhancedAnimatorState : EnhancedScriptableObject {
         #region Global Members
         [Section("Animator State")]
 
@@ -77,13 +77,13 @@ namespace EnhancedFramework.Core {
         [Space(5f)]
 
         [Tooltip("Root motion forward movement constraint")]
-        [SerializeField, Enhanced, ShowIf("rootMotion")] private ForwardConstraint motionForwardContraint = ForwardConstraint.None;
+        [SerializeField, Enhanced, ShowIf(nameof(rootMotion))] private ForwardConstraint motionForwardContraint = ForwardConstraint.None;
 
         [Tooltip("Root motion influence on the object position")]
-        [SerializeField, Enhanced, ShowIf("rootMotion")] private AxisConstraints motionPositionConstraints = AxisConstraints.X | AxisConstraints.Z;
+        [SerializeField, Enhanced, ShowIf(nameof(rootMotion))] private AxisConstraints motionPositionConstraints = AxisConstraints.X | AxisConstraints.Z;
 
         [Tooltip("Root motion influence on the object rotation")]
-        [SerializeField, Enhanced, ShowIf("rootMotion")] private AxisConstraints motionRotationConstraints = AxisConstraints.None;
+        [SerializeField, Enhanced, ShowIf(nameof(rootMotion))] private AxisConstraints motionRotationConstraints = AxisConstraints.None;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -99,19 +99,19 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         [Tooltip("Normalized time at which the exit transition take effect")]
-        [SerializeField, Enhanced, ShowIf("HasExitTransition"), Range(0f, 10f)] private float exitTime = .9f;
+        [SerializeField, Enhanced, ShowIf(nameof(HasExitTransition)), Range(0f, 10f)] private float exitTime = .9f;
 
         [Space(5f)]
 
         [Tooltip("Default exit transition duration")]
-        [SerializeField, Enhanced, ShowIf("UseDefaultExitWithDuration"), Range(0f, 10f)] private float exitTransitionDuration = .5f;
+        [SerializeField, Enhanced, ShowIf(nameof(UseDefaultExitWithDuration)), Range(0f, 10f)] private float exitTransitionDuration = .5f;
 
         [Tooltip("Default exit transition destination state")]
-        [SerializeField, Enhanced, ShowIf("UseCustomExit"), DisplayName("State")] private EnhancedAnimatorState exitState = null;
+        [SerializeField, Enhanced, ShowIf(nameof(UseCustomExit)), DisplayName("State")] private EnhancedAnimatorState exitState = null;
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, ShowIf("UseCustomExit"), Block] private EnhancedAnimatorTransitionSettings exitTransition = new EnhancedAnimatorTransitionSettings();
+        [SerializeField, Enhanced, ShowIf(nameof(UseCustomExit)), Block] private EnhancedAnimatorTransitionSettings exitTransition = new EnhancedAnimatorTransitionSettings();
 
         // -----------------------
 
@@ -126,7 +126,6 @@ namespace EnhancedFramework.Core {
         public int Hash {
             get {
                 if (hash == 0) {
-
                     hash = Animator.StringToHash(stateName);
                     //this.LogWarning("State hash value was not correctly configured");
                 }
@@ -184,7 +183,6 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_layerIndex">Index of this state layer.</param>
         public void Initialize(int _layerIndex) {
-
             hash = Animator.StringToHash(stateName);
             layerIndex = _layerIndex;
         }
@@ -206,7 +204,6 @@ namespace EnhancedFramework.Core {
 
             // Instant.
             if (_instant) {
-
                 _animator.Play(Hash, _layerIndex);
                 return;
             }
@@ -226,7 +223,12 @@ namespace EnhancedFramework.Core {
 
             EnhancedAnimatorTransition GetTransition() {
 
-                foreach (EnhancedAnimatorStateTransition _state in transitions) {
+                List<EnhancedAnimatorStateTransition> _transitionsSpan = transitions.collection;
+                int _count = _transitionsSpan.Count;
+
+                for (int i = 0; i < _count; i++) {
+
+                    EnhancedAnimatorStateTransition _state = _transitionsSpan[i];
 
                     if (_state.Contains(_currentHash, out EnhancedAnimatorTransition _transition) || _state.Contains(_nextHash, out _transition)) {
                         return _transition;
@@ -303,17 +305,17 @@ namespace EnhancedFramework.Core {
             }
 
             bool HasPositionContraint(AxisConstraints _constraint) {
-                return motionPositionConstraints.HasFlag(_constraint) || _next.motionPositionConstraints.HasFlag(_constraint);
+                return motionPositionConstraints.HasFlagUnsafe(_constraint) || _next.motionPositionConstraints.HasFlagUnsafe(_constraint);
             }
 
             bool HasRotationContraint(AxisConstraints _constraint) {
-                return motionRotationConstraints.HasFlag(_constraint) || _next.motionRotationConstraints.HasFlag(_constraint);
+                return motionRotationConstraints.HasFlagUnsafe(_constraint) || _next.motionRotationConstraints.HasFlagUnsafe(_constraint);
             }
         }
         #endregion
 
         #region Utility
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         /// <summary>
         /// Creates and setups this state in an <see cref="AnimatorController"/>, on a specific layer.
         /// </summary>
@@ -323,7 +325,7 @@ namespace EnhancedFramework.Core {
 
             AnimationClip _animation = animation;
 
-            if (!_states.Find(s => s.name == stateName, out AnimatorState _state)) {
+            if (!FindStateByName(_states.collection, stateName, out AnimatorState _state)) {
 
                 // An animation is required to create the state (otherwise, an error is thrown).
                 if (_animation == null) {
@@ -387,12 +389,12 @@ namespace EnhancedFramework.Core {
 
             void CreateTransition(EnhancedAnimatorState _exitState, EnhancedAnimatorTransitionSettings _settings) {
 
-                if (!_states.Find(s => s.name == stateName, out AnimatorState _state) || !_states.Find(s => s.name == _exitState.stateName, out AnimatorState _transitionState)) {
+                if (!FindStateByName(_states.collection, stateName, out AnimatorState _state) || !FindStateByName(_states.collection, _exitState.stateName, out AnimatorState _transitionState)) {
                     return;
                 }
 
                 AnimatorStateTransition[] _allTransitions = _state.transitions;
-                if (!_allTransitions.Find(t => t.hasExitTime && (t.destinationState == _transitionState), out AnimatorStateTransition _transition)) {
+                if (!FindTransitionState(_allTransitions, _transitionState, out AnimatorStateTransition _transition)) {
 
                     // Create if don't exist.
                     // Overload taking a Transition does not saved it into the asset, so we don't use it.
@@ -400,7 +402,7 @@ namespace EnhancedFramework.Core {
                     _allTransitions = _state.transitions;
 
                     // Retrieve state.
-                    if (!_allTransitions.Find(t => t.hasExitTime && (t.destinationState == _transitionState), out _transition)) {
+                    if (!FindTransitionState(_allTransitions, _transitionState, out _transition)) {
                         return;
                     }
                 }
@@ -423,6 +425,37 @@ namespace EnhancedFramework.Core {
                 EditorUtility.SetDirty(_transition);
                 EditorUtility.SetDirty(_state);
             }
+        }
+
+        // -----------------------
+
+        private bool FindStateByName(List<AnimatorState> _states, string _name, out AnimatorState _state) {
+
+            int _count = _states.Count;
+            for (int i = 0; i < _count; i++) {
+
+                _state = _states[i];
+                if (_state.name.Equals(_name, System.StringComparison.Ordinal)) {
+                    return true;
+                }
+            }
+
+            _state = null;
+            return false;
+        }
+
+        private bool FindTransitionState(AnimatorStateTransition[] _transitions, AnimatorState _destinationState, out AnimatorStateTransition _transition) {
+
+            for (int i = 0; i < _transitions.Length; i++) {
+
+                _transition = _transitions[i];
+                if (_transition.hasExitTime && (_transition.destinationState == _destinationState)) {
+                    return true;
+                }
+            }
+
+            _transition = null;
+            return false;
         }
         #endif
         #endregion

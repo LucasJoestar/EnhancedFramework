@@ -6,9 +6,10 @@
 
 using EnhancedEditor;
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
-using Object = UnityEngine.Object;
+using Object     = UnityEngine.Object;
 using SceneAsset = EnhancedEditor.SceneAsset;
 
 namespace EnhancedFramework.Core {
@@ -17,23 +18,23 @@ namespace EnhancedFramework.Core {
     /// </summary>
     /// <typeparam name="T">The referencing object <see cref="Component"/> type to load.</typeparam>
     [Serializable]
-    public class CrossSceneReference<T> where T : Component {
+    public sealed class CrossSceneReference<T> where T : Component {
         #region Global Members
         /// <summary>
         /// The id of the referenced <see cref="CrossSceneObject"/>.
         /// </summary>
         public EnhancedObjectID ReferenceID = EnhancedObjectID.Default;
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="CrossSceneReference{T}"/>
         public CrossSceneReference() { }
 
         /// <param name="_reference">The referenced object instance (must not be null).</param>
         /// <inheritdoc cref="CrossSceneReference{T}"/>
-        public CrossSceneReference(CrossSceneObject _reference) {
-            ReferenceID = _reference.ID;
-        }
+        public CrossSceneReference(CrossSceneObject _reference) : this(_reference.ID) { }
 
         /// <param name="_id">Id of the object to reference.</param>
         /// <inheritdoc cref="CrossSceneReference{T}"/>
@@ -53,6 +54,10 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Utility
+        private static readonly SceneAsset sceneAssetBuffer = new SceneAsset();
+
+        // -----------------------
+
         /// <summary>
         /// <inheritdoc cref="GetReference(out T)" path="/summary"/>
         /// </summary>
@@ -103,10 +108,17 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
-        /// Get te <see cref="SceneAsset"/> associated with this object.
+        /// Get the <see cref="SceneAsset"/> associated with this object.
         /// </summary>
         public bool GetScene(out SceneAsset _scene) {
             return ReferenceID.GetScene(out _scene);
+        }
+
+        /// <summary>
+        /// Get the <see cref="SceneAsset"/> associated with this object, filling a buffer <see cref="SceneAsset"/>.
+        /// </summary>
+        public bool GetScene(SceneAsset _scene) {
+            return ReferenceID.GetScene(_scene);
         }
 
         /// <summary>
@@ -115,15 +127,19 @@ namespace EnhancedFramework.Core {
         /// <param name="_bundle"><see cref="SceneBundle"/> of this object reference.</param>
         /// <returns>True if the associated bundle could be successfully found, false otherwise.</returns>
         public bool GetBundle(out SceneBundle _bundle) {
-            if (!GetScene(out SceneAsset _scene)) {
+
+            SceneAsset _sceneBuffer = sceneAssetBuffer;
+
+            if (!GetScene(_sceneBuffer)) {
                 _bundle = null;
                 return false;
             }
             
-            return BuildSceneDatabase.Database.GetSceneBundle(_scene, out _bundle);
+            return BuildSceneDatabase.Database.GetSceneBundle(_sceneBuffer, out _bundle);
         }
 
         /// <inheritdoc cref="IsLoaded(out SceneBundle, out T)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsLoaded(out SceneBundle _bundle) {
             return IsLoaded(out _bundle, out _);
         }
@@ -135,8 +151,13 @@ namespace EnhancedFramework.Core {
         /// <param name="_reference">This class referencing <see cref="Component"/>.</param>
         /// <returns>True if this object associated scene is loaded, false otherwise.</returns>
         public bool IsLoaded(out SceneBundle _bundle, out T _reference) {
-            _reference = null;
-            return GetBundle(out _bundle) && _bundle.IsLoaded && GetReference(out _reference);
+
+            if (!GetBundle(out _bundle) || !_bundle.IsLoaded) {
+                _reference = null;
+                return false;
+            }
+
+            return GetReference(out _reference);
         }
         #endregion
     }
@@ -144,7 +165,7 @@ namespace EnhancedFramework.Core {
     /// <summary>
     /// Exception raised when a <see cref="CrossSceneReference{T}"/> could not be retrieved.
     /// </summary>
-    public class MissingCrossCeneReferenceException : Exception {
+    public sealed class MissingCrossCeneReferenceException : Exception {
         #region Global Members
         public const string MessageFormat = "Could not retrieve the cross scene reference with GUID \'{0}\'";
 

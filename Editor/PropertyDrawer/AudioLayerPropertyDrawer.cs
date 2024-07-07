@@ -16,7 +16,7 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="AudioLayer"/> drawer.
     /// </summary>
     [CustomPropertyDrawer(typeof(AudioLayer), true)]
-    public class AudioLayerPropertyDrawer : EnumPropertyDrawer {
+    public sealed class AudioLayerPropertyDrawer : EnumPropertyDrawer {
         #region Drawer Content
         protected override void DrawPopup(Rect _position, SerializedProperty _property, EnumInfos _infos, GUIContent _label) {
 

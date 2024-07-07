@@ -13,5 +13,5 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Selection Base"), SelectionBase, DisallowMultipleComponent]
-    public class SelectionBaseBehaviour : EnhancedBehaviour { }
+    public sealed class SelectionBaseBehaviour : EnhancedBehaviour { }
 }

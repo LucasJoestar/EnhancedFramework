@@ -15,7 +15,7 @@ namespace EnhancedFramework.Core {
     [DefaultExecutionOrder(-10)]
     [RequireComponent(typeof(Animator))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Animation/Animator Handler"), DisallowMultipleComponent]
-    public class EnhancedAnimatorHandler : EnhancedBehaviour {
+    public sealed class EnhancedAnimatorHandler : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members

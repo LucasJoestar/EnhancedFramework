@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when a Playable is being paused")]
     [ActionCategory("Playable")]
-    public class PlayablePausedEvent : FsmStateAction {
+    public sealed class PlayablePausedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event

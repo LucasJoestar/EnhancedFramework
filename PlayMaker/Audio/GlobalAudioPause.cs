@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Pauses/Resumes the Audio global state.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class GlobalAudioPause : FsmStateAction {
+    public sealed class GlobalAudioPause : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Pause - Reset

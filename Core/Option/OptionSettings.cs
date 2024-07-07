@@ -105,7 +105,7 @@ namespace EnhancedFramework.Core.Option {
     /// Default <see cref="BaseGameOption"/> empty class.
     /// </summary>
     [Serializable, DisplayName("<Default>")]
-    public class DefaultGameOption : BaseGameOption {
+    public sealed class DefaultGameOption : BaseGameOption {
         #region Behaviour
         public override void Apply() { }
 
@@ -119,7 +119,7 @@ namespace EnhancedFramework.Core.Option {
     /// <see cref="BaseGameOption"/> used to save a specific <see cref="AudioMixer"/> volume.
     /// </summary>
     [Serializable, DisplayName("Audio/Volume")]
-    public class AudioVolumeOption : BaseGameOption {
+    public sealed class AudioVolumeOption : BaseGameOption {
         private const float MinVolume = .0001f;
 
         #region Global Members
@@ -139,6 +139,11 @@ namespace EnhancedFramework.Core.Option {
         [Tooltip("Total amount of available resolution steps")]
         [SerializeField, Enhanced, Range(1f, 100f)] private int stepCount = 10;
 
+        [Space(10f)]
+
+        [Tooltip("Whether this audio is currently mute or not")]
+        [SerializeField] private bool isMute = false;
+
         // -----------------------
 
         /// <summary>
@@ -150,6 +155,13 @@ namespace EnhancedFramework.Core.Option {
                 volume = Mathf.Clamp(value, MinVolume, 1f);
                 Apply();
             }
+        }
+
+        /// <summary>
+        /// Whether this audio is currently mute or not.
+        /// </summary>
+        public bool IsMute {
+            get { return isMute; }
         }
 
         // -----------------------
@@ -183,18 +195,19 @@ namespace EnhancedFramework.Core.Option {
         #region Behaviour
         public override void Apply() {
 
-            float _value = Volume - MinVolume;
-            float _max   = 1f - MinVolume;
+            float _volume = isMute ? MinVolume : volume;
+            float _value  = _volume - MinVolume;
+            float _max    = 1f - MinVolume;
 
             float _percent = (_value == 0f) ? 0f : (_value / _max);
 
-            _value         = Mathf.Lerp(MinVolume, 1f, _percent);
-            _value         = Mathf.Log10(_value);
-            _value        *= 20f;
+            _value = Mathf.Lerp(MinVolume, 1f, _percent);
+            _value = Mathf.Log10(_value);
+            _value *= 20f;
 
             audioMixer.SetFloat(audioGroupName, _value);
-            audioMixer.GetFloat(audioGroupName, out float _v);
 
+            //audioMixer.GetFloat(audioGroupName, out float _v);
             //this.LogMessage("Apply Volume => " + _value + " - " + volume + " - " + SelectedValueIndex + " | " + _v);
         }
 
@@ -203,7 +216,7 @@ namespace EnhancedFramework.Core.Option {
             // Read mixer float value.
             if (audioMixer.GetFloat(audioGroupName, out float _volume)) {
 
-                float _v = _volume;
+                //float _v = _volume;
 
                 _volume /= 20f;
                 _volume  = Mathf.Pow(10f, _volume);
@@ -217,13 +230,27 @@ namespace EnhancedFramework.Core.Option {
 
         public override void Initialize(BaseGameOption _option) {
 
-            if (!(_option is AudioVolumeOption _audio)) {
+            if (_option is not AudioVolumeOption _audio) {
                 return;
             }
 
-            audioMixer = _audio.audioMixer;
-            audioGroupName = _audio.audioGroupName;
-            stepCount = _audio.stepCount;
+            audioMixer      = _audio.audioMixer;
+            audioGroupName  = _audio.audioGroupName;
+            stepCount       = _audio.stepCount;
+
+            isMute = false;
+        }
+
+        // -----------------------
+
+        /// <summary>
+        /// Mutes/Unmutes this audio.
+        /// </summary>
+        /// <param name="_isMute">True to mute this audio, false to unmute it.</param>
+        public void Mute(bool _isMute) {
+
+            isMute = _isMute;
+            Apply();
         }
         #endregion
     }
@@ -232,7 +259,7 @@ namespace EnhancedFramework.Core.Option {
     /// <see cref="BaseGameOption"/> used to set the game <see cref="FullScreenMode"/>.
     /// </summary>
     [Serializable, DisplayName("General/Full Screen Mode")]
-    public class FullScreenModeOption : BaseGameOption {
+    public sealed class FullScreenModeOption : BaseGameOption {
         #region Global Members
         [Space(10f)]
 
@@ -299,9 +326,9 @@ namespace EnhancedFramework.Core.Option {
     /// Game options wrapper.
     /// </summary>
     [Serializable]
-    public class GameOptionsWrapper {
+    public sealed class GameOptionsWrapper {
         #region Global Members
-        [SerializeReference] public BaseGameOption[] Options = new BaseGameOption[] { };
+        [SerializeReference] public BaseGameOption[] Options = new BaseGameOption[0];
 
         // -------------------------------------------
         // Constructor(s)
@@ -310,14 +337,14 @@ namespace EnhancedFramework.Core.Option {
         /// <summary>
         /// Prevents from creating any new instance of this class.
         /// </summary>
-        internal protected GameOptionsWrapper() { }
+        internal GameOptionsWrapper() { }
         #endregion
     }
 
     /// <summary>
     /// Game option related settings, saved on disk.
     /// </summary>
-    public class OptionSettings : BaseSettings<OptionSettings> {
+    public sealed class OptionSettings : BaseSettings<OptionSettings> {
         #region Global Members
         [Section("Option Settings")]
 
@@ -360,8 +387,8 @@ namespace EnhancedFramework.Core.Option {
             // Loading and initialization.
             Load();
 
-            foreach (ScriptableGameOption _option in scriptableOptions) {
-                _option.Initialize(this);
+            for (int i = 0; i < scriptableOptions.Length; i++) {
+                scriptableOptions[i].Initialize(this);
             }
 
             Apply();
@@ -377,29 +404,35 @@ namespace EnhancedFramework.Core.Option {
         /// <param name="_name">The name of the option to get.</param>
         /// <param name="_creator">Called to create this option if not found.</param>
         /// <returns>The option associated with the given guid and name.</returns>
-        public T GetOption<T>(int _guid, string _name, Func<T> _creator) where T : BaseGameOption {
+        public BaseGameOption GetOption(int _guid, string _name, ScriptableGameOption _gameOption) {
 
-            int _index = Array.FindIndex(option.Options, o => (o.GUID == _guid) && o.Name.Equals(_name, StringComparison.OrdinalIgnoreCase));
-
+            int _index = GeOptionIndex(option.Options);
             if (_index != -1) {
-
-                BaseGameOption _indexOption = option.Options[_index];
-
-                if (_indexOption is T _temp) {
-                    return _temp;
-                }
-
-                this.LogWarning($"Option with name \'{_indexOption.Name}\' and guid \'{_indexOption.GUID}\' does not match - Removing it");
-                ArrayUtility.RemoveAt(ref option.Options, _index);
+                return option.Options[_index];
             }
 
-            T _option = _creator();
+            BaseGameOption _option = _gameOption.CreateOption();
 
             _option.name = _name;
             _option.guid = _guid;
 
             ArrayUtility.Add(ref option.Options, _option);
             return _option;
+
+            // ----- Local Method ----- \\
+
+            int GeOptionIndex(BaseGameOption[] _options) {
+
+                for (int i = 0; i < _options.Length; i++) {
+                    BaseGameOption _option = _options[i];
+
+                    if ((_option.GUID == _guid) && _option.Name.Equals(_name, StringComparison.OrdinalIgnoreCase)) {
+                        return i;
+                    }
+                }
+
+                return -1;
+            }
         }
 
         /// <summary>
@@ -415,9 +448,8 @@ namespace EnhancedFramework.Core.Option {
         /// </summary>
         [Button(SuperColor.Green, IsDrawnOnTop = false)]
         public void Apply() {
-
-            foreach (BaseGameOption _option in option.Options) {
-                _option.Apply();
+            for (int i = 0; i < option.Options.Length; i++) {
+                option.Options[i].Apply();
             }
         }
 
@@ -426,9 +458,8 @@ namespace EnhancedFramework.Core.Option {
         /// </summary>
         [Button(SuperColor.HarvestGold, IsDrawnOnTop = false)]
         public void Refresh() {
-
-            foreach (BaseGameOption _option in option.Options) {
-                _option.Refresh();
+            for (int i = 0; i < option.Options.Length; i++) {
+                option.Options[i].Refresh();
             }
         }
         #endregion
@@ -499,7 +530,7 @@ namespace EnhancedFramework.Core.Option {
     /// <summary>
     /// Exception raised when a <see cref="GameOptionException"/> is not compatible.
     /// </summary>
-    public class GameOptionException : Exception {
+    public sealed class GameOptionException : Exception {
         #region Global Members
         public const string MessageFormat = "Game Option incompatible with this request \'{0}\'";
 

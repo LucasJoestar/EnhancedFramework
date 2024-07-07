@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Fades the game screen.")]
     [ActionCategory("FadingGroup")]
-    public class ScreenFade : FadingObjectFade {
+    public sealed class ScreenFade : FadingObjectFade {
         #region Global Members
         public override IFadingObject FadingObject {
             get { return ScreenFadingGroup.Instance; }

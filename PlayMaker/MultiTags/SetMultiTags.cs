@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Set the tags of a Game Object from a a Multi Tags Behaviour Variable.")]
     [ActionCategory(ActionCategory.GameObject)]
-    public class SetMultiTags : FsmStateAction {
+    public sealed class SetMultiTags : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Value

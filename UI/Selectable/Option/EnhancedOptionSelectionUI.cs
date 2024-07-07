@@ -25,6 +25,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     public enum SelectionMovement {
         None = 0,
+
         Horizontal  = 1,
         Vertical    = 2,
     }
@@ -34,7 +35,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     #pragma warning disable
-    public class EnhancedOptionSelectionUI : EnhancedOptionUI {
+    public sealed class EnhancedOptionSelectionUI : EnhancedOptionUI {
         #region Parameters
         /// <summary>
         /// <see cref="EnhancedOptionSelectionUI"/>-related UI parameters.
@@ -67,7 +68,7 @@ namespace EnhancedFramework.UI {
         [Space(10f)]
 
         [Tooltip("Total count of available options")]
-        [SerializeField, Enhanced, DrawMember("OptionCount"), ReadOnly] private int optionCount = 0;
+        [SerializeField, Enhanced, DrawMember(nameof(OptionCount)), ReadOnly] private int optionCount = 0;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -75,10 +76,10 @@ namespace EnhancedFramework.UI {
         [SerializeField] private AudioAsset onSelectAudio = null;
 
         [Tooltip("This option text")]
-        [SerializeField, Enhanced, ShowIf("UseText")] private TextMeshProUGUI text = null;
+        [SerializeField, Enhanced, ShowIf(nameof(UseText))] private TextMeshProUGUI text = null;
 
         [Tooltip("Determines if GameObjects are activated or deactivated when their index is inferior or equal to the selected value")]
-        [SerializeField, Enhanced, ShowIf("UseGameObjects")] private bool activateGameObject = true;
+        [SerializeField, Enhanced, ShowIf(nameof(UseGameObjects))] private bool activateGameObject = true;
 
         [Space(10f)]
 
@@ -119,14 +120,14 @@ namespace EnhancedFramework.UI {
         /// Indicates if this option uses a text.
         /// </summary>
         public bool UseText {
-            get { return parameters.HasFlag(Parameters.Text); }
+            get { return HasFlag(Parameters.Text); }
         }
 
         /// <summary>
         /// Indicates if this option uses multiple <see cref="GameObject"/>.
         /// </summary>
         public bool UseGameObjects {
-            get { return parameters.HasFlag(Parameters.SingleActiveObject) || parameters.HasFlag(Parameters.MutlipleActiveObjects); }
+            get { return HasFlag(Parameters.SingleActiveObject) || HasFlag(Parameters.MutlipleActiveObjects); }
         }
 
         /// <summary>
@@ -135,9 +136,9 @@ namespace EnhancedFramework.UI {
         public bool UseString {
             get {
                 #if LOCALIZATION
-                return parameters.HasFlag(Parameters.Text) && !parameters.HasFlag(Parameters.Localization);
+                return HasFlag(Parameters.Text) && !HasFlag(Parameters.Localization);
                 #else
-                return parameters.HasFlag(Parameters.Text);
+                return HasFlag(Parameters.Text);
                 #endif
             }
         }
@@ -147,7 +148,7 @@ namespace EnhancedFramework.UI {
         /// Indicates if this option uses localization.
         /// </summary>
         public bool UseLocalization {
-            get { return parameters.HasFlag(Parameters.Text) && parameters.HasFlag(Parameters.Localization); }
+            get { return HasFlag(Parameters.Text) && HasFlag(Parameters.Localization); }
         }
         #endif
         #endregion
@@ -214,14 +215,14 @@ namespace EnhancedFramework.UI {
         /// <summary>
         /// Selects the next option from the list.
         /// </summary>
-        public virtual void SelectNextOption() {
+        public void SelectNextOption() {
             SelectOption(SelectedOptionIndex + 1);
         }
 
         /// <summary>
         /// Selects the previous option from the list.
         /// </summary>
-        public virtual void SelectPreviousOption() {
+        public void SelectPreviousOption() {
             SelectOption(SelectedOptionIndex - 1);
         }
 
@@ -229,7 +230,7 @@ namespace EnhancedFramework.UI {
         /// Selects a specific option from the list.
         /// </summary>
         /// <param name="_index">Index of the option to select.</param>
-        public virtual void SelectOption(int _index) {
+        public void SelectOption(int _index) {
 
             int _optionCount = Option.AvailableOptionCount;
             if (_optionCount == 0) {
@@ -312,12 +313,23 @@ namespace EnhancedFramework.UI {
             // Activate game objects.
             for (int i = 0; i < gameObjects.Length; i++) {
 
-                bool _active = parameters.HasFlag(Parameters.SingleActiveObject)
+                bool _active = HasFlag(Parameters.SingleActiveObject)
                              ? (i == SelectedOptionIndex)
-                             : (parameters.HasFlag(Parameters.MutlipleActiveObjects) ? (i <= SelectedOptionIndex) : false);
+                             : (HasFlag(Parameters.MutlipleActiveObjects) ? (i <= SelectedOptionIndex) : false);
 
                 gameObjects[i].SetActive(_active == activateGameObject);
             }
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Get if a specific <see cref="Parameters"/> is enabled.
+        /// </summary>
+        /// <param name="_flag"><see cref="Parameters"/> to check.</param>
+        /// <returns>True if this flag is enable, false otherwise.</returns>
+        public bool HasFlag(Parameters _flag) {
+            return parameters.HasFlagUnsafe(_flag);
         }
         #endregion
     }

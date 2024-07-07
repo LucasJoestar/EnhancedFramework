@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Plays a collection of Enhanced Feedback.")]
     [ActionCategory("Feedback")]
-    public class FeedbackPlay : FsmStateAction {
+    public sealed class FeedbackPlay : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Feedbacks - Options - Transform - Stop
@@ -37,7 +37,7 @@ namespace EnhancedFramework.PlayMaker {
         public FsmEnum Options = null;
 
         [Tooltip("Transform used to play these feedbacks (position and rotation).")]
-        [HideIf("HideTransform")]
+        [HideIf(nameof(HideTransform))]
         public FsmGameObject Transform;
 
         [Tooltip("If true, stops these feedbacks when exiting this state.")]
@@ -49,11 +49,11 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            AssetFeedbacks = null;
-            SceneFeedbacks = null;
-            Options = FeedbackPlayOptions.None;
-            Transform = null;
-            StopOnExit = false;
+            AssetFeedbacks  = null;
+            SceneFeedbacks  = null;
+            Options         = FeedbackPlayOptions.None;
+            Transform       = null;
+            StopOnExit      = false;
         }
 
         public override void OnEnter() {
@@ -72,7 +72,7 @@ namespace EnhancedFramework.PlayMaker {
         // -----------------------
 
         private void Play() {
-            GameObject _object = Transform.Value;
+            GameObject _object   = Transform.Value;
             Transform _transform = (_object != null) ? _object.transform : null;
 
             FeedbackPlayOptions _options = (FeedbackPlayOptions)Options.Value;

@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Get all tags in a Game Object and store them in a Multi Tags Behaviour Variable.")]
     [ActionCategory(ActionCategory.GameObject)]
-    public class GetMultiTags : FsmStateAction {
+    public sealed class GetMultiTags : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Store
@@ -53,8 +53,8 @@ namespace EnhancedFramework.PlayMaker {
             if (StoreBehaviour.Value is MultiTagsBehaviour _behaviour) {
                 GameObject _gameObject = Fsm.GetOwnerDefaultTarget(GameObject);
 
-                _behaviour.Tags = _gameObject.IsValid()
-                                ? _gameObject.GetTags()
+                _behaviour.Tags = (_gameObject.IsValid() && _gameObject.GetTags(out TagGroup _tags))
+                                ? _tags
                                 : new TagGroup();
             }
         }

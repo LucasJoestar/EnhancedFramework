@@ -19,7 +19,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="WeightAreaController"/>-related area settings wrapper.
     /// </summary>
     [Serializable]
-    public class WeightAreaSettings {
+    public sealed class WeightAreaSettings {
         #region Global Members
         [Space(10f)]
 
@@ -30,7 +30,7 @@ namespace EnhancedFramework.Core {
 
         [Tooltip("X: The distance from the centerpoint that the area will have full effect at\n" +
                  "Y: The distance from the centerpoint that the area will not have any effect")]
-        [Enhanced, MinMax("MinMaxRange")] public Vector2 MinMaxDistance = new Vector2(2f, 5f);
+        [Enhanced, MinMax(nameof(MinMaxRange))] public Vector2 MinMaxDistance = new Vector2(2f, 5f);
 
         [Tooltip("Area range max slider value")]
         [SerializeField, Enhanced, Range(5f, 99f)] private float maxRange = 10f;
@@ -64,7 +64,7 @@ namespace EnhancedFramework.Core {
 
         [Tooltip("If true, uses a range area to control this object weight")]
         [SerializeField] protected bool useRangeArea = false;
-        [SerializeField, Enhanced, ShowIf("useRangeArea")] protected WeightAreaSettings areaSettings = new WeightAreaSettings();
+        [SerializeField, Enhanced, ShowIf(nameof(useRangeArea))] protected WeightAreaSettings areaSettings = new WeightAreaSettings();
 
         // -----------------------
 
@@ -139,8 +139,8 @@ namespace EnhancedFramework.Core {
             Vector3 _position = _transform.position;
 
             AxisConstraints _axes = areaSettings.Axes;
-            Vector3 _normal =  !_axes.HasFlag(AxisConstraints.Y) ? _transform.up
-                            : (!_axes.HasFlag(AxisConstraints.X) ? _transform.right : _transform.forward);
+            Vector3 _normal =  !_axes.HasFlagUnsafe(AxisConstraints.Y) ? _transform.up
+                            : (!_axes.HasFlagUnsafe(AxisConstraints.X) ? _transform.right : _transform.forward);
 
             Vector2 _range = areaSettings.MinMaxDistance;
             bool _isActor = GetActorDistance(out float _actorDistance);
@@ -325,20 +325,20 @@ namespace EnhancedFramework.Core {
                 return false;
             }
 
-            Vector3 _position = transform.position;
             Vector3 _actorPosition = actor.position;
+            Vector3 _position      = transform.position;
 
-            AxisConstraints _axes = areaSettings.Axes;
+            AxisConstraints _axes  = areaSettings.Axes;
 
-            if (!_axes.HasFlag(AxisConstraints.X)) {
+            if (!_axes.HasFlagUnsafe(AxisConstraints.X)) {
                 _actorPosition = _actorPosition.SetX(_position.x);
             }
 
-            if (!_axes.HasFlag(AxisConstraints.Y)) {
+            if (!_axes.HasFlagUnsafe(AxisConstraints.Y)) {
                 _actorPosition = _actorPosition.SetY(_position.y);
             }
 
-            if (!_axes.HasFlag(AxisConstraints.Z)) {
+            if (!_axes.HasFlagUnsafe(AxisConstraints.Z)) {
                 _actorPosition = _actorPosition.SetZ(_position.z);
             }
 
@@ -353,7 +353,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_actor">This area actor.</param>
         protected virtual void SetActor(bool _isActor, Transform _actor) {
             isActor = _isActor;
-            actor = _actor;
+            actor   = _actor;
         }
         #endregion
     }

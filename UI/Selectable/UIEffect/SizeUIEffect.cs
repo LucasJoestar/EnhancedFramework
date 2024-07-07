@@ -6,16 +6,16 @@
 
 #if TEXT_MESH_PRO_PACKAGE
 using EnhancedEditor;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 namespace EnhancedFramework.UI {
     /// <summary>
     /// Set the size of the button text.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Size UI Effect"), DisallowMultipleComponent]
-    public class SizeUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Size UI Effect"), DisallowMultipleComponent]
+    public sealed class SizeUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Size Effect")]
 

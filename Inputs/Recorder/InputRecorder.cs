@@ -34,7 +34,9 @@ namespace EnhancedFramework.Inputs {
     /// </summary>
     internal struct EnhancedRecorderDeviceState : IInputStateTypeInfo {
         #region Global Members
-        public FourCC format => new FourCC('E', 'H', 'C', 'D');
+        public readonly FourCC format {
+            get { return new FourCC('E', 'H', 'C', 'D'); }
+        }
 
         /// <summary>
         /// Dummy field used to compile this struct.
@@ -51,7 +53,7 @@ namespace EnhancedFramework.Inputs {
     [InitializeOnLoad]
     #endif
     [InputControlLayout(displayName = "Enhanced Recorder", stateType = typeof(EnhancedRecorderDeviceState))]
-    internal class EnhancedRecorderDevice : InputDevice {
+    internal sealed class EnhancedRecorderDevice : InputDevice {
         #region Global Members
         /// <summary>
         /// Instance of this <see cref="InputDevice"/>.
@@ -61,7 +63,7 @@ namespace EnhancedFramework.Inputs {
         /// <summary>
         /// Dummy button.
         /// </summary>
-        public ButtonControl button { get; private set; }
+        public ButtonControl Button { get; private set; }
 
         static EnhancedRecorderDevice() {
             InputSystem.RegisterLayout<EnhancedRecorderDevice>("Enhanced Device");
@@ -75,7 +77,7 @@ namespace EnhancedFramework.Inputs {
         protected override void FinishSetup() {
             base.FinishSetup();
 
-            button = GetChildControl<ButtonControl>("button");
+            Button = GetChildControl<ButtonControl>("button");
         }
         #endregion
     }
@@ -87,9 +89,9 @@ namespace EnhancedFramework.Inputs {
     public struct InputCaptureSingleDataObject {
         #region Content
         public Quaternion Quaternion;
-        public Vector3 Vector;
-        public float Float;
-        public string String;
+        public Vector3    Vector;
+        public float      Float;
+        public string     String;
         #endregion
     }
 
@@ -97,7 +99,7 @@ namespace EnhancedFramework.Inputs {
     /// Wrapper for a custom input data.
     /// </summary>
     [Serializable]
-    public class InputCaptureData {
+    public sealed class InputCaptureData {
         #region Global Members
         /// <summary>
         /// Unique identifier of this input data.
@@ -174,7 +176,7 @@ namespace EnhancedFramework.Inputs {
     /// Holder for all input data from a single capture.
     /// </summary>
     [Serializable]
-    public class InputCaptureDataHolder {
+    public sealed class InputCaptureDataHolder {
         #region Global Members
         /// <summary>
         /// All data from this input capture.
@@ -191,9 +193,12 @@ namespace EnhancedFramework.Inputs {
         /// <param name="_data">Data value.</param>
         public void RecordData(double _time, int _id, InputCaptureSingleDataObject _data) {
 
-            for (int i = 0; i < Data.Count; i++) {
+            List<InputCaptureData> _dataSpan = Data.collection;
+            int _dataCount = _dataSpan.Count;
 
-                if (Data[i].Record(_time, _id, _data)) {
+            for (int i = 0; i < _dataCount; i++) {
+
+                if (_dataSpan[i].Record(_time, _id, _data)) {
                     return;
                 }
             }
@@ -213,9 +218,12 @@ namespace EnhancedFramework.Inputs {
         /// <param name="_timeStartEvent">Record first event time.</param>
         public void ReplayData(IInputRecorderData _recorderData, double _time, double _timeRuntime, double _timeStartEvent) {
 
-            for (int i = 0; i < Data.Count; i++) {
+            List<InputCaptureData> _dataSpan = Data.collection;
+            int _dataCount = _dataSpan.Count;
 
-                if (Data[i].Replay(_recorderData, _time, _timeRuntime, _timeStartEvent)) {
+            for (int i = 0; i < _dataCount; i++) {
+
+                if (_dataSpan[i].Replay(_recorderData, _time, _timeRuntime, _timeStartEvent)) {
                     return;
                 }
             }
@@ -254,7 +262,7 @@ namespace EnhancedFramework.Inputs {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Input/Input Recorder"), DisallowMultipleComponent]
     #pragma warning disable
-    public class InputRecorder : EnhancedBehaviour, IStableUpdate {
+    public sealed class InputRecorder : EnhancedBehaviour, IStableUpdate {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Stable;
 
         #region State
@@ -325,7 +333,7 @@ namespace EnhancedFramework.Inputs {
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
         [Tooltip("Memory allocate for capture by default (will automatically grow up to max memory)")]
-        [SerializeField, Enhanced, DisplayName("Default Size"), Range("RecordMemorySizeRange")] private int recordMemoryDefaultSize = 2;
+        [SerializeField, Enhanced, DisplayName("Default Size"), Range(nameof(RecordMemorySizeRange))] private int recordMemoryDefaultSize = 2;
 
         [Tooltip("Maximum memory allocated for capture. Once a capture reaches this limit, new events will start overwriting old ones")]
         [SerializeField, Enhanced, DisplayName("Max Size"), Range(1, 500)] private int recordMemoryMaxSize = 10;
@@ -569,7 +577,7 @@ namespace EnhancedFramework.Inputs {
         #endregion
 
         #region Capture
-        private const BindingFlags StaticFlags      = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        private const BindingFlags StaticFlags      = BindingFlags.Static   | BindingFlags.Public | BindingFlags.NonPublic;
         private const BindingFlags InstanceFlags    = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static readonly Type inputRuntimeType           = typeof(InputEventTrace).Assembly.GetType("UnityEngine.InputSystem.LowLevel.InputRuntime");
@@ -614,16 +622,27 @@ namespace EnhancedFramework.Inputs {
 
                 // Get all capture events.
                 List<InputEventPtr> _events = (List<InputEventPtr>)allEventsField.GetValue(replayController);
-                if ((_events == null) || (_events.Count < 3)) {
+                int _eventCount = _events.Count;
+
+                if ((_events == null) || (_eventCount < 3)) {
                     return 0d;
                 }
 
                 // Retrieve recorder device id (not the same as during record).
                 if ((eventDeviceID == 0) && (firstCaptureEventID != 0)) {
 
-                    int _firstEventIndex = _events.FindIndex(e => e.id == firstCaptureEventID);
-                    eventDeviceID = (_firstEventIndex == -1) ? -1 : _events[_firstEventIndex].deviceId;
+                    int _firstEventIndex = -1;
+                    for (int i = 0; i < _eventCount; i++) {
 
+                        InputEventPtr _ptr = _events[i];
+                        if (_ptr.id == firstCaptureEventID) {
+
+                            _firstEventIndex = _ptr.deviceId;
+                            break;
+                        }
+                    }
+
+                    eventDeviceID = _firstEventIndex;
                     //this.LogError("Delog ID => " + firstCaptureEventID + " - " + eventDeviceID + " | " + _firstEventIndex);
                 }
 
@@ -631,21 +650,22 @@ namespace EnhancedFramework.Inputs {
                 int _index = (int)eventIndexField.GetValue(replayController);
                 int _previous = _index - 1;
 
-                int _adjustment = Mathf.Clamp(replayAdjustment, 0, _events.Count - 1);
+                int _adjustment = Mathf.Clamp(replayAdjustment, 0, _eventCount - 1);
 
                 // Detect marker index.
                 int _min = Mathf.Max(0, _index - replayAdjustment);
-                int _max = Mathf.Min(_events.Count - 1, _index + replayAdjustment);
+                int _max = Mathf.Min(_eventCount - 1, _index + replayAdjustment);
 
-                int _markerIndex = _events.FindIndex(_min, Mathf.Max(0, _max - _min), e => e.deviceId == eventDeviceID);
-
-                if (_markerIndex != -1) {
-                    _index = _markerIndex;
+                for (int i = _min; i < Mathf.Max(0, _max - _min); i++) {
+                    if (_events[i].deviceId == eventDeviceID) {
+                        _index = i;
+                        break;
+                    }
                 }
 
                 // Security.
-                _index = Mathf.Clamp(_index, 0, _events.Count - 1);
-                _previous = Mathf.Clamp(_previous, 0, _events.Count - 1);
+                _index    = Mathf.Clamp(_index, 0, _eventCount - 1);
+                _previous = Mathf.Clamp(_previous, 0, _eventCount - 1);
 
                 return _events[_index].time - _events[_previous].time;
             }
@@ -867,12 +887,12 @@ namespace EnhancedFramework.Inputs {
             // Used to consistently disable capture during loading or any sequence that doesn't require input.
             // Reduces potential machine-dependant issues (like loading times).
 
-            InputManager _inputs = InputManager.Instance;
+            InputDatabase _database = InputDatabase.Database;
             bool _active = false;
 
-            for (int i = 0; i < _inputs.InputMapCount; i++) {
+            for (int i = 0; i < _database.InputMapCount; i++) {
 
-                if (_inputs.GetInputMapAt(i).IsEnabled) {
+                if (_database.GetMapAt(i).IsEnabled) {
                     _active = true;
                 }
             }
@@ -923,12 +943,12 @@ namespace EnhancedFramework.Inputs {
         /// <param name="_pause"></param>
         private void PauseOrphanInputs(bool _pause) {
 
-            InputManager _inputs = InputManager.Instance;
+            InputDatabase _database = InputDatabase.Database;
             bool _active = false;
 
-            for (int i = 0; i < _inputs.InputCount; i++) {
+            for (int i = _database.InputCount; i-- > 0;) {
 
-                var _input = _inputs.GetInputAt(i);
+                var _input = _database.GetActionAt(i);
 
                 if (_input.IsOrphan) {
                     _input.IsPaused = _pause;
@@ -953,8 +973,9 @@ namespace EnhancedFramework.Inputs {
             }
 
             double _time = InputCurrentTime;
+            int _bufferSize = dataBuffer.Count;
 
-            for (int i = 0; i < dataBuffer.Count; i++) {
+            for (int i = 0; i < _bufferSize; i++) {
 
                 IInputRecorderData _recordData = dataBuffer[i];
 
@@ -981,7 +1002,9 @@ namespace EnhancedFramework.Inputs {
                 return;
             }
 
-            for (int i = 0; i < dataBuffer.Count; i++) {
+            int _bufferSize = dataBuffer.Count;
+
+            for (int i = 0; i < _bufferSize; i++) {
 
                 IInputRecorderData _recordData = dataBuffer[i];
                 dataHolder.ReplayData(_recordData, _time, _timeRuntime, _timeFirstEvent);

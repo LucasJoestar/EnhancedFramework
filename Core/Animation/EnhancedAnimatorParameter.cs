@@ -14,6 +14,7 @@ using UnityEngine;
 
 #if DOTWEEN
 using DG.Tweening;
+using System.Collections.Generic;
 #endif
 
 #if UNITY_EDITOR
@@ -28,12 +29,12 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [CreateAssetMenu(fileName = "ANIP_AnimatorParameter", menuName = FrameworkUtility.MenuPath + "Animation/Animator Parameter", order = FrameworkUtility.MenuOrder)]
     #pragma warning disable
-    public class EnhancedAnimatorParameter : EnhancedScriptableObject {
+    public sealed class EnhancedAnimatorParameter : EnhancedScriptableObject {
         #region Animator Wrapper
         /// <summary>
         /// Wrapper for a single <see cref="UnityEngine.Animator"/> operations.
         /// </summary>
-        public class AnimatorWrapper {
+        public sealed class AnimatorWrapper {
             private const float DelayValue = .001f;
 
             /// <summary>
@@ -61,7 +62,9 @@ namespace EnhancedFramework.Core {
                 Animator = _animator;
             }
 
-            // -----------------------
+            // -------------------------------------------
+            // Utility
+            // -------------------------------------------
 
             /// <inheritdoc cref="Delayer.Call(float, Action, bool)"/>
             public void Delay(Action _callback) {
@@ -81,11 +84,7 @@ namespace EnhancedFramework.Core {
                 tween.Stop();
 
                 tweenTarget = _to;
-                tween = Tweener.Tween(_from, _to, _setter, _duration, _ease, RealTime, OnComplete);
-
-                // ----- Local Method ----- \\
-
-                void OnComplete(bool _complete) { }
+                tween = Tweener.Tween(_from, _to, _setter, _duration, _ease, RealTime, null);
             }
             #endif
 
@@ -99,11 +98,7 @@ namespace EnhancedFramework.Core {
                 tween.Stop();
 
                 tweenTarget = _to;
-                tween = Tweener.Tween(_from, _to, _setter, _duration, _curve, RealTime, OnComplete);
-
-                // ----- Local Method ----- \\
-
-                void OnComplete(bool _complete) { }
+                tween = Tweener.Tween(_from, _to, _setter, _duration, _curve, RealTime, null);
             }
 
             /// <summary>
@@ -129,13 +124,13 @@ namespace EnhancedFramework.Core {
         [Space(10f)]
 
         [Tooltip("Default value of this parameter")]
-        [SerializeField, Enhanced, ShowIf("IsFloat"),   DisplayName("Default")] private float defaultFloat  = 0f;
+        [SerializeField, Enhanced, ShowIf(nameof(IsFloat)), DisplayName("Default")] private float defaultFloat  = 0f;
 
         [Tooltip("Default value of this parameter")]
-        [SerializeField, Enhanced, ShowIf("IsBool"),    DisplayName("Default")] private bool defaultBool    = false;
+        [SerializeField, Enhanced, ShowIf(nameof(IsBool)),  DisplayName("Default")] private bool defaultBool    = false;
 
         [Tooltip("Default value of this parameter")]
-        [SerializeField, Enhanced, ShowIf("IsInt"),     DisplayName("Default")] private int defaultInt      = 0;
+        [SerializeField, Enhanced, ShowIf(nameof(IsInt)),   DisplayName("Default")] private int defaultInt      = 0;
 
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
@@ -145,14 +140,14 @@ namespace EnhancedFramework.Core {
         [Space(5f)]
 
         [Tooltip("Parameter update tween duration (in seconds)")]
-        [SerializeField, Enhanced, ShowIf("CanUseTween"), Range(0f, 10f)] private float updateValueDuration = 0f;
+        [SerializeField, Enhanced, ShowIf(nameof(CanUseTween)), Range(0f, 10f)] private float updateValueDuration = 0f;
 
         #if DOTWEEN
         [Tooltip("Parameter update evaluation ease")]
-        [SerializeField, Enhanced, ShowIf("CanUseTween")] private Ease updateEase = Ease.Linear;
+        [SerializeField, Enhanced, ShowIf(nameof(CanUseTween))] private Ease updateEase = Ease.Linear;
         #else
         [Tooltip("Parameter update evaluation curve")]
-        [SerializeField, Enhanced, ShowIf("CanUseTween")] private AnimationCurve updateCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+        [SerializeField, Enhanced, ShowIf(nameof(CanUseTween))] private AnimationCurve updateCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
         #endif
 
         // -----------------------
@@ -240,11 +235,14 @@ namespace EnhancedFramework.Core {
         /// <param name="_animator"><see cref="Animator"/> to unregister.</param>
         public void Unregister(Animator _animator) {
 
-            for (int i = 0; i < animators.Count; i++) {
-                
-                if (animators[i].Animator == _animator) {
+            List<AnimatorWrapper> _animatorsSpan = animators.collection;
+            int _count = _animatorsSpan.Count;
 
-                    animators.RemoveAt(i);
+            for (int i = 0; i < _count; i++) {
+                
+                if (_animatorsSpan[i].Animator == _animator) {
+
+                    _animatorsSpan.RemoveAt(i);
                     return;
                 }
             }
@@ -257,7 +255,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <inheritdoc cref="EnhancedAnimatorController.SetBool(Animator, int, bool)"/>
-        public virtual void SetBool(Animator _animator, bool _value) {
+        public void SetBool(Animator _animator, bool _value) {
 
             if (!IsBool) {
 
@@ -279,7 +277,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <inheritdoc cref="EnhancedAnimatorController.SetInt(Animator, int, int)"/>
-        public virtual void SetInt(Animator _animator, int _value) {
+        public void SetInt(Animator _animator, int _value) {
 
             if (!IsInt) {
 
@@ -302,7 +300,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <inheritdoc cref="EnhancedAnimatorController.SetFloat(Animator, int, float)"/>
-        public virtual void SetFloat(Animator _animator, float _value) {
+        public void SetFloat(Animator _animator, float _value) {
 
             if (!IsFloat) {
 
@@ -325,7 +323,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <inheritdoc cref="EnhancedAnimatorController.SetTrigger(Animator, int)"/>
-        public virtual void SetTrigger(Animator _animator) {
+        public void SetTrigger(Animator _animator) {
 
             if (!IsTrigger) {
 
@@ -343,7 +341,7 @@ namespace EnhancedFramework.Core {
         }
 
         /// <inheritdoc cref="EnhancedAnimatorController.ResetTrigger(Animator, int)"/>
-        public virtual void ResetTrigger(Animator _animator) {
+        public void ResetTrigger(Animator _animator) {
 
             if (!IsTrigger) {
 
@@ -427,9 +425,12 @@ namespace EnhancedFramework.Core {
         /// <returns>True if an associated wrapper could be found for this animator, false otherwise.</returns>
         private bool GetWrapperIndex(Animator _animator, out int _index) {
 
-            for (int i = 0; i < animators.Count; i++) {
+            List<AnimatorWrapper> _animatorsSpan = animators.collection;
+            int _count = _animatorsSpan.Count;
 
-                if (animators[i].Animator == _animator) {
+            for (int i = 0; i < _count; i++) {
+
+                if (_animatorsSpan[i].Animator == _animator) {
 
                     _index = i;
                     return true;
@@ -453,12 +454,12 @@ namespace EnhancedFramework.Core {
         internal void Create(AnimatorController _animator, ref AnimatorControllerParameter[] _parameters) {
 
             // Parameter.
-            if (!_parameters.Find(s => s.name == parameterName, out AnimatorControllerParameter _parameter)) {
+            if (!FindParameterByName(_parameters, parameterName, out AnimatorControllerParameter _parameter)) {
 
                 _animator.AddParameter(parameterName, type);
                 _parameters = _animator.parameters;
 
-                if (!_parameters.Find(s => s.name == parameterName, out _parameter)) {
+                if (!FindParameterByName(_parameters, parameterName, out _parameter)) {
                     return;
                 }
             }
@@ -469,6 +470,22 @@ namespace EnhancedFramework.Core {
             _parameter.defaultBool  = defaultBool;
             _parameter.defaultFloat = defaultFloat;
             _parameter.defaultInt   = defaultInt;
+        }
+
+        // -----------------------
+
+        private bool FindParameterByName(AnimatorControllerParameter[] _parameters, string _name, out AnimatorControllerParameter _parameter) {
+
+            for (int i = 0; i < _parameters.Length; i++) {
+
+                _parameter = _parameters[i];
+                if (_parameter.name.Equals(_name, System.StringComparison.Ordinal)) {
+                    return true;
+                }
+            }
+
+            _parameter = null;
+            return false;
         }
         #endif
         #endregion

@@ -19,17 +19,19 @@ namespace EnhancedFramework.UI {
     /// Enum referencing all <see cref="Selectable"/> possible states.
     /// </summary>
     public enum SelectableState {
-        Normal,
-        Highlighted,
-        Pressed,
-        Selected,
-        Disabled
+        Normal      = 0,
+        Highlighted = 1,
+        Pressed     = 2,
+        Selected    = 3,
+        Disabled    = 4,
     }
 
     /// <summary>
     /// Base class to inherit your own <see cref="EnhancedSelectable"/> effects from.
     /// </summary>
     public abstract class EnhancedSelectableEffect : EnhancedBehaviour {
+        public const string MenuPath = FrameworkUtility.MenuPath + "UI/Effect/";
+
         #region Behaviour
         /// <summary>
         /// Called when changing the selection state of the associated selectable.
@@ -91,6 +93,10 @@ namespace EnhancedFramework.UI {
         }
 
         #if UNITY_EDITOR
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
         protected override void OnValidate() {
 
             if (EditorApplication.isPlayingOrWillChangePlaymode) {
@@ -161,7 +167,7 @@ namespace EnhancedFramework.UI {
             // Apply effects.
             SelectableState _selectableState = GetSelectableState(_state);
 
-            foreach (var _effect in Effects) {
+            foreach (EnhancedSelectableEffect _effect in Effects) {
                 if (_effect == null) {
                     continue;
                 }

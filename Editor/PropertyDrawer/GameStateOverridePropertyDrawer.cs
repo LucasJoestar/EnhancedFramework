@@ -14,7 +14,7 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="GameStateOverride"/> drawer.
     /// </summary>
     [CustomPropertyDrawer(typeof(GameStateOverride), true)]
-    public class GameStateOverridePropertyDrawer : EnhancedPropertyEditor {
+    public sealed class GameStateOverridePropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
         protected override float OnEnhancedGUI(Rect _position, SerializedProperty _property, GUIContent _label) {
             _position.height = EditorGUI.GetPropertyHeight(_property, true);

@@ -53,7 +53,7 @@ namespace EnhancedFramework.Core.GameStates {
 
         #region Behaviour   
         public const int ChronosPriority = 999;
-        private readonly int chronosID = EnhancedUtility.GenerateGUID();
+        private readonly int chronosID   = EnhancedUtility.GenerateGUID();
 
         // -----------------------
 
@@ -62,14 +62,14 @@ namespace EnhancedFramework.Core.GameStates {
         /// </summary>
         public virtual GameStateOverride Reset() {
             IsCursorVisible = true;
-            CursorLockMode = CursorLockMode.None;
+            CursorLockMode  = CursorLockMode.None;
 
-            IsLoading = false;
+            IsLoading   = false;
             IsUnloading = false;
 
-            IsPaused = false;
+            IsPaused      = false;
             FreezeChronos = false;
-            IsQuitting = false;
+            IsQuitting    = false;
 
             return this;
         }
@@ -79,7 +79,7 @@ namespace EnhancedFramework.Core.GameStates {
         /// </summary>
         internal protected virtual void Apply() {
             // Cursor overrides.
-            Cursor.visible = IsCursorVisible;
+            Cursor.visible   = IsCursorVisible;
             Cursor.lockState = CursorLockMode;
 
             // Freeze.

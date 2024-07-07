@@ -11,5 +11,5 @@ namespace EnhancedFramework.Core {
     /// <see cref="EnhancedAssetFeedback"/> related <see cref="AssetMaterialDatabase{T}"/>.
     /// </summary>
     [CreateAssetMenu(fileName = MenuPrefix + "FeedbackMaterialDatabase", menuName = MenuPath + "Feedback", order = MenuOrder)]
-    public class FeedbackMaterialDatabase : AssetMaterialDatabase<EnhancedAssetFeedback> { }
+    public sealed class FeedbackMaterialDatabase : AssetMaterialDatabase<EnhancedAssetFeedback> { }
 }

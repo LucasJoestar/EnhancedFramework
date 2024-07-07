@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Stops a collection of Enhanced Feedback.")]
     [ActionCategory("Feedback")]
-    public class FeedbackStop : FsmStateAction {
+    public sealed class FeedbackStop : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Feedbacks

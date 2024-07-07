@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-300)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Cross Scene/Cross Scene Object"), DisallowMultipleComponent]
-    public class CrossSceneObject : EnhancedBehaviour {
+    public sealed class CrossSceneObject : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Enhanced Behaviour

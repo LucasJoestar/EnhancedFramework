@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-using Object = UnityEngine.Object;
+using Object     = UnityEngine.Object;
 using SceneAsset = EnhancedEditor.SceneAsset;
 
 namespace EnhancedFramework.Editor {
@@ -20,7 +20,7 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="CrossSceneReference{T}"/> drawer.
     /// </summary>
     [CustomPropertyDrawer(typeof(CrossSceneReference<>), true)]
-    public class CrossSceneReferencePropertyDrawer : EnhancedPropertyEditor {
+    public sealed class CrossSceneReferencePropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
         private const int CacheLimit = 100;
 
@@ -37,6 +37,7 @@ namespace EnhancedFramework.Editor {
                                                                          "The reference object has been destroyed or could not be found");
 
         private static readonly Dictionary<string, Pair<EnhancedObjectID, CrossSceneObject>> references = new  Dictionary<string, Pair<EnhancedObjectID, CrossSceneObject>>();
+        private static readonly SceneAsset sceneAssetBuffer = null;
 
         // -----------------------
 
@@ -67,10 +68,12 @@ namespace EnhancedFramework.Editor {
             EnhancedObjectID _id;
 
             // Cache the reference object for performance.
+            SceneAsset _sceneBuffer = sceneAssetBuffer;
+
             if (references.TryGetValue(_propertyID, out var _pair)) {
                 _id = _pair.First;
 
-                if ((_pair.Second == null) && _id.GetScene(out SceneAsset _scene) && _scene.IsLoaded && GetReference(_id, out CrossSceneObject _object)) {
+                if ((_pair.Second == null) && _id.GetScene(_sceneBuffer) && _sceneBuffer.IsLoaded && GetReference(_id, out CrossSceneObject _object)) {
                     _pair.Second = _object;
                     references[_propertyID] = _pair;
                 }
@@ -82,7 +85,7 @@ namespace EnhancedFramework.Editor {
 
                 CrossSceneObject _object = null;
 
-                bool _shouldLock = _id.GetScene(out SceneAsset _scene) && (!_scene.IsLoaded || !GetReference(_id, out _object));
+                bool _shouldLock = _id.GetScene(_sceneBuffer) && (!_sceneBuffer.IsLoaded || !GetReference(_id, out _object));
 
                 if (!_isLock) {
                     _property.isExpanded = _isLock
@@ -115,12 +118,12 @@ namespace EnhancedFramework.Editor {
                         // When the reference could not be found, display an informative help box.
                         GUIContent _gui;
 
-                        if (!_id.GetScene(out SceneAsset _scene) || _scene.IsLoaded) {
+                        if (!_id.GetScene(_sceneBuffer) || _sceneBuffer.IsLoaded) {
                             _gui = missingGUI;
                             _gui.text = $"Missing Reference [{_type.Name.Bold()}]";
                         } else {
                             _gui = notLoadedGUI;
-                            _gui.text = $"Unloaded [{_scene.Name.Bold()}]";
+                            _gui.text = $"Unloaded [{_sceneBuffer.Name.Bold()}]";
                         }
 
                         EditorGUI.LabelField(_propertyPosition, GUIContent.none, EditorStyles.helpBox);

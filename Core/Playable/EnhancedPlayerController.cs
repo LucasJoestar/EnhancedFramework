@@ -13,7 +13,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Player/Enhanced Player Controller")]
-    public class EnhancedPlayerController : EventTrigger {
+    public sealed class EnhancedPlayerController : EventTrigger {
         #region Global Members
         [Section("Enhanced Player Controller"), PropertyOrder(0)]
 
@@ -29,6 +29,10 @@ namespace EnhancedFramework.Core {
 
         #region Enhanced Behaviour
         #if UNITY_EDITOR
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
         protected override void OnValidate() {
             base.OnValidate();
 

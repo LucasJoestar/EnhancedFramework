@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker.Timeline {
     /// Sends an event in a <see cref="PlayMakerFSM"/> on play.
     /// </summary>
     [DisplayName("PlayMaker/Send Event")]
-    public class EventPlayMakerClip : PlayMakerPlayableAsset<EventPlayMakerBehaviour> {
+    public sealed class EventPlayMakerClip : PlayMakerPlayableAsset<EventPlayMakerBehaviour> {
         #region Utility
         public override string ClipDefaultName {
             get { return "PlayMaker Event"; }
@@ -29,7 +29,7 @@ namespace EnhancedFramework.PlayMaker.Timeline {
     /// <see cref="EventPlayMakerClip"/>-related <see cref="PlayableBehaviour"/>.
     /// </summary>
     [Serializable]
-    public class EventPlayMakerBehaviour : EnhancedPlayableBehaviour<PlayMakerFSM> {
+    public sealed class EventPlayMakerBehaviour : EnhancedPlayableBehaviour<PlayMakerFSM> {
         #region Global Members
         public string EventName = "Timeline Event";
 

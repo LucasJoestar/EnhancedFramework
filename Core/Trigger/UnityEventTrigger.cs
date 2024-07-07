@@ -10,7 +10,7 @@ using UnityEngine.Events;
 
 namespace EnhancedFramework.Core {
     /// <summary>
-    /// Plays a <see cref="UnityEvent"/> on trigger enter and or exit.
+    /// Plays a <see cref="UnityEvent"/> on trigger enter and / or exit.
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Trigger/Unity Event Trigger"), DisallowMultipleComponent]

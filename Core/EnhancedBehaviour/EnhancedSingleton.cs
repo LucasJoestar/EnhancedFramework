@@ -21,7 +21,14 @@ namespace EnhancedFramework.Core {
     /// <typeparam name="T">This object singleton type.</typeparam>
     public abstract class EnhancedSingleton<T> : EnhancedBehaviour where T : EnhancedSingleton<T> {
         #region Singleton Instance
+        /// <summary>
+        /// Called whenever a new singleton instance of this class is assigned.
+        /// </summary>
+        public static event Action<EnhancedSingleton<T>> OnInstanceChanged = null;
+
         private static T instance = null;
+
+        // -----------------------
 
         /// <summary>
         /// Singleton instance.
@@ -37,13 +44,9 @@ namespace EnhancedFramework.Core {
                 return instance;
             } protected set {
                 instance = value;
+                OnInstanceChanged?.Invoke(value);
             }
         }
-
-        /// <summary>
-        /// Called whenever a new singleton instance of this class is assigned.
-        /// </summary>
-        public static event Action<EnhancedSingleton<T>> OnInstanceChanged = null;
         #endregion
 
         #region Enhanced Behaviour
@@ -52,7 +55,6 @@ namespace EnhancedFramework.Core {
                 OnNonSingletonInstance();   // When a singleton instance already exist, call this method.
             } else {
                 Instance = this as T;       // Set this object as singleton instance.
-                OnInstanceChanged?.Invoke(this);
             }
 
             base.OnBehaviourEnabled();

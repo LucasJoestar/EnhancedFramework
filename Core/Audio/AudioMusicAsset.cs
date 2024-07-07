@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 using Range = EnhancedEditor.RangeAttribute;
@@ -16,6 +17,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     public enum MusicInterruption {
         None    = 0,
+
         Pause   = 1,
         Stop    = 2,
     }
@@ -114,7 +116,7 @@ namespace EnhancedFramework.Core {
     /// used to stop and play the music while applying volume fade effects.
     /// </summary>
     [Serializable]
-    public class MusicPlayer : IHandle, IPoolableObject {
+    public sealed class MusicPlayer : IHandle, IPoolableObject {
         #region States
         /// <summary>
         /// References all available states for this music.
@@ -680,6 +682,12 @@ namespace EnhancedFramework.Core {
         private TweenHandler sourceVolumeTween = default;
         private DelayHandler delay = default;
 
+        private Action<float> interruptionVolumeSetter  = null;
+        private Action<float> musicVolumeSetter         = null;
+        private Action<bool> onFadeInStoppedCallback    = null;
+        private Action onResumeCallback                 = null;
+        private Action onPlayCallback                   = null;
+
         private MusicInterruption fadeInterruption = MusicInterruption.None;
         private bool instantFade = false;
 
@@ -695,6 +703,7 @@ namespace EnhancedFramework.Core {
             float _delay = _settings.PlayDelay;
 
             // Setup.
+            InitDelegates();
             StopFade();
             SetTransitionState(TransitionState.FadeIn);
 
@@ -705,7 +714,7 @@ namespace EnhancedFramework.Core {
                 if (_settings.OverrideFadeOut) {
 
                     // Fade tween.
-                    transitionVolumeTween = Tweener.Tween(0f, interruptionVolume, SetInterruptionVolume, _settings.FadeOutDuration, _settings.FadeOutCurve, true, OnTweenComplete);
+                    transitionVolumeTween = Tweener.Tween(0f, interruptionVolume, interruptionVolumeSetter, _settings.FadeOutDuration, _settings.FadeOutCurve, true, onFadeInStoppedCallback);
 
                     if (_settings.WaitForFadeOut) {
                         _delay += _settings.FadeOutDuration;
@@ -723,41 +732,11 @@ namespace EnhancedFramework.Core {
             } else {
 
                 // Instant transition if there is no music to interrupt.
-                OnTweenComplete(true);
+                OnFadeInStopped(true);
             }
 
             // Play.
-            delay = Delayer.Call(_delay, OnPlay, true);
-
-            // ----- Local Methods ----- \\
-
-            void OnTweenComplete(bool _complete) {
-
-                if (!_complete) {
-                    return;
-                }
-
-                SetFadeInterruption(interruptionMode, true);
-            }
-
-            void OnPlay() {
-
-                PlayMusic();
-                AudioMusicAsset.TransitionSettings _settings = music.PlaySettings;
-
-                // Fade in.
-                if (audioHandler.GetHandle(out EnhancedAudioPlayer _player)) {
-
-                    AnimationCurve _fadeInCurve = _settings.OverrideFadeIn ? _settings.FadeInCurve      : _player.AudioAsset.FadeInCurve;
-                    float _fadeInDuration       = _settings.OverrideFadeIn ? _settings.FadeInDuration   : _player.AudioAsset.FadeInDuration;
-
-                    sourceVolumeTween = Tweener.Tween(sourceVolume, 1f, SetMusicVolume, _fadeInDuration, _fadeInCurve, true, OnComplete);
-                } else {
-                    SetMusicVolume(1f);
-                }
-            }
-
-            void OnComplete(bool _complete) { }
+            delay = Delayer.Call(_delay, onPlayCallback, true);
         }
 
         /// <summary>
@@ -770,6 +749,7 @@ namespace EnhancedFramework.Core {
             float _delay = _settings.PlayDelay;
 
             // Setup.
+            InitDelegates();
             StopFade();
             SetTransitionState(TransitionState.FadeOut);
 
@@ -780,7 +760,7 @@ namespace EnhancedFramework.Core {
                 AnimationCurve _fadeOutCurve = _settings.OverrideFadeOut ? _settings.FadeOutCurve       : _player.AudioAsset.FadeOutCurve;
                 float _fadeOutDuration       = _settings.OverrideFadeOut ? _settings.FadeOutDuration    : _player.AudioAsset.FadeOutDuration;
 
-                sourceVolumeTween = Tweener.Tween(0f, sourceVolume, SetMusicVolume, _fadeOutDuration, _fadeOutCurve, true, OnTweenComplete);
+                sourceVolumeTween = Tweener.Tween(0f, sourceVolume, musicVolumeSetter, _fadeOutDuration, _fadeOutCurve, true, null);
 
                 if (_settings.WaitForFadeOut) {
                     _delay += _fadeOutDuration;
@@ -790,29 +770,77 @@ namespace EnhancedFramework.Core {
             }
 
             // Resume other musics.
-            delay = Delayer.Call(_delay, OnResume, true);
+            delay = Delayer.Call(_delay, onResumeCallback, true);
+        }
 
-            // ----- Local Methods ----- \\
+        // -------------------------------------------
+        // Delegates
+        // -------------------------------------------
 
-            void OnTweenComplete(bool _complete) { }
+        /// <summary>
+        /// Called when playing this music.
+        /// </summary>
+        private void OnPlay() {
 
-            void OnResume() {
+            PlayMusic();
+            AudioMusicAsset.TransitionSettings _settings = music.PlaySettings;
 
-                // We cannot resume the other audio for fade in,
-                // as we don't know which one should be playing and that they might all have a different fade duration.
-                //
-                // So instead, use a fixed but quick fade in tween.
-                AudioMusicAsset.TransitionSettings _settings = music.StopSettings;
-                const float DefaultFadeInDuration = .5f;
+            // Fade in.
+            if (audioHandler.GetHandle(out EnhancedAudioPlayer _player)) {
 
-                AnimationCurve _fadeInCurve = _settings.OverrideFadeIn ? _settings.FadeInCurve       : AnimationCurve.Linear(0f, 0f, 1f, 1f);
-                float _fadeInDuration       = _settings.OverrideFadeIn ? _settings.FadeInDuration    : DefaultFadeInDuration;
+                AnimationCurve _fadeInCurve = _settings.OverrideFadeIn ? _settings.FadeInCurve      : _player.AudioAsset.FadeInCurve;
+                float _fadeInDuration       = _settings.OverrideFadeIn ? _settings.FadeInDuration   : _player.AudioAsset.FadeInDuration;
 
-                transitionVolumeTween = Tweener.Tween(interruptionVolume, 1f, SetInterruptionVolume, _fadeInDuration, _fadeInCurve, true, OnComplete);
-                SetFadeInterruption(MusicInterruption.None, false);
+                sourceVolumeTween = Tweener.Tween(sourceVolume, 1f, musicVolumeSetter, _fadeInDuration, _fadeInCurve, true, null);
+            } else {
+                SetMusicVolume(1f);
             }
+        }
 
-            void OnComplete(bool _complete) { }
+        /// <summary>
+        /// Called when resuming this music.
+        /// </summary>
+        private void OnResume() {
+
+            // We cannot resume the other audio for fade in,
+            // as we don't know which one should be playing and that they might all have a different fade duration.
+            //
+            // So instead, use a fixed but quick fade in tween.
+            AudioMusicAsset.TransitionSettings _settings = music.StopSettings;
+            const float DefaultFadeInDuration = .5f;
+
+            AnimationCurve _fadeInCurve = _settings.OverrideFadeIn ? _settings.FadeInCurve       : AnimationCurve.Linear(0f, 0f, 1f, 1f);
+            float _fadeInDuration       = _settings.OverrideFadeIn ? _settings.FadeInDuration    : DefaultFadeInDuration;
+
+            transitionVolumeTween = Tweener.Tween(interruptionVolume, 1f, interruptionVolumeSetter, _fadeInDuration, _fadeInCurve, true, null);
+            SetFadeInterruption(MusicInterruption.None, false);
+        }
+
+        /// <summary>
+        /// Called when this music fade in tween is stopped.
+        /// </summary>
+        private void OnFadeInStopped(bool _complete) {
+            if (_complete) {
+                SetFadeInterruption(interruptionMode, true);
+            }
+        }
+
+        // -----------------------
+
+        /// <summary>
+        /// Initializes local delegates.
+        /// </summary>
+        private void InitDelegates() {
+            if (musicVolumeSetter != null)
+                return;
+
+            musicVolumeSetter        = SetMusicVolume;
+            interruptionVolumeSetter = SetInterruptionVolume;
+
+            onPlayCallback   = OnPlay;
+            onResumeCallback = OnResume;
+
+            onFadeInStoppedCallback = OnFadeInStopped;
         }
 
         // -------------------------------------------
@@ -967,7 +995,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        void IPoolableObject.OnCreated() {
+        void IPoolableObject.OnCreated(IObjectPool _pool) {
 
             // Initialization.
             Reset();
@@ -1038,21 +1066,21 @@ namespace EnhancedFramework.Core {
     /// <see cref="ScriptableObject"/> data holder for an audio-related music asset.
     /// </summary>
     [CreateAssetMenu(fileName = "MSC_MusicAsset", menuName = FrameworkUtility.MenuPath + "Audio/Music", order = FrameworkUtility.MenuOrder)]
-    public class AudioMusicAsset : EnhancedScriptableObject {
+    public sealed class AudioMusicAsset : EnhancedScriptableObject {
         /// <summary>
         /// Settings used to perform a music transition.
         /// </summary>
         [Serializable]
-        public class TransitionSettings {
+        public sealed class TransitionSettings {
             #region Global Members
             [Tooltip("If true, overrides transition fade out parameters")]
             public bool OverrideFadeOut = false;
 
             [Tooltip("Transition fade out duration (in seconds)")]
-            [Enhanced, ShowIf("OverrideFadeOut"), Range(0f, 60f)] public float FadeOutDuration = 1f;
+            [Enhanced, ShowIf(nameof(OverrideFadeOut)), Range(0f, 60f)] public float FadeOutDuration = 1f;
 
             [Tooltip("Transition fade out evaluation curve")]
-            [Enhanced, ShowIf("OverrideFadeOut"), EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Crimson)]
+            [Enhanced, ShowIf(nameof(OverrideFadeOut)), EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Crimson)]
             public AnimationCurve FadeOutCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
 
             [Space(15f)]
@@ -1069,10 +1097,10 @@ namespace EnhancedFramework.Core {
             public bool OverrideFadeIn = false;
 
             [Tooltip("Transition fade in duration (in seconds)")]
-            [Enhanced, ShowIf("OverrideFadeIn"), Range(0f, 60f)] public float FadeInDuration = 1f;
+            [Enhanced, ShowIf(nameof(OverrideFadeIn)), Range(0f, 60f)] public float FadeInDuration = 1f;
 
             [Tooltip("Transition fade in evaluation curve")]
-            [Enhanced, ShowIf("OverrideFadeIn"), EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Green)]
+            [Enhanced, ShowIf(nameof(OverrideFadeIn)), EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Green)]
             public AnimationCurve FadeInCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
             #endregion
         }
@@ -1162,6 +1190,7 @@ namespace EnhancedFramework.Core {
         /// Plays this music.
         /// </summary>
         /// <inheritdoc cref="AudioManager.PlayMusic(AudioMusicAsset, AudioLayer, MusicInterruption)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public MusicHandler PlayMusic(AudioLayer _layer, MusicInterruption _interruptionMode) {
             return AudioManager.Instance.PlayMusic(this, _layer, _interruptionMode);
         }
@@ -1197,7 +1226,6 @@ namespace EnhancedFramework.Core {
         /// </summary>
         [Button(ActivationMode.Play, SuperColor.Green, IsDrawnOnTop = false), DisplayName("Play")]
         private void PlayDebug(bool _resume) {
-
             if (_resume && GetHandler(out MusicHandler _handler)) {
                 _handler.Resume();
             } else {

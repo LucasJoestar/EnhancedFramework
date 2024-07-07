@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Sends an Event when an Enhanced Video Player is being paused")]
     [ActionCategory("Video")]
-    public class EnhancedVideoPausedEvent : FsmStateAction {
+    public sealed class EnhancedVideoPausedEvent : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Event

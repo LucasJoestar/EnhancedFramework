@@ -5,6 +5,7 @@
 // ================================================================================== //
 
 using EnhancedEditor;
+using System;
 using UnityEngine;
 
 using Range = EnhancedEditor.RangeAttribute;
@@ -92,7 +93,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [AddComponentMenu(FrameworkUtility.MenuPath + "Particles/Particle System Player"), DisallowMultipleComponent]
     #pragma warning disable CS0414
-    public class EnhancedParticleSystemPlayer : EnhancedPoolableObject, IHandle {
+    public sealed class EnhancedParticleSystemPlayer : EnhancedPoolableObject, IHandle {
         #region State
         /// <summary>
         /// References all available states for an <see cref="EnhancedParticleSystemPlayer"/>.
@@ -106,7 +107,16 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+                if (playAfterLoading) {
+                    _value |= UpdateRegistration.Play;
+                }
+
+                return _value;
+            }
+        }
 
         #region Global Members
         [Section("Enhanced Particle Player")]
@@ -174,13 +184,13 @@ namespace EnhancedFramework.Core {
         #if UNITY_EDITOR
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("Time"), Range("TimeRange"), ValidationMember("Time")]
+        [SerializeField, Enhanced, DrawMember(nameof(Time)), Range(nameof(TimeRange)), ValidationMember(nameof(Time))]
         private float time = 0f;
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("Duration"), ReadOnly] private float duration = 0f;
-        [SerializeField, Enhanced, DrawMember("IsParticlePlaying"), ReadOnly] private bool isPlaying = false;
+        [SerializeField, Enhanced, DrawMember(nameof(Duration)), ReadOnly] private float duration = 0f;
+        [SerializeField, Enhanced, DrawMember(nameof(IsParticlePlaying)), ReadOnly] private bool isPlaying = false;
         #endif
 
         /// <summary>
@@ -190,15 +200,15 @@ namespace EnhancedFramework.Core {
         public float Time {
             get {
                 float _time = 0f;
-                foreach (var _particle in particleSystems) {
-                    _time = Mathf.Max(_time, _particle.time);
+                for (int i = 0; i < particleSystems.Length; i++) {
+                    _time = Mathf.Max(_time, particleSystems[i].time);
                 }
 
                 return _time;
             }
             set {
-                foreach (var _particle in particleSystems) {
-                    _particle.time = value;
+                for (int i = 0; i < particleSystems.Length; i++) {
+                    particleSystems[i].time = value;
                 }
             }
         }
@@ -216,8 +226,8 @@ namespace EnhancedFramework.Core {
         public float Duration {
             get {
                 float _duration = 0f;
-                foreach (var _particle in particleSystems) {
-                    _duration = Mathf.Max(_duration, _particle.main.duration);
+                for (int i = 0; i < particleSystems.Length; i++) {
+                    _duration = Mathf.Max(_duration, particleSystems[i].main.duration);
                 }
 
                 return _duration;
@@ -229,8 +239,8 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public bool IsParticlePlaying {
             get {
-                foreach (var _particle in particleSystems) {
-                    if (_particle.isPlaying) {
+                for (int i = 0; i < particleSystems.Length; i++) {
+                    if (particleSystems[i].isPlaying) {
                         return true;
                     }
                 }
@@ -241,6 +251,13 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
+        protected override void OnBehaviourEnabled() {
+            base.OnBehaviourEnabled();
+
+            // Registration.
+            ParticleSystemManager.RegisterPlayer(this);
+        }
+
         protected override void OnPlay() {
             base.OnPlay();
 
@@ -250,13 +267,6 @@ namespace EnhancedFramework.Core {
                 playAfterLoading = false;
                 Play();
             }
-        }
-
-        protected override void OnBehaviourEnabled() {
-            base.OnBehaviourEnabled();
-
-            // Registration.
-            ParticleSystemManager.RegisterPlayer(this);
         }
 
         /// <summary>
@@ -271,8 +281,8 @@ namespace EnhancedFramework.Core {
 
                     bool _isAlive = false;
 
-                    foreach (ParticleSystem _particle in particleSystems) {
-                        if (_particle.IsAlive()) {
+                    for (int i = 0; i < particleSystems.Length; i++) {
+                        if (particleSystems[i].IsAlive()) {
                             _isAlive = true;
                             break;
                         }
@@ -280,6 +290,7 @@ namespace EnhancedFramework.Core {
 
                     if (!_isAlive) {
                         Stop(ParticleSystemStopBehavior.StopEmittingAndClear);
+                        return;
                     }
 
                     break;
@@ -310,6 +321,7 @@ namespace EnhancedFramework.Core {
         #region Behaviour
         private static int lastPlayID = 0;
 
+        private Action onPlayCallback = null;
         private DelayHandler delay = default;
 
         // -----------------------
@@ -332,7 +344,9 @@ namespace EnhancedFramework.Core {
         }
 
         private ParticleHandler DoPlay() {
-            Stop();
+
+            // Security.
+            Stop(ParticleSystemStopBehavior.StopEmitting, false);
 
             // Stop previous player.
             if (particleAsset.AvoidDuplicate && particleAsset.GetHandler(out ParticleHandler _currentHandler)) {
@@ -346,7 +360,7 @@ namespace EnhancedFramework.Core {
 
             #if UNITY_EDITOR
             // Hierachy utility.
-            if (isFromPool) {
+            if (IsFromPool) {
                 gameObject.name = $"{gameObject.name.GetPrefix()}{particleAsset.name.RemovePrefix()} - [{playID}]";
             }
             #endif
@@ -356,7 +370,9 @@ namespace EnhancedFramework.Core {
             if (_delay  != 0f) {
 
                 SetState(State.Delay);
-                delay = Delayer.Call(particleAsset.Delay, OnPlay, true);
+
+                onPlayCallback ??= OnPlay;
+                delay = Delayer.Call(_delay, onPlayCallback, true);
 
             } else {
                 OnPlay();
@@ -375,8 +391,8 @@ namespace EnhancedFramework.Core {
                 // Play.
                 SetState(State.Playing);
 
-                foreach (ParticleSystem _particle in particleSystems) {
-                    _particle.Play(false);
+                for (int i = 0; i < particleSystems.Length; i++) {
+                    particleSystems[i].Play(false);
                 }
             }
         }
@@ -391,7 +407,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_particle"><see cref="ParticleSystemAsset"/> to initialize this player with.</param>
         public void Initialize(ParticleSystemAsset _particle) {
-            particleAsset = _particle;
+            particleAsset   = _particle;
             particleSystems = GetComponentsInChildren<ParticleSystem>();
         }
 
@@ -408,7 +424,7 @@ namespace EnhancedFramework.Core {
 
             #if UNITY_EDITOR
             if (!Application.isPlaying && (state == State.Playing)) {
-                Stop(ParticleSystemStopBehavior.StopEmittingAndClear);
+                Stop(ParticleSystemStopBehavior.StopEmittingAndClear, false);
             }
             #endif
 
@@ -423,8 +439,8 @@ namespace EnhancedFramework.Core {
                 case State.Paused:
                     SetState(State.Playing);
 
-                    foreach (ParticleSystem _particle in particleSystems) {
-                        _particle.Play(false);
+                    for (int i = 0; i < particleSystems.Length; i++) {
+                        particleSystems[i].Play(false);
                     }
                     break;
 
@@ -469,8 +485,8 @@ namespace EnhancedFramework.Core {
             // Pause.
             SetState(State.Paused);
 
-            foreach (ParticleSystem _particle in particleSystems) {
-                _particle.Pause(false);
+            for (int i = 0; i < particleSystems.Length; i++) {
+                particleSystems[i].Pause(false);
             }
 
             return true;
@@ -482,7 +498,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_behaviour">Behaviour applied when stopping the particle(s).</param>
         /// <returns>True if this player could be successfully stopped, false otherwise.</returns>
         [Button(SuperColor.Crimson)]
-        public bool Stop(ParticleSystemStopBehavior _behaviour = ParticleSystemStopBehavior.StopEmitting) {
+        public bool Stop(ParticleSystemStopBehavior _behaviour = ParticleSystemStopBehavior.StopEmitting, bool _sendToPool = true) {
 
             switch (state) {
 
@@ -501,8 +517,8 @@ namespace EnhancedFramework.Core {
                     break;
             }
 
-            foreach (ParticleSystem _particle in particleSystems) {
-                _particle.Stop(false, _behaviour);
+            for (int i = 0; i < particleSystems.Length; i++) {
+                particleSystems[i].Stop(false, _behaviour);
             }
 
             switch (_behaviour) {
@@ -514,8 +530,8 @@ namespace EnhancedFramework.Core {
                     SetState(State.Inactive);
 
                     // Send back to pool.
-                    if (isFromPool) {
-                        particleAsset.ReleaseInstance(this);
+                    if (IsFromPool && _sendToPool) {
+                        Release();
                     }
 
                     break;
@@ -530,17 +546,6 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Poolable
-        private bool isFromPool = false;
-
-        // -----------------------
-
-        public override void OnCreated() {
-            base.OnCreated();
-
-            // Pool management.
-            isFromPool = true;
-        }
-
         public override void OnRemovedFromPool() {
             base.OnRemovedFromPool();
 
@@ -557,12 +562,6 @@ namespace EnhancedFramework.Core {
             // Push to the hierarchy bottom.
             transform.SetAsLastSibling();
             #endif
-        }
-
-        // -----------------------
-
-        protected override void SetActive(bool _isActive) {
-            base.SetActive(_isActive);
         }
         #endregion
 
@@ -603,7 +602,13 @@ namespace EnhancedFramework.Core {
         /// </summary>
         private void UpdateFollow() {
             if (followTransform) {
-                transform.SetPositionAndRotation(referenceTransform.position, referenceTransform.rotation);
+
+                try {
+                    transform.SetPositionAndRotation(referenceTransform.position, referenceTransform.rotation);
+                } catch (MissingReferenceException e) {
+                    this.LogException(e);
+                    StopFollowTransform();
+                }
             }
         }
         #endregion

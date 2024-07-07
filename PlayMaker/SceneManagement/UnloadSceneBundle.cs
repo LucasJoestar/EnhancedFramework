@@ -18,7 +18,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Unloads a Scene Bundle")]
     [ActionCategory("SceneBundle")]
-    public class UnloadSceneBundle : FsmStateAction {
+    public sealed class UnloadSceneBundle : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable

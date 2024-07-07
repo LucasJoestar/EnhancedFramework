@@ -15,26 +15,20 @@ namespace EnhancedFramework.Core {
     /// <see cref="AudioAmbientAsset"/>-related one shot sound asset.
     /// </summary>
     [CreateAssetMenu(fileName = "AMS_AmbientSound", menuName = FrameworkUtility.MenuPath + "Audio/Ambient Sound", order = FrameworkUtility.MenuOrder)]
-    public class AudioAmbientSoundAsset : EnhancedScriptableObject {
+    public sealed class AudioAmbientSoundAsset : EnhancedScriptableObject {
         #region Play Mode
         /// <summary>
         /// Mode used to determine the position where to play a sound from an ambient.
         /// </summary>
         public enum PlayMode {
-            /// <summary>
-            /// Plays relative to the ambient center position.
-            /// </summary>
-            FromAmbientCenter,
+            [Tooltip("Plays relative to the ambient center position")]
+            FromAmbientCenter = 0,
 
-            /// <summary>
-            /// Play relative to the audio listener curent position.
-            /// </summary>
-            FromListener,
+            [Tooltip("Plays relative to the audio listener curent position")]
+            FromListener      = 1,
 
-            /// <summary>
-            /// Play relative to the ambient current actor position.
-            /// </summary>
-            FromActor,
+            [Tooltip("Plays relative to the ambient current actor position")]
+            FromActor         = 2,
         }
         #endregion
 
@@ -60,10 +54,10 @@ namespace EnhancedFramework.Core {
         [Space(10f)]
 
         [Tooltip("Min max flat distance (X & Z axises) used to play this sound from the reference position")]
-        [SerializeField, Enhanced, MinMax("PlayFlatRange")] private Vector2 playFlatDistance = new Vector2(1f, 3f);
+        [SerializeField, Enhanced, MinMax(nameof(PlayFlatRange))] private Vector2 playFlatDistance = new Vector2(1f, 3f);
 
         [Tooltip("Min max vertical distance (Y axis) used to play this sound from the reference position")]
-        [SerializeField, Enhanced, MinMax("PlayVerticalRange")] private Vector2 playVerticalDistance = new Vector2(0f, 1f);
+        [SerializeField, Enhanced, MinMax(nameof(PlayVerticalRange))] private Vector2 playVerticalDistance = new Vector2(0f, 1f);
 
         [Space(10f)]
 

@@ -19,8 +19,8 @@ namespace EnhancedFramework.Editor {
     internal static class EditorSceneResourceManager {
         #region Content
         static EditorSceneResourceManager() {
-            EditorSceneManager.sceneSaving += OnSavingScene;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+            EditorSceneManager.sceneSaving         += OnSavingScene;
         }
 
         // -----------------------

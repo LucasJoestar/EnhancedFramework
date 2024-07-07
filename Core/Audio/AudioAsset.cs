@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -16,17 +17,17 @@ namespace EnhancedFramework.Core {
     /// Override for an audio loop.
     /// </summary>
     public enum LoopOverride {
-        None = 0,
+        None    = 0,
 
-        Loop = 1,
-        NoLoop = 2,
+        Loop    = 1,
+        NoLoop  = 2,
     }
 
     /// <summary>
     /// <see cref="ScriptableObject"/> data holder for an audio asset.
     /// </summary>
     [CreateAssetMenu(fileName = "AD_AudioAsset", menuName = FrameworkUtility.MenuPath + "Audio/Audio Asset", order = FrameworkUtility.MenuOrder)]
-    public class AudioAsset : EnhancedAssetFeedback, IEnhancedAnimationEvent {
+    public sealed class AudioAsset : EnhancedAssetFeedback, IEnhancedAnimationEvent {
         #region Global Members
         [Section("Audio Asset")]
 
@@ -99,7 +100,7 @@ namespace EnhancedFramework.Core {
         [SerializeField, Enhanced, DisplayName("Range")] private bool usePlayRange = false;
 
         [Tooltip("Play range used of this audio (start and end time)")]
-        [SerializeField, Enhanced, ShowIf("usePlayRange"), MinMax("AudioRange")] private Vector2 playRange = new Vector2(0f, 1f);
+        [SerializeField, Enhanced, ShowIf(nameof(usePlayRange)), MinMax(nameof(AudioRange))] private Vector2 playRange = new Vector2(0f, 1f);
 
         // -----------------------
 
@@ -124,7 +125,10 @@ namespace EnhancedFramework.Core {
             get {
                 float _duration = 0f;
 
-                foreach (AudioClip _clip in clips) {
+                for (int i = 0; i < clips.Count; i++) {
+
+                    AudioClip _clip = clips[i];
+
                     if (_clip != null) {
                         _duration = (_duration == 0f)
                                   ? _clip.length
@@ -154,7 +158,10 @@ namespace EnhancedFramework.Core {
 
                 AudioClip _audio = null;
 
-                foreach (AudioClip _clip in clips) {
+                for (int i = 0; i < clips.Count; i++) {
+
+                    AudioClip _clip = clips[i];
+
                     if ((_clip != null) && (_audio.IsNull() || (_audio.length < _clip.length))) {
                         _audio = _clip;
                     }
@@ -251,6 +258,7 @@ namespace EnhancedFramework.Core {
 
         /// <param name="_position"><inheritdoc cref="AudioManager.Play(AudioAsset, AudioAssetSettings, Vector3)" path="/param[@name='_position']"/></param>
         /// <inheritdoc cref="PlayAudio(Transform, AudioAssetSettings)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AudioHandler PlayAudio(Vector3 _position, AudioAssetSettings _settings) {
             return AudioManager.Instance.Play(this, _settings, _position);
         }
@@ -264,6 +272,7 @@ namespace EnhancedFramework.Core {
         /// Plays this audio.
         /// </summary>
         /// <inheritdoc cref="AudioManager.Play(AudioAsset, AudioAssetSettings, Transform)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AudioHandler PlayAudio(Transform _transform, AudioAssetSettings _settings) {
             return AudioManager.Instance.Play(this, _settings, _transform);
         }
@@ -294,17 +303,17 @@ namespace EnhancedFramework.Core {
         // Feedback
         // -------------------------------------------
 
-        public override void Play(Transform _transform, FeedbackPlayOptions _options) {
+        protected override void DoPlay(Transform _transform, Vector3 _position, FeedbackPlayOptions _options) {
             // Instant play (delay managed in the player).
-            OnPlay(_transform, _options);
+            OnPlay(_transform, _position, _options);
         }
 
-        protected override void OnPlay(Transform _transform, FeedbackPlayOptions _options) {
+        protected override void OnPlay(Transform _transform, Vector3 _position, FeedbackPlayOptions _options) {
             switch (_options) {
 
                 // Play at position.
                 case FeedbackPlayOptions.PlayAtPosition:
-                    PlayAudio(_transform.position);
+                    PlayAudio(_position);
                     break;
 
                 // Follow transform.
@@ -355,7 +364,7 @@ namespace EnhancedFramework.Core {
 
         #region Event
         private const float EventDelay = .2f;
-        private UnscaledCooldown eventCooldown = new UnscaledCooldown();
+        private readonly UnscaledCooldown eventCooldown = new UnscaledCooldown();
 
         // -----------------------
 

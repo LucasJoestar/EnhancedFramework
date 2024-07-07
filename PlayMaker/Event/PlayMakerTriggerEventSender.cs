@@ -15,7 +15,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Trigger Event Sender")]
-    public class PlayMakerTriggerEventSender : EnhancedTrigger {
+    public sealed class PlayMakerTriggerEventSender : EnhancedTrigger {
         #region Global Members
         [Section("Trigger Event Sender")]
 

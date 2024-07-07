@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Pauses/Resumes the Particle System global state.")]
     [ActionCategory(ActionCategory.Effects)]
-    public class GlobalParticleSystemPause : FsmStateAction {
+    public sealed class GlobalParticleSystemPause : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Pause - Reset
@@ -60,8 +60,10 @@ namespace EnhancedFramework.PlayMaker {
         // -------------------------------------------
 
         private void DoPause() {
-            wasPaused = ParticleSystemManager.Instance.IsPaused;
-            ParticleSystemManager.Instance.Pause(Pause.Value);
+            ParticleSystemManager _manager = ParticleSystemManager.Instance;
+
+            wasPaused = _manager.IsPaused;
+            _manager.Pause(Pause.Value);
         }
 
         private void Revert() {

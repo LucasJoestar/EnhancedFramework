@@ -15,7 +15,7 @@ namespace EnhancedFramework.Core {
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Camera))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Camera/Main Camera Behaviour"), DisallowMultipleComponent]
-    public class MainCameraBehaviour : EnhancedBehaviour {
+    public sealed class MainCameraBehaviour : EnhancedBehaviour {
         #region Global Members
         [SerializeField, HideInInspector] private new Camera camera = null;
 
@@ -24,12 +24,12 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Main <see cref="Camera"/> instance.
         /// </summary>
-        public static Camera MainCamera { get; private set; }
+        public static Camera MainCamera { get; private set; } = null;
 
         /// <summary>
         /// Whether the <see cref="MainCamera"/> reference is currently set or not.
         /// </summary>
-        public static bool HasMainCamera { get; private set; }
+        public static bool HasMainCamera { get; private set; } = false;
         #endregion
 
         #region Enhanced Behaviour
@@ -38,8 +38,7 @@ namespace EnhancedFramework.Core {
 
             // Set.
             if (!HasMainCamera) {
-
-                MainCamera = camera;
+                MainCamera    = camera;
                 HasMainCamera = true;
             }
         }
@@ -49,8 +48,7 @@ namespace EnhancedFramework.Core {
 
             // Unset.
             if (HasMainCamera && (MainCamera == camera)) {
-
-                MainCamera = null;
+                MainCamera    = null;
                 HasMainCamera = false;
             }
         }

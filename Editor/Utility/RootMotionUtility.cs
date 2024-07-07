@@ -52,15 +52,15 @@ namespace EnhancedFramework.Editor {
 
         private static void OverrideRootMotionBindings(EditorCurveBinding[] _overrideBindings, EditorCurveBinding[] _sourceBindings) {
             AnimationWindow _window = EditorWindow.GetWindow<AnimationWindow>();
-            AnimationClip _clip = _window.animationClip;
+            AnimationClip _clip     = _window.animationClip;
 
             Undo.RecordObject(_clip, "animation root motion override");
 
-            for (int _i = 0; _i < _sourceBindings.Length; _i++) {
-                AnimationCurve _curve = AnimationUtility.GetEditorCurve(_clip, _sourceBindings[_i]);
+            for (int i = 0; i < _sourceBindings.Length; i++) {
+                AnimationCurve _curve = AnimationUtility.GetEditorCurve(_clip, _sourceBindings[i]);
 
-                AnimationUtility.SetEditorCurve(_clip, _overrideBindings[_i], _curve);
-                AnimationUtility.SetEditorCurve(_clip, _sourceBindings[_i], null);
+                AnimationUtility.SetEditorCurve(_clip, _overrideBindings[i], _curve);
+                AnimationUtility.SetEditorCurve(_clip, _sourceBindings[i], null);
             }
         }
         #endregion

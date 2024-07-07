@@ -15,10 +15,12 @@
 using EnhancedEditor;
 using System;
 using System.Collections;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 #if DOTWEEN
 using DG.Tweening;
+using DG.Tweening.Core;
 #endif
 
 #if UNITY_EDITOR
@@ -40,10 +42,12 @@ namespace EnhancedFramework.Core {
         // -----------------------
 
         public int ID {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return handler.ID; }
         }
 
         public bool IsValid {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return GetHandle(out _); }
         }
 
@@ -124,15 +128,16 @@ namespace EnhancedFramework.Core {
     /// Enhanced class used to perform simple tweens both during editor and runtime.
     /// </summary>
     [Serializable]
-    public class EnhancedTween : IHandle, IPoolableObject {
+    public sealed class EnhancedTween : IHandle, IPoolableObject {
         #region State
         /// <summary>
         /// References all available states of this object.
         /// </summary>
         public enum State {
-            Inactive,
-            Playing,
-            Paused,
+            Inactive = 0,
+
+            Playing  = 1,
+            Paused   = 2,
         }
         #endregion
 
@@ -166,6 +171,13 @@ namespace EnhancedFramework.Core {
         private bool doComplete = false; // Used to complete coroutines.
 
         #if DOTWEEN
+        private DOGetter<float> tweenGetter = null;
+        private DOSetter<float> tweenSetter = null;
+        private TweenCallback tweenCompleteCallback = null;
+        private TweenCallback tweenKillCallback     = null;
+
+        private Action<float> tweenCurrentSetter = null;
+
         private Tween tween = null;
         private float time = 0f;
         #else
@@ -303,8 +315,18 @@ namespace EnhancedFramework.Core {
             #if DOTWEEN
             // Tween.
             time = 0f;
-            tween = DOTween.To(Get, Set, 1f, _duration).SetEase(Ease.Linear).SetUpdate(_realTime)
-                           .SetRecyclable(true).SetAutoKill(true).OnComplete(OnComplete).OnKill(OnKill);
+            tweenCurrentSetter = _setter;
+
+            if (tweenGetter == null) {
+
+                tweenGetter = Get;
+                tweenSetter = Set;
+                tweenCompleteCallback = OnComplete;
+                tweenKillCallback     = OnKill;
+            }
+
+            tween = DOTween.To(tweenGetter, tweenSetter, 1f, _duration).SetEase(Ease.Linear).SetUpdate(_realTime)
+                           .SetRecyclable(true).SetAutoKill(true).OnComplete(tweenCompleteCallback).OnKill(tweenKillCallback);
 
             // ----- Local Methods ----- \\
 
@@ -314,7 +336,7 @@ namespace EnhancedFramework.Core {
 
             void Set(float _value) {
                 time = _value;
-                _setter(_value);
+                tweenCurrentSetter(_value);
             }
 
             void OnComplete() {
@@ -478,7 +500,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        void IPoolableObject.OnCreated() { }
+        void IPoolableObject.OnCreated(IObjectPool _pool) { }
 
         void IPoolableObject.OnRemovedFromPool() { }
 
@@ -506,7 +528,7 @@ namespace EnhancedFramework.Core {
     #if UNITY_EDITOR
     [InitializeOnLoad]
     #endif
-    public class Tweener : IObjectPoolManager<EnhancedTween> {
+    public sealed class Tweener : IObjectPoolManager<EnhancedTween> {
         #region Global Members
         /// <summary>
         /// Static singleton instance.
@@ -566,44 +588,54 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        private static ObjectPool<EnhancedTween> pool = new ObjectPool<EnhancedTween>(3);
+        private static readonly ObjectPool<EnhancedTween> pool = new ObjectPool<EnhancedTween>(3);
 
         // -----------------------
 
         /// <summary>
         /// Get a <see cref="EnhancedTween"/> instance from the pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Get"/>
+        /// <inheritdoc cref="ObjectPool{T}.GetPoolInstance"/>
         public static EnhancedTween GetTween() {
-            return pool.Get();
+            return pool.GetPoolInstance();
         }
 
         /// <summary>
         /// Releases a specific <see cref="EnhancedTween"/> instance and sent it back to the pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Release(T)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ReleasePoolInstance(T)"/>
         internal static bool ReleaseTween(EnhancedTween _tween) {
-            return pool.Release(_tween);
+            return pool.ReleasePoolInstance(_tween);
         }
 
         /// <summary>
         /// Clears the <see cref="EnhancedTween"/> pool content.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Clear(int)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ClearPool(int)"/>
         public static void ClearPool(int _capacity = 1) {
-            pool.Clear(_capacity);
+            pool.ClearPool(_capacity);
         }
 
         // -------------------------------------------
         // Manager
         // -------------------------------------------
 
-        /// <inheritdoc cref="IObjectPoolManager{EnhancedTween}.CreateInstance"/>
+        EnhancedTween IObjectPool<EnhancedTween>.GetPoolInstance() {
+            return GetTween();
+        }
+
+        bool IObjectPool<EnhancedTween>.ReleasePoolInstance(EnhancedTween _instance) {
+            return ReleaseTween(_instance);
+        }
+
+        void IObjectPool.ClearPool(int _capacity) {
+            ClearPool(_capacity);
+        }
+
         EnhancedTween IObjectPoolManager<EnhancedTween>.CreateInstance() {
             return new EnhancedTween();
         }
 
-        /// <inheritdoc cref="IObjectPoolManager{EnhancedTween}.DestroyInstance(EnhancedTween)"/>
         void IObjectPoolManager<EnhancedTween>.DestroyInstance(EnhancedTween _tween) {
             // Cannot destroy the instance, so simply ignore the object and wait for the garbage collector to pick it up.
         }

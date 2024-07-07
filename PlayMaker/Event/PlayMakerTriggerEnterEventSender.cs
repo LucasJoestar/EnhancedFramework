@@ -15,7 +15,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Trigger Enter Event Sender")]
-    public class PlayMakerTriggerEnterEventSender : EnhancedTrigger {
+    public sealed class PlayMakerTriggerEnterEventSender : EnhancedTrigger {
         #region Global Members
         [Section("On Enter Trigger - Event Sender")]
 

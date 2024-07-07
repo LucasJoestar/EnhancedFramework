@@ -23,7 +23,7 @@ namespace EnhancedFramework.Core {
     /// Enhanced type used as a persistent id for an object.
     /// </summary>
     [Serializable]
-    public class EnhancedObjectID {
+    public sealed class EnhancedObjectID {
         /// <summary>
         /// Identifier of an <see cref="EnhancedObjectID"/> object type.
         /// </summary>
@@ -75,10 +75,10 @@ namespace EnhancedFramework.Core {
         public static EnhancedObjectID Default {
             get {
                 return new EnhancedObjectID() {
-                    type = Type.Null,
-                    assetGUID = string.Empty,
-                    objectID = 0L,
-                    prefabID = 0L
+                    type        = Type.Null,
+                    assetGUID   = string.Empty,
+                    objectID    = 0L,
+                    prefabID    = 0L
                 };
             }
         }
@@ -122,9 +122,8 @@ namespace EnhancedFramework.Core {
             }
 
             assetGUID = string.Empty;
-            prefabID = 0L;
-
-            objectID = Guid.NewGuid().ToString().GetLongStableHashCode();
+            objectID  = GenerateID();
+            prefabID  = 0L;
         }
 
         /// <inheritdoc cref="EnhancedObjectID"/>
@@ -132,19 +131,18 @@ namespace EnhancedFramework.Core {
             type = Type.DynamicObject;
 
             assetGUID = string.Empty;
-            prefabID = 0L;
-
-            objectID = Guid.NewGuid().ToString().GetLongStableHashCode();
+            objectID  = GenerateID();
+            prefabID  = 0L;
         }
         #endregion
 
         #region Operator
         public static bool operator ==(EnhancedObjectID a, EnhancedObjectID b) {
-            if (!ReferenceEquals(a, null)) {
+            if (a is not null) {
                 return a.Equals(b);
             }
 
-            return ReferenceEquals(b, null);
+            return b is null;
         }
 
         public static bool operator !=(EnhancedObjectID a, EnhancedObjectID b) {
@@ -172,7 +170,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Intializes this object id for a scene object.
         /// </summary>
-        internal void InitSceneObject() {
+        internal void InitSceneObject(Object _instance) {
 
             switch (type) {
 
@@ -183,7 +181,9 @@ namespace EnhancedFramework.Core {
 
                     // Generate new id for instantiated or non initialized objects.
                     type = Type.SceneObject;
-                    objectID = Guid.NewGuid().ToString().GetLongStableHashCode();
+                    unchecked {
+                        objectID = (ulong)_instance.GetInstanceID();
+                    }
 
                     break;
 
@@ -199,10 +199,10 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_id"><see cref="EnhancedObjectID"/> to copy values.</param>
         public void Copy(EnhancedObjectID _id) {
-            type = _id.type;
+            type      = _id.type;
             assetGUID = _id.assetGUID;
-            objectID = _id.objectID;
-            prefabID = _id.prefabID;
+            objectID  = _id.objectID;
+            prefabID  = _id.prefabID;
         }
 
         /// <summary>
@@ -211,8 +211,8 @@ namespace EnhancedFramework.Core {
         /// <param name="_id">ID to compare with this one.</param>
         /// <returns>True if both ids are equal, false otherwise.</returns>
         public bool Equals(EnhancedObjectID _id) {
-            return !ReferenceEquals(_id, null) &&
-                   (type == _id.type) &&
+            return (_id is not null) &&
+                   (type     == _id.type) &&
                    (objectID == _id.objectID) &&
                    (prefabID == _id.prefabID) &&
                     assetGUID.Equals(_id.assetGUID, StringComparison.Ordinal);
@@ -233,6 +233,17 @@ namespace EnhancedFramework.Core {
             return _scene.IsValid;
         }
 
+        /// <param name="_scene">Buffer used to store this id associated scene <see cref="SceneAsset"/>.</param>
+        /// <inheritdoc cref="GetScene(out SceneAsset)"/>
+        public bool GetScene(SceneAsset _scene) {
+            if (string.IsNullOrEmpty(assetGUID)) {
+                return false;
+            }
+
+            _scene.SetGUID(assetGUID);
+            return _scene.IsValid;
+        }
+
         /// <summary>
         /// Tries to parse a given <see cref="string"/> into an <see cref="EnhancedObjectID"/> instance.
         /// </summary>
@@ -247,10 +258,10 @@ namespace EnhancedFramework.Core {
                 if ((_ids.Length == 2) && ulong.TryParse(_ids[0], out ulong _objID) && ulong.TryParse(_ids[1], out ulong _prefabID)) {
 
                     _objectID = new EnhancedObjectID() {
-                        type = (Type)_type,
+                        type      = (Type)_type,
                         assetGUID = _components[1],
-                        objectID = _objID,
-                        prefabID = _prefabID
+                        objectID  = _objID,
+                        prefabID  = _prefabID
                     };
 
                     return true;
@@ -259,6 +270,16 @@ namespace EnhancedFramework.Core {
 
             _objectID = null;
             return false;
+        }
+
+        /// <summary>
+        /// Generates a new <see cref="ulong"/> id.
+        /// </summary>
+        /// <returns>New generated <see cref="ulong"/> id.</returns>
+        public static ulong GenerateID() {
+            unchecked {
+                return (ulong)Guid.NewGuid().GetHashCode();
+            }
         }
         #endregion
     }

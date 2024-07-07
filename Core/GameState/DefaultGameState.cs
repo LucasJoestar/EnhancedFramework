@@ -12,7 +12,7 @@ namespace EnhancedFramework.Core.GameStates {
     /// Original <see cref="GameState"/>, acting as the default one when no override is applied.
     /// </summary>
     [Serializable, DisplayName("<Default>")]
-    public class DefaultGameState : GameState {
+    public sealed class DefaultGameState : GameState {
         #region Global Members
         /// <summary>
         /// The default state, which is added on game start and never removed,
@@ -28,7 +28,9 @@ namespace EnhancedFramework.Core.GameStates {
             get { return true; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="DefaultGameState"/>
         public DefaultGameState() : base(false) { }

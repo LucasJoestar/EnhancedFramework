@@ -133,7 +133,16 @@ namespace EnhancedFramework.Core {
     /// Base non-generic class for <see cref="IFadingObject"/>-encapsulated <see cref="EnhancedBehaviour"/>.
     /// </summary>
     public abstract class FadingObjectBehaviour : EnhancedBehaviour, IFadingObject {
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+                if (InitMode != FadingMode.None) {
+                    _value |= UpdateRegistration.Init;
+                }
+
+                return _value;
+            }
+        }
 
         #region Global Members
         /// <summary>

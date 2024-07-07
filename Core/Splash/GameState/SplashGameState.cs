@@ -8,7 +8,6 @@ using EnhancedEditor;
 using System;
 
 namespace EnhancedFramework.Core.GameStates {
-
     /// <summary>
     /// Base interface for every splash <see cref="GameState"/>.
     /// <br/> Used within a <see cref="SerializedType{T}"/> instead of the generic <see cref="SplashGameState{T}"/> class.
@@ -27,9 +26,11 @@ namespace EnhancedFramework.Core.GameStates {
             get { return true; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
-        /// <inheritdoc cref="SplashGameState"/>
+        /// <inheritdoc cref="SplashGameState{T}"/>
         public SplashGameState() : base(false) { }
         #endregion
 
@@ -47,7 +48,7 @@ namespace EnhancedFramework.Core.GameStates {
     /// Default <see cref="SplashManager"/>-related <see cref="GameState"/>, applied while in the splash scene.
     /// </summary>
     [Serializable, DisplayName("Splash/Splash [Default]")]
-    public class DefaultSplashGameState : SplashGameState<GameStateOverride> {
+    public sealed class DefaultSplashGameState : SplashGameState<GameStateOverride> {
         #region Global Members
         /// <summary>
         /// High priority to remain above gameplay states, but lower than loadings

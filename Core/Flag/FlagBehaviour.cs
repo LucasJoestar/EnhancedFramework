@@ -13,7 +13,7 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Flag/Flag")]
-    public class FlagBehaviour : EnhancedBehaviour {
+    public sealed class FlagBehaviour : EnhancedBehaviour {
         #region Global Members
         [Section("Flag")]
 

@@ -2,6 +2,9 @@
 //
 // Notes:
 //
+//  • FadingGroups use many delegates causing multiple memory allocations.
+//  Can be optimized at some point, but requires quite a lot of rework.
+//
 // ================================================================================== //
 
 #if DOTWEEN_ENABLED
@@ -42,10 +45,10 @@ namespace EnhancedFramework.UI {
             HideCompleted   = 1 << 5,
 
             CompleteShow = ShowPerformed    | ShowCompleted,
-            CompleteHide = HidePerformed   | HideCompleted,
+            CompleteHide = HidePerformed    | HideCompleted,
 
             FullShow = ShowStarted | ShowPerformed  | ShowCompleted,
-            FullHide = HideStarted | HidePerformed | CompleteHide,
+            FullHide = HideStarted | HidePerformed  | CompleteHide,
         }
         #endregion
 
@@ -93,12 +96,12 @@ namespace EnhancedFramework.UI {
         /// <summary>
         /// This object <see cref="UnityEngine.Canvas"/>.
         /// </summary>
-        [Enhanced, ShowIf("UseCanvas"), Required] public Canvas Canvas = null;
+        [Enhanced, ShowIf(nameof(UseCanvas)), Required] public Canvas Canvas = null;
 
         /// <summary>
         /// This object <see cref="FadingGroupController"/>.
         /// </summary>
-        [Enhanced, ShowIf("UseController"), Required] public FadingGroupController Controller = null;
+        [Enhanced, ShowIf(nameof(UseController)), Required] public FadingGroupController Controller = null;
 
         /// <summary>
         /// This object <see cref="CanvasGroup"/>.
@@ -120,22 +123,25 @@ namespace EnhancedFramework.UI {
         [Space(10f)]
 
         [Tooltip("If true, disables all Selectable components in children when this group is not interactable")]
-        [Enhanced, ShowIf("IsInteractable")] public bool EnableSelectable = false;
+        [Enhanced, ShowIf(nameof(IsInteractable))] public bool EnableSelectable = false;
 
         [Tooltip("Object to first select when visible")]
-        [Enhanced, ShowIf("UseSelectable"), Required] public Selectable Selectable = null;
-        [Enhanced, ShowIf("UseSelectable"), ReadOnly] public Selectable ActiveSelectable = null;
+        [Enhanced, ShowIf(nameof(UseSelectable)), Required] public Selectable Selectable = null;
+        [Enhanced, ShowIf(nameof(UseSelectable)), ReadOnly] public Selectable ActiveSelectable = null;
 
         // -----------------------
 
+        /// <inheritdoc/>
         public virtual bool IsVisible {
             get { return Group.alpha == FadeAlpha.y; }
         }
 
+        /// <inheritdoc/>
         public virtual float ShowDuration {
             get { return 0f; }
         }
 
+        /// <inheritdoc/>
         public virtual float HideDuration {
             get { return 0f; }
         }
@@ -427,7 +433,7 @@ namespace EnhancedFramework.UI {
             // ----- Local Method ----- \\
 
             bool HasEvent(ControllerEvent _eventType) {
-                return _event.HasFlag(_eventType);
+                return _event.HasFlagUnsafe(_eventType);
             }
         }
 
@@ -471,7 +477,7 @@ namespace EnhancedFramework.UI {
         /// <param name="_parameter">Parameter to check.</param>
         /// <returns>True if this group has the parameter enabled, false otherwise.</returns>
         public bool HasParameter(Parameters _parameter) {
-            return GroupParameters.HasFlag(_parameter);
+            return GroupParameters.HasFlagUnsafe(_parameter);
         }
         #endregion
     }
@@ -726,14 +732,31 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
+        private Action<float> setter = null;
+
         private TweenHandler tween = default;
         private float targetAlpha = 0f;
+
+        public Action<float> Setter {
+            get {
+                setter ??= Set;
+                return setter;
+            }
+        }
 
         // -------------------------------------------
         // General
         // -------------------------------------------
 
         public override void Show(Action _onComplete = null) {
+
+            // Already faded.
+            if ((Group.alpha == FadeAlpha.y) && !tween.IsValid) {
+
+                _onComplete?.Invoke();
+                return;
+            }
+
             #if TWEENING
             Fade(FadeAlpha.y, fadeInDuration, fadeInEase, _onComplete);
             #else
@@ -744,6 +767,14 @@ namespace EnhancedFramework.UI {
         }
 
         public override void Hide(Action _onComplete = null) {
+
+            // Already faded.
+            if ((Group.alpha == FadeAlpha.x) && !tween.IsValid) {
+
+                _onComplete?.Invoke();
+                return;
+            }
+
             #if TWEENING
             Fade(FadeAlpha.x, fadeOutDuration, fadeOutEase, _onComplete);
             #else
@@ -845,7 +876,16 @@ namespace EnhancedFramework.UI {
         // -------------------------------------------
 
         private void Fade(float _alpha, Action _onComplete) {
+
             CancelCurrentFade();
+
+            // Already faded.
+            if (Group.alpha == _alpha) {
+
+                _onComplete?.Invoke();
+                return;
+            }
+
             Group.alpha = _alpha;
 
             ToggleCanvas(_alpha == FadeAlpha.y);
@@ -893,6 +933,7 @@ namespace EnhancedFramework.UI {
             SetInteractable(true);
 
             if (Group.alpha == _alpha) {
+
                 OnStopped();
                 return;
             }
@@ -901,13 +942,9 @@ namespace EnhancedFramework.UI {
 
             // Tween.
             targetAlpha = _alpha;
-            tween = _tweener(Set, OnStopped);
+            tween = _tweener(Setter, OnStopped);
 
             // ----- Local Method ----- \\
-
-            void Set(float _value) {
-                Group.alpha = _value;
-            }
 
             void OnStopped(bool _completed = false) {
 
@@ -916,6 +953,14 @@ namespace EnhancedFramework.UI {
 
                 _onComplete?.Invoke();
             }
+        }
+
+        // -------------------------------------------
+        // Delegate
+        // -------------------------------------------
+
+        private void Set(float _value) {
+            Group.alpha = _value;
         }
         #endregion
     }

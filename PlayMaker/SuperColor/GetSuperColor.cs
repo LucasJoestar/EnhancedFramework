@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Get the value of a SuperColor and store it in a Color Variable.")]
     [ActionCategory(ActionCategory.Color)]
-    public class GetSuperColor : FsmStateAction {
+    public sealed class GetSuperColor : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Value - Every Frame
@@ -39,8 +39,8 @@ namespace EnhancedFramework.PlayMaker {
             base.Reset();
 
             ColorVariable = null;
-            SuperColor = null;
-            EveryFrame = false;
+            SuperColor    = null;
+            EveryFrame    = false;
         }
 
         public override void OnEnter() {

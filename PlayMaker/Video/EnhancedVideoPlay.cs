@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Plays an Enhanced Video Player")]
     [ActionCategory("Video")]
-    public class EnhancedVideoPlay : FsmStateAction {
+    public sealed class EnhancedVideoPlay : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Paused - Resumed - Stopped
@@ -41,8 +41,8 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            Video = null;
-            PausedEvent = null;
+            Video        = null;
+            PausedEvent  = null;
             ResumedEvent = null;
             StoppedEvent = null;
         }

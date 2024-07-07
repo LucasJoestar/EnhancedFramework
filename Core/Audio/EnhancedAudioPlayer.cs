@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 using Range = EnhancedEditor.RangeAttribute;
@@ -15,9 +16,9 @@ namespace EnhancedFramework.Core {
     /// <see cref="EnhancedAudioPlayer"/>-related modifiers used to apply coefficients to various audio parameters (volume, pitch...).
     /// </summary>
     public enum AudioPlayerModifier {
-        None        = 0,
-        Asset       = 1,
-        Fade        = 2,
+        None    = 0,
+        Asset   = 1,
+        Fade    = 2,
 
         ControllerSource    = 5,
         ControllerFadeOut   = 6,
@@ -114,7 +115,7 @@ namespace EnhancedFramework.Core {
     [RequireComponent(typeof(AudioSource))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Audio/Audio Player"), DisallowMultipleComponent]
     #pragma warning disable
-    public class EnhancedAudioPlayer : EnhancedPoolableObject, IHandle {
+    public sealed class EnhancedAudioPlayer : EnhancedPoolableObject, IHandle {
         #region State
         /// <summary>
         /// References all available states for an <see cref="EnhancedAudioPlayer"/>.
@@ -128,7 +129,16 @@ namespace EnhancedFramework.Core {
         }
         #endregion
 
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+                if (playAfterLoading) {
+                    _value |= UpdateRegistration.Play;
+                }
+
+                return _value;
+            }
+        }
 
         #region Global Members
         [Section("Enhanced Audio Player")]
@@ -227,13 +237,13 @@ namespace EnhancedFramework.Core {
         #if UNITY_EDITOR
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("Time"), Range("TimeRange"), ValidationMember("Time")]
+        [SerializeField, Enhanced, DrawMember(nameof(Time)), Range(nameof(TimeRange)), ValidationMember(nameof(Time))]
         private float time = 0f;
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, DrawMember("Duration"), ReadOnly] private float duration = 0f;
-        [SerializeField, Enhanced, DrawMember("IsAudioSourcePlaying"), ReadOnly] private bool isPlaying = false;
+        [SerializeField, Enhanced, DrawMember(nameof(Duration)), ReadOnly] private float duration = 0f;
+        [SerializeField, Enhanced, DrawMember(nameof(IsAudioSourcePlaying)), ReadOnly] private bool isPlaying = false;
         #endif
 
         /// <summary>
@@ -276,6 +286,13 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Enhanced Behaviour
+        protected override void OnBehaviourEnabled() {
+            base.OnBehaviourEnabled();
+
+            // Registration.
+            AudioManager.RegisterPlayer(this);
+        }
+
         protected override void OnPlay() {
             base.OnPlay();
 
@@ -285,13 +302,6 @@ namespace EnhancedFramework.Core {
                 playAfterLoading = false;
                 Play();
             }
-        }
-
-        protected override void OnBehaviourEnabled() {
-            base.OnBehaviourEnabled();
-
-            // Registration.
-            AudioManager.RegisterPlayer(this);
         }
 
         /// <summary>
@@ -375,6 +385,8 @@ namespace EnhancedFramework.Core {
         #region Behaviour
         private static int lastPlayID = 0;
 
+        private Action onPlayCallback = null;
+
         private TweenHandler volumeTween = default;
         private DelayHandler delay = default;
 
@@ -427,27 +439,29 @@ namespace EnhancedFramework.Core {
 
             #if UNITY_EDITOR
             // Hierachy utility.
-            if (isFromPool) {
+            if (IsFromPool) {
                 gameObject.name = $"{gameObject.name.GetPrefix()}{audioSource.clip.name.RemovePrefix()} - [{playID}]";
             }
             #endif
 
             // Delay.
-            float _delay = audioAsset.Delay;
+            float _delay = _audio.Delay;
             if (_delay  != 0f) {
 
                 SetState(State.Delay);
-                delay = Delayer.Call(_audio.Delay, OnPlay, true);
+
+                onPlayCallback ??= OnPlay;
+                delay = Delayer.Call(_delay, onPlayCallback, true);
 
             } else {
                 OnPlay();
             }
 
             // Play.
-            AudioHandler _player = new AudioHandler(this, playID);
-            audioAsset.SetHandler(_player);
+            AudioHandler _handler = new AudioHandler(this, playID);
+            _audio.SetHandler(_handler);
 
-            return _player;
+            return _handler;
 
             // ----- Local Method ----- \\
 
@@ -480,7 +494,7 @@ namespace EnhancedFramework.Core {
 
             #if UNITY_EDITOR
             if (!Application.isPlaying && (state == State.Playing)) {
-                Stop(true);
+                Stop(true, null, false);
             }
             #endif
 
@@ -638,7 +652,7 @@ namespace EnhancedFramework.Core {
                 SetState(State.Inactive);
 
                 // Send back to pool.
-                if (isFromPool && _sendToPool) {
+                if (IsFromPool && _sendToPool) {
                     AudioManager.Instance.ReleaseAudioPlayerToPool(this);
                 }
 
@@ -810,20 +824,24 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private void UpdateVolume() {
+
+            List<Pair<AudioPlayerModifier, float>> _modifiersSpan = volumeModifiers.collection;
             float _volume = DefaultVolume;
 
-            foreach (var _pair in volumeModifiers) {
-                _volume *= _pair.Second;
+            for (int i = _modifiersSpan.Count; i-- > 0;) {
+                _volume *= _modifiersSpan[i].Second;
             }
 
             audioSource.volume = _volume;
         }
 
         private void UpdatePitch() {
+
+            List<Pair<AudioPlayerModifier, float>> _modifiersSpan = pitchModifiers.collection;
             float _pitch = DefaultPitch;
 
-            foreach (var _pair in pitchModifiers) {
-                _pitch *= _pair.Second;
+            for (int i = _modifiersSpan.Count; i-- > 0;) {
+                _pitch *= _modifiersSpan[i].Second;
             }
 
             audioSource.pitch = _pitch;
@@ -866,8 +884,10 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public void ClearVolumeModifiers() {
 
-            for (int i = volumeTweens.Count; i-- > 0;) {
-                volumeTweens[i].Second.Stop();
+            List<Pair<AudioPlayerModifier, TweenHandler>> _tweenSpan = volumeTweens.collection;
+
+            for (int i = _tweenSpan.Count; i-- > 0;) {
+                _tweenSpan[i].Second.Stop();
             }
 
             volumeTweens.Clear();
@@ -881,8 +901,10 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public void ClearPitchModifiers() {
 
-            for (int i = pitchTweens.Count; i-- > 0;) {
-                pitchTweens[i].Second.Stop();
+            List<Pair<AudioPlayerModifier, TweenHandler>> _tweenSpan = pitchTweens.collection;
+            
+            for (int i = _tweenSpan.Count; i-- > 0;) {
+                _tweenSpan[i].Second.Stop();
             }
 
             pitchTweens.Clear();
@@ -893,15 +915,8 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Poolable
-        private bool isFromPool = false;
-
-        // -----------------------
-
-        public override void OnCreated() {
-            base.OnCreated();
-
-            // Pool management.
-            isFromPool = true;
+        public override void OnCreated(IObjectPool _pool) {
+            base.OnCreated(_pool);
 
             // Component reference.
             audioSource = gameObject.AddComponentIfNone<AudioSource>();
@@ -928,8 +943,14 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        protected override void SetActive(bool _isActive) {
-            base.SetActive(_isActive);
+        public override void Release() {
+
+            if (IsFromPool) {
+                AudioManager.Instance.ReleaseAudioPlayerToPool(this);
+                return;
+            }
+
+            base.Release();
         }
         #endregion
 
@@ -971,7 +992,13 @@ namespace EnhancedFramework.Core {
         private void UpdateFollow() {
 
             if (followTransform) {
-                transform.position = referenceTransform.position;
+
+                try {
+                    transform.position = referenceTransform.position;
+                } catch (MissingReferenceException e) {
+                    this.LogException(e);
+                    StopFollowTransform();
+                }
             }
         }
         #endregion

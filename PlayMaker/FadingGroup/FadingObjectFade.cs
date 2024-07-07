@@ -29,7 +29,7 @@ namespace EnhancedFramework.PlayMaker {
         public FsmBool Instant = null;
 
         [Tooltip("Whether to fade the group instantly or not.")]
-        [HideIf("HideWaitDuration")]
+        [HideIf(nameof(HideWaitDuration))]
         public FsmFloat WaitDuration = null;
 
         [Tooltip("Event to send when fade is completed.")]
@@ -51,10 +51,10 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            FadingMode = null;
-            Instant = null;
-            WaitDuration = null;
-            CompletedEvent = null;
+            FadingMode      = null;
+            Instant         = null;
+            WaitDuration    = null;
+            CompletedEvent  = null;
         }
 
         public override void OnEnter() {

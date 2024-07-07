@@ -136,13 +136,15 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-990)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Save/Save Manager"), DisallowMultipleComponent]
-    public class SaveManager : EnhancedSingleton<SaveManager> {
+    public sealed class SaveManager : EnhancedSingleton<SaveManager> {
         #region Global Members
+        [Section("Save Manager")]
+
         private string saveJson = string.Empty;
         #endregion
 
         #region Registration
-        private EnhancedCollection<ISaveable> savableObjects = new EnhancedCollection<ISaveable>();
+        private readonly EnhancedCollection<ISaveable> savableObjects = new EnhancedCollection<ISaveable>();
 
         // -----------------------
 

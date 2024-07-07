@@ -13,24 +13,33 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Game Object Activator")]
-    public class GameObjectActivator : EnhancedBehaviour {
+    public sealed class GameObjectActivator : EnhancedBehaviour {
         #region Mode
         /// <summary>
         /// Enum used to define when the object state is being updated.
         /// </summary>
         public enum Mode {
             [Tooltip("Don't toggle this object state")]
-            None        = 0,
+            None    = 0,
 
             [Tooltip("Toggles this object state as soon as it is enabled")]
-            Enable   = 1,
+            Enable  = 1,
 
             [Tooltip("Toggles this object state on Init")]
-            Init      = 2,
+            Init    = 2,
         }
         #endregion
 
-        public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
+        public override UpdateRegistration UpdateRegistration {
+            get {
+                UpdateRegistration _value = base.UpdateRegistration;
+                if (mode == Mode.Init) {
+                    _value |= UpdateRegistration.Init;
+                }
+
+                return _value;
+            }
+        }
 
         #region Global Members
         [Section("Game Object Activator")]
@@ -45,7 +54,7 @@ namespace EnhancedFramework.Core {
         [Space(10f)]
 
         [Tooltip("Scripting Symbol to check definition")]
-        [SerializeField, Enhanced, ShowIf("useScriptingSymbol")] private string scriptingSymbol = string.Empty;
+        [SerializeField, Enhanced, ShowIf(nameof(useScriptingSymbol))] private string scriptingSymbol = string.Empty;
 
         [Tooltip("Defines when this object state is updated")]
         [SerializeField] private Mode mode = Mode.Init;

@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Open URL On Quit"), DisallowMultipleComponent]
     #pragma warning disable
-    public class OpenURLOnQuit : EnhancedBehaviour {
+    public sealed class OpenURLOnQuit : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members

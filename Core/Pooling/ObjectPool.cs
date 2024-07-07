@@ -5,7 +5,9 @@
 // ================================================================================== //
 
 using System;
+using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace EnhancedFramework.Core {
 	/// <summary>
@@ -16,7 +18,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Called when this object is created.
         /// </summary>
-        void OnCreated();
+        void OnCreated(IObjectPool _pool);
 
         /// <summary>
         /// Called when this element is removed from the pool.
@@ -31,10 +33,67 @@ namespace EnhancedFramework.Core {
     }
 
     /// <summary>
-    /// <see cref="ObjectPool{T}"/>-related interface used to create and destroy instances.
+    /// Base non-generic interface to inherit any <see cref="IPoolableObject"/> pool from.
+    /// </summary>
+    public interface IObjectPool {
+        #region Content
+        /// <summary>
+        /// Get an object instance from this pool.
+        /// </summary>
+        /// <returns>The object instance get from the pool.</returns>
+        IPoolableObject GetPoolInstance();
+
+        /// <summary>
+        /// Releases a specific instance and sent it to the pool.
+        /// </summary>
+        /// <param name="_instance">Object instance to release and send to the pool.</param>
+        /// <returns>True if the instance could be successfully released and sent to the pool, false otherwise.</returns>
+        bool ReleasePoolInstance(IPoolableObject _instance);
+
+        /// <summary>
+        /// Clears this pool content and destroys all its instances.
+        /// </summary>
+        /// <param name="_capacity">New capacity of the pool.</param>
+        void ClearPool(int _capacity = 1);
+        #endregion
+    }
+
+    /// <summary>
+    /// Base generic interface to inherit any <see cref="IPoolableObject"/> pool from.
+    /// </summary>
+    public interface IObjectPool<T> : IObjectPool where T : class, IPoolableObject {
+        #region Content
+        /// <inheritdoc cref="IObjectPool.GetPoolInstance"/>
+        new T GetPoolInstance();
+
+        /// <inheritdoc cref="IObjectPool.ReleasePoolInstance"/>
+        bool ReleasePoolInstance(T _instance);
+
+        // -------------------------------------------
+        // Non-Generic Default Implementation
+        // -------------------------------------------
+
+        /// <inheritdoc/>
+        IPoolableObject IObjectPool.GetPoolInstance() {
+            return GetPoolInstance();
+        }
+
+        /// <inheritdoc/>
+        bool IObjectPool.ReleasePoolInstance(IPoolableObject _instance) {
+            if (_instance is T _objectInstance) {
+                return ReleasePoolInstance(_objectInstance);
+            }
+
+            return false;
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// <see cref="ObjectPool{T}"/>-related interface, managing a pool and used to create and destroy instances.
     /// </summary>
     /// <typeparam name="T"><see cref="IPoolableObject"/> managed type.</typeparam>
-    public interface IObjectPoolManager<T> where T : class, IPoolableObject {
+    public interface IObjectPoolManager<T> : IObjectPool<T> where T : class, IPoolableObject {
         #region Content
         /// <summary>
         /// Creates a new object instance.
@@ -50,13 +109,15 @@ namespace EnhancedFramework.Core {
         #endregion
     }
 
+    // ===== Core Pool ===== \\
+
     /// <summary>
     /// Generic pool system used to manage a specific <see cref="IPoolableObject"/> type.
     /// <para/>
     /// Keep in mind to initialize it as soon as possible using <see cref="Initialize(IObjectPoolManager{T})"/>.
     /// </summary>
     [Serializable]
-    public sealed class ObjectPool<T> where T : class, IPoolableObject  {
+    public sealed class ObjectPool<T> : IObjectPool<T> where T : class, IPoolableObject  {
         #region Global Members
         [SerializeField] private EnhancedCollection<T> pool = new EnhancedCollection<T>();
         private IObjectPoolManager<T> manager = null;
@@ -85,67 +146,83 @@ namespace EnhancedFramework.Core {
 
             manager = _manager;
 
-            for (int i = pool.Count; i < pool.Capacity; i++) {
-                T _instance = _manager.CreateInstance();
-                pool.Add(_instance);
+            int _capacity = pool.Capacity;
+            for (int i = pool.Count; i < _capacity; i++) {
 
-                _instance.OnCreated();
-                _instance.OnSentToPool();
+                T _instance = CreateInstance();
+
+                AssertInstanceInPool(_instance);
+                pool.Add(_instance);
             }
         }
         #endregion
 
         #region Management
-        /// <summary>
-        /// Get an object instance from this pool.
-        /// </summary>
-        /// <returns>The object instance get from the pool.</returns>
-        public T Get() {
+        /// <inheritdoc cref="IObjectPool.GetPoolInstance"/>
+        public T GetPoolInstance() {
             T _instance;
+            int _count = pool.Count;
 
-            if (pool.Count == 0) {
-                _instance = manager.CreateInstance();
-                _instance.OnCreated();
+            if (_count == 0) {
+                _instance = CreateInstance();
             } else {
-                _instance = pool.Last();
-                pool.RemoveLast();
+                int _index = _count - 1;
+
+                _instance = pool[_index];
+                pool.RemoveAt(_index);
             }           
 
             _instance.OnRemovedFromPool();
+            AssertInstanceInPool(_instance);
+
             return _instance;
         }
 
-        /// <summary>
-        /// Releases a specific instance and sent it to the pool.
-        /// </summary>
-        /// <param name="_instance">Object instance to release and send to the pool.</param>
-        /// <returns>True if the instance could be successfully released and sent to the pool, false otherwise.</returns>
-        public bool Release(T _instance) {
+        /// <inheritdoc cref="IObjectPool.ReleasePoolInstance"/>
+        public bool ReleasePoolInstance(T _instance) {
             // Ignore it if already in the pool.
             if (pool.IndexOf(_instance) != -1) {
                 return false;
             }
 
             _instance.OnSentToPool();
+
+            AssertInstanceInPool(_instance);
             pool.Add(_instance);
 
             return true;
         }
 
-        /// <summary>
-        /// Clears this pool content and destroys all its instances.
-        /// </summary>
-        /// <param name="_capacity">New capacity of the pool.</param>
-        public void Clear(int _capacity = 1) {
+        /// <inheritdoc cref="IObjectPool.ClearPool"/>
+        public void ClearPool(int _capacity = 1) {
             // Destroy instances.
             for (int i = pool.Count; i-- > 0;) {
-                T _object = pool[i];
-                manager.DestroyInstance(_object);
+                manager.DestroyInstance(pool[i]);
             }
 
             // Reset capacity.
             pool.Clear();
             pool.Capacity = _capacity;
+        }
+
+        // -------------------------------------------
+        // Internal
+        // -------------------------------------------
+
+        private T CreateInstance() {
+            T _instance = manager.CreateInstance();
+
+            _instance.OnCreated(manager);
+            _instance.OnSentToPool();
+
+            return _instance;
+        }
+        #endregion
+
+        #region Utility
+        [Conditional("DEVELOPMENT")]
+        private void AssertInstanceInPool(T _instance) {
+            Assert.IsFalse(pool.Contains(_instance));
         }
         #endregion
     }

@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Stops an Audio Asset.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class EnhancedAudioStop : FsmStateAction {
+    public sealed class EnhancedAudioStop : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Audio

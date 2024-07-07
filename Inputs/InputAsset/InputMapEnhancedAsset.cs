@@ -23,7 +23,7 @@ namespace EnhancedFramework.Inputs {
     /// <br/> Not of any use when using the native input system.
     /// </summary>
     [CreateAssetMenu(fileName = FilePrefix + "InputMap", menuName = MenuPath + "Map", order = MenuOrder)]
-    public class InputMapEnhancedAsset : InputEnhancedAsset {
+    public sealed class InputMapEnhancedAsset : InputEnhancedAsset {
         public const string FilePrefix  = "IPM_";
 
         #region Global Members

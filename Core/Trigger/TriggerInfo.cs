@@ -4,9 +4,8 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace EnhancedFramework.Core {
     /// <summary>
@@ -99,14 +98,14 @@ namespace EnhancedFramework.Core {
     /// Wrapper for an <see cref="ITrigger"/> state infos.
     /// </summary>
     [Serializable]
-    public class TriggerInfo : IHandle, IPoolableObject, IEnumerable<ITriggerActor> {
+    public sealed class TriggerInfo : IHandle, IPoolableObject {
         #region Global Members
-        private int id = 0;
-
         /// <summary>
         /// Default instance of this class.
         /// </summary>
         public static TriggerInfo None = new TriggerInfo();
+
+        private int id = 0;
 
         /// <summary>
         /// This trigger instance.
@@ -135,7 +134,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// The total amount of actors within this trigger.
         /// </summary>
-        public virtual int Count {
+        public int Count {
             get { return Actors.Count; }
         }
 
@@ -144,19 +143,7 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         /// <inheritdoc cref="TriggerInfo"/>
-        internal protected TriggerInfo() { }
-        #endregion
-
-        #region IEnumerable
-        public IEnumerator<ITriggerActor> GetEnumerator() {
-            for (int i = 0; i < Count; i++) {
-                yield return Actors[i];
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return GetEnumerator();
-        }
+        internal TriggerInfo() { }
         #endregion
 
         #region Behaviour
@@ -178,7 +165,7 @@ namespace EnhancedFramework.Core {
                 _infos = EnhancedTriggerInfoManager.GetInfos(_trigger);
             }
 
-            _infos.Actors.AddInstance(_actor);
+            _infos.Actors.Add(_actor);
             return _infos;
         }
 
@@ -240,7 +227,7 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        void IPoolableObject.OnCreated() { }
+        void IPoolableObject.OnCreated(IObjectPool _pool) { }
 
         void IPoolableObject.OnRemovedFromPool() { }
 
@@ -254,12 +241,12 @@ namespace EnhancedFramework.Core {
     /// <see cref="ITrigger"/>-related utility class.
     /// <br/> Use this for getting a <see cref="TriggerInfo"/> instance.
     /// </summary>
-    public class EnhancedTriggerInfoManager : IObjectPoolManager<TriggerInfo> {
+    public sealed class EnhancedTriggerInfoManager : IObjectPoolManager<TriggerInfo> {
         #region Pool
         private const int PoolCapacity = 2;
 
-        private static readonly ObjectPool<TriggerInfo> pool = new ObjectPool<TriggerInfo>(PoolCapacity);
-        public static readonly EnhancedTriggerInfoManager Instance = new EnhancedTriggerInfoManager();
+        private static readonly ObjectPool<TriggerInfo> pool        = new ObjectPool<TriggerInfo>(PoolCapacity); // Must be before Instance field for a correct initialization.
+        public  static readonly EnhancedTriggerInfoManager Instance = new EnhancedTriggerInfoManager();
 
         /// <inheritdoc cref="EnhancedTriggerInfoManager"/>
         private EnhancedTriggerInfoManager() {
@@ -275,9 +262,9 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Get a <see cref="TriggerInfo"/> instance from the pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Get"/>
+        /// <inheritdoc cref="ObjectPool{T}.GetPoolInstance"/>
         public static TriggerInfo GetInfos(ITrigger _trigger) {
-            TriggerInfo _infos = pool.Get();
+            TriggerInfo _infos = pool.GetPoolInstance();
             _infos.Setup(_trigger);
 
             return _infos;
@@ -286,27 +273,38 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Releases a specific <see cref="TriggerInfo"/> instance and sent it back to the pool.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Release(T)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ReleasePoolInstance(T)(T)"/>
         public static bool ReleaseInfos(TriggerInfo _instance) {
-            return pool.Release(_instance);
+            return pool.ReleasePoolInstance(_instance);
         }
 
         /// <summary>
         /// Clears the <see cref="TriggerInfo"/> pool content.
         /// </summary>
-        /// <inheritdoc cref="ObjectPool{T}.Clear(int)"/>
+        /// <inheritdoc cref="ObjectPool{T}.ClearPool(int)"/>
         public static void ClearPool(int _capacity = PoolCapacity) {
-            pool.Clear(_capacity);
+            pool.ClearPool(_capacity);
         }
 
         // -----------------------
 
-        /// <inheritdoc cref="IObjectPoolManager{TriggerInfos}.CreateInstance"/>
+        TriggerInfo IObjectPool<TriggerInfo>.GetPoolInstance() {
+            this.LogErrorMessage($"Cannot get a {typeof(TriggerInfo).Name} instance from the pool without a valid {typeof(ITrigger).Name}");
+            return null;
+        }
+
+        bool IObjectPool<TriggerInfo>.ReleasePoolInstance(TriggerInfo _instance) {
+            return ReleaseInfos(_instance);
+        }
+
+        void IObjectPool.ClearPool(int _capacity) {
+            ClearPool(_capacity);
+        }
+
         TriggerInfo IObjectPoolManager<TriggerInfo>.CreateInstance() {
             return new TriggerInfo();
         }
 
-        /// <inheritdoc cref="IObjectPoolManager{TriggerInfos}.DestroyInstance(TriggerInfos)"/>
         void IObjectPoolManager<TriggerInfo>.DestroyInstance(TriggerInfo _instance) {
             // Cannot destroy the instance, so simply ignore the object and wait for the garbage collector to pick it up.
         }

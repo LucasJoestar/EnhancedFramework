@@ -31,10 +31,26 @@ namespace EnhancedFramework.Localization {
     }
 
     /// <summary>
+    /// Interface used to receives callbacks on multiple localization-related events.
+    /// <para/>
+    /// Must be registered on initialization and unregistered on deactivation using
+    /// <see cref="LocalizationManager.Register(ILocalizer)"/> and <see cref="LocalizationManager.Unregister(ILocalizer)"/>.
+    /// </summary>
+    public interface ILocalizer {
+        #region Content
+        /// <summary>
+        /// Called when the game active locale is changed.
+        /// </summary>
+        /// <param name="_locale">New active locale (use this to update localized strings and assets).</param>
+        void OnLocaleChanged(Locale _locale);
+        #endregion
+    }
+
+    /// <summary>
     /// <see cref="ResourceLoader{T}"/> used to load various localization tables from a <see cref="ILocalizable"/>.
     /// </summary>
     [Serializable]
-    public class LocalizationResourceLoader : ResourceLoader<LocalizationResourceLoader> {
+    public sealed class LocalizationResourceLoader : ResourceLoader<LocalizationResourceLoader> {
         #region Global Members
         public override bool IsProcessing {
             get { return currentOperations.Count != 0; }
@@ -42,8 +58,8 @@ namespace EnhancedFramework.Localization {
 
         // -----------------------
 
-        private readonly Set<TableReference> stringTables   = new Set<TableReference>();
-        private readonly Set<TableReference> assetTables    = new Set<TableReference>();
+        private readonly Set<TableReference> stringTables = new Set<TableReference>();
+        private readonly Set<TableReference> assetTables  = new Set<TableReference>();
 
         private readonly List<AsyncOperationHandle> currentOperations = new List<AsyncOperationHandle>();
         #endregion
@@ -98,21 +114,7 @@ namespace EnhancedFramework.Localization {
         #endregion
     }
 
-    /// <summary>
-    /// Interface used to receives callbacks on multiple localization-related events.
-    /// <para/>
-    /// Must be registered on initialization and unregistered on deactivation using
-    /// <see cref="LocalizationManager.Register(ILocalizer)"/> and <see cref="LocalizationManager.Unregister(ILocalizer)"/>.
-    /// </summary>
-    public interface ILocalizer {
-        #region Content
-        /// <summary>
-        /// Called when the game active locale is changed.
-        /// </summary>
-        /// <param name="_locale">New active locale (use this to update localized strings and assets).</param>
-        void OnLocaleChanged(Locale _locale);
-        #endregion
-    }
+    // ===== Manager ===== \\
 
     /// <summary>
     /// Localization singleton class, managing all localization-related operations (like tables loading and selected locale).
@@ -120,7 +122,7 @@ namespace EnhancedFramework.Localization {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-200)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Localization/Localization Manager"), DisallowMultipleComponent]
-    public class LocalizationManager : EnhancedSingleton<LocalizationManager>, ILoadingProcessor {
+    public sealed class LocalizationManager : EnhancedSingleton<LocalizationManager>, ILoadingProcessor {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Loading Processor
@@ -153,6 +155,13 @@ namespace EnhancedFramework.Localization {
         #endregion
 
         #region Enhanced Behaviour
+        protected override void OnBehaviourEnabled() {
+            base.OnBehaviourEnabled();
+
+            // Locale callback.
+            LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
+        }
+
         protected override void OnInit() {
             base.OnInit();
 
@@ -166,12 +175,12 @@ namespace EnhancedFramework.Localization {
             }
 
             // Load.
-            foreach (LocalizedAssetTable _asset in generalAssets) {
-                LoadAssetTable(_asset.TableReference);
+            for (int i = 0; i < generalAssets.Length; i++) {
+                LoadAssetTable(generalAssets[i].TableReference);
             }
 
-            foreach (LocalizedStringTable _asset in generalStrings) {
-                LoadStringTable(_asset.TableReference);
+            for (int i = 0; i < generalStrings.Length; i++) {
+                LoadStringTable(generalStrings[i].TableReference);
             }
 
             // ----- Local Method ----- \\
@@ -195,13 +204,6 @@ namespace EnhancedFramework.Localization {
                         break;
                 }
             }
-        }
-
-        protected override void OnBehaviourEnabled() {
-            base.OnBehaviourEnabled();
-
-            // Locale callback.
-            LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
         }
 
         protected override void OnBehaviourDisabled() {
@@ -250,18 +252,20 @@ namespace EnhancedFramework.Localization {
         /// </summary>
         /// <param name="_locale">The new locale to select.</param>
         public void SelectLocale(Locale _locale) {
-            this.LogMessage($"Select Locale \'{_locale.name}\'");
+            Instance.LogMessage($"Select Locale \'{_locale?.name}\'");
 
             LocalizationSettings.SelectedLocale = _locale;
             OnSelectLocale?.Invoke(_locale);
         }
 
         private void OnLocaleChanged(Locale _locale) {
-            this.LogWarningMessage($"Changed Locale to \'{_locale.name}\'");
+            this.LogWarningMessage($"Changed Locale to \'{_locale?.name}\'");
 
             // Update localizables.
-            foreach (ILocalizer _localizable in localizables) {
-                _localizable.OnLocaleChanged(_locale);
+            List<ILocalizer> _localizableSpan = localizables.collection;
+
+            for (int i = _localizableSpan.Count; i-- > 0;) {
+                _localizableSpan[i].OnLocaleChanged(_locale);
             }
         }
         #endregion
@@ -351,7 +355,8 @@ namespace EnhancedFramework.Localization {
         /// <param name="_tables">All string tables to release.</param>
         public void ReleaseStringTables(IList<TableReference> _tables) {
 
-            foreach (TableReference _table in _tables) {
+            for (int i = 0; i < _tables.Count; i++) {
+                TableReference _table = _tables[i];
                 ReleaseStringTable(_table);
             }
         }
@@ -362,7 +367,8 @@ namespace EnhancedFramework.Localization {
         /// <param name="_tables">All asset tables to release.</param>
         public void ReleaseAssetTables(IList<TableReference> _tables) {
 
-            foreach (TableReference _table in _tables) {
+            for (int i = 0; i < _tables.Count; i++) {
+                TableReference _table = _tables[i];
                 ReleaseAssetTable(_table);
             }
         }

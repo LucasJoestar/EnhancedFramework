@@ -6,7 +6,6 @@
 
 using EnhancedEditor;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 #if DOTWEEN_ENABLED
@@ -35,35 +34,15 @@ namespace EnhancedFramework.Core {
         [Tooltip("Total duration of this curve")]
         [Enhanced, Min(.001f)] public float Duration = 1f;
 
-        protected readonly Dictionary<int, float> timeWrapper = new Dictionary<int, float>();
-
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         protected EaseCurveValue() { }
 
         protected EaseCurveValue(Vector2 _range, float _duration) {
-            Range = _range;
+            Range    = _range;
             Duration = _duration;
-        }
-        #endregion
-
-        #region Registration
-        /// <summary>
-        /// Registers a new id for this value, and create a specific wrapper for it.
-        /// <br/> Registration must be performed before any use.
-        /// </summary>
-        /// <param name="_id">The new id to register.</param>
-        public virtual void Register(int _id) {
-            timeWrapper.Add(_id, 0f);
-        }
-
-        /// <summary>
-        /// Unregisters a specific id from this value, along with its associated wrapper.
-        /// <br/> Use this when a registered object is being destroyed.
-        /// </summary>
-        /// <param name="_id">The id to unregister.</param>
-        public virtual void Unregister(int _id) {
-            timeWrapper.Remove(_id);
         }
         #endregion
 
@@ -71,90 +50,58 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Continue evaluating this value by increasing its current time.
         /// </summary>
-        /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
+        /// <param name="_time">Reference time value to increase.</param>
         /// <param name="_increase">Value time increase (in seconds).</param>
         /// <returns>This value at the current evaluation time.</returns>
-        public float EvaluateContinue(int _id, float _increase) {
-
-            if (!timeWrapper.TryGetValue(_id, out float _value)) {
-                return 0f;
-            }
-
-            float _time = Mathf.Clamp(_value + _increase, 0f, Duration);
-            timeWrapper[_id] = _time;
-
-            return DoEvaluate(_id, _time / Duration);
+        public float EvaluateContinue(ref float _time, float _increase) {
+            _time = Mathf.Clamp(_time + _increase, 0f, Duration);
+            return DoEvaluate(_time / Duration);
         }
 
         /// <summary>
         /// Evaluates this value at a specific time.
         /// </summary>
-        /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
         /// <param name="_time">Time to evaluate this value at.</param>
         /// <returns>This value at the given time.</returns>
-        public float Evaluate(int _id, float _time) {
-
-            if (!timeWrapper.ContainsKey(_id)) {
-                return 0f;
-            }
-
-            timeWrapper[_id] = _time;
-            return DoEvaluate(_id, _time / Duration);
+        public float Evaluate(float _time) {
+            return DoEvaluate(_time / Duration);
         }
 
         /// <summary>
         /// Evaluates this curve value at a specific percentage (from 0 to 1).
         /// </summary>
-        /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
         /// <param name="_percent">Lifetime percentage to evaluate the curve at.</param>
         /// <returns>The curve value at the given percentage.</returns>
-        public float EvaluatePercent(int _id, float _percent) {
-
-            if (!timeWrapper.ContainsKey(_id)) {
-                return 0f;
-            }
-
-            timeWrapper[_id] = Duration * _percent;
-            return DoEvaluate(_id, _percent);
+        public float EvaluatePercent(float _percent) {
+            return DoEvaluate(_percent);
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Internal
+        // -------------------------------------------
 
         /// <summary>
         /// Use this to implement this value evaluation behaviour.
         /// </summary>
-        /// <param name="_id">The identifier to retrieve the associated values from
-        /// (use <see cref="Register(int)"/> to register a new id).</param>
-        protected abstract float DoEvaluate(int _id, float _percent);
+        /// <param name="_percent">Lifetime percentage to evaluate the curve at.</param>
+        protected abstract float DoEvaluate(float _percent);
         #endregion
 
         #region Utility
         /// <summary>
         /// Get the current evaluation time ratio (between 0 and 1) of this value.
         /// </summary>
-        /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
-        public float GetTimeRatio(int _id) {
-
-            if (!timeWrapper.ContainsKey(_id)) {
-                return 0f;
-            }
-
-            return timeWrapper[_id] / Duration;
+        /// <param name="_time">Time to get the associated ratio.</param>
+        public float GetTimeRatio(float _time) {
+            return _time / Duration;
         }
 
         /// <summary>
         /// Resets this value back to its first value.
         /// </summary>
-        /// <param name="_id"><inheritdoc cref="DoEvaluate(int, float)" path="/param[@name='_id']"/></param>
         /// <returns>This value first default value.</returns>
-        public float Reset(int _id) {
-
-            if (!timeWrapper.ContainsKey(_id)) {
-                return 0f;
-            }
-
-            timeWrapper[_id] = 0f;
-            return DoEvaluate(_id, 0f);
+        public float Reset() {
+            return DoEvaluate(0f);
         }
         #endregion
     }
@@ -164,7 +111,7 @@ namespace EnhancedFramework.Core {
     /// Wrapper utility class for an ease curve type value.
     /// </summary>
     [Serializable]
-    public class EaseValue : EaseCurveValue {
+    public sealed class EaseValue : EaseCurveValue {
         #region Content
         /// <summary>
         /// Ease used to evaluate this value.
@@ -172,7 +119,9 @@ namespace EnhancedFramework.Core {
         [Tooltip("Ease used to evaluate values")]
         public Ease Ease = Ease.OutSine;
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         public EaseValue() { }
 
@@ -180,9 +129,11 @@ namespace EnhancedFramework.Core {
             Ease = _ease;
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Core
+        // -------------------------------------------
 
-        protected override float DoEvaluate(int _id, float _percent) {
+        protected override float DoEvaluate(float _percent) {
             return DOVirtual.EasedValue(Range.x, Range.y, _percent, Ease);
         }
         #endregion
@@ -201,7 +152,9 @@ namespace EnhancedFramework.Core {
         [Tooltip("Curve used to evaluate values")]
         [Enhanced, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Lime)] public AnimationCurve Curve = AnimationCurve.Constant(0f, 1f, 0f);
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         public CurveValue() { }
 
@@ -209,14 +162,12 @@ namespace EnhancedFramework.Core {
             Curve = _curve;
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Core
+        // -------------------------------------------
 
-        protected override float DoEvaluate(int _id, float _percent) {
-            #if DOTWEEN_ENABLED
-            return DOVirtual.EasedValue(Range.x, Range.y, _percent, Curve);
-            #else
+        protected override float DoEvaluate(float _percent) {
             return Mathf.Lerp(Range.x, Range.y, Curve.Evaluate(_percent));
-            #endif
         }
         #endregion
     }
@@ -226,12 +177,12 @@ namespace EnhancedFramework.Core {
     /// <para/> Uses an additional curve to decrease its value.
     /// </summary>
     [Serializable]
-    public class AdvancedCurveValue : CurveValue {
+    public sealed class AdvancedCurveValue : CurveValue {
         #region Decrease Wrapper
         /// <summary>
         /// Wrapper for object instance decrease values.
         /// </summary>
-        private class DecreaseWrapper {
+        public class DecreaseWrapper {
             public float Duration = 0f;
             public float From = 0f;
             public float Time = 0f;
@@ -239,11 +190,11 @@ namespace EnhancedFramework.Core {
             // -----------------------
 
             public float GetTime(AnimationCurve _curve) {
-                #if DOTWEEN_ENABLED
-                return DOVirtual.EasedValue(0f, From, Time / Duration, _curve);
-                #else
                 return Mathf.Lerp(0f, From, _curve.Evaluate(Time / Duration));
-                #endif
+            }
+
+            public void Reset() {
+                Time = 0f;
             }
         }
         #endregion
@@ -261,68 +212,33 @@ namespace EnhancedFramework.Core {
         [Tooltip("Curve used to decrease values")]
         [Enhanced, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Crimson)] public AnimationCurve DecreaseCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
 
-        private readonly Dictionary<int, DecreaseWrapper> decreaseWrapper = new Dictionary<int, DecreaseWrapper>();
-
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         public AdvancedCurveValue() { }
 
         public AdvancedCurveValue(Vector2 _range, float _duration, AnimationCurve _curve) : base(_range, _duration, _curve) { }
         #endregion
 
-        #region Registration
-        public override void Register(int _id) {
-            base.Register(_id);
-
-            decreaseWrapper.Add(_id, new DecreaseWrapper());
-        }
-
-        public override void Unregister(int _id) {
-            base.Unregister(_id);
-
-            decreaseWrapper.Remove(_id);
-        }
-        #endregion
-
         #region Behaviour
-        protected override float DoEvaluate(int _id, float _percent) {
-            float _value = base.DoEvaluate(_id, _percent);
-
-            DecreaseWrapper _wrapper = decreaseWrapper[_id];
-
-            // Reset decrease value timer on time increase.
-            if (_wrapper.Time != 0f) {
-                float _decreaseTime = _wrapper.GetTime(DecreaseCurve);
-
-                if (GetTimeRatio(_id) > _decreaseTime) {
-                    _wrapper.Time = 0f;
-                }
-            }
-
-            return _value;
-        }
-
         /// <summary>
         /// Decreases this value, using a specific decrease curve.
         /// </summary>
         /// <param name="_decrease">Value time decrease (in seconds).
         /// <br/> Must be positive.</param>
         /// <returns>The curve value with applied time decrease.</returns>
-        public float Decrease(int _id, float _decrease) {
-            DecreaseWrapper _wrapper = decreaseWrapper[_id];
-            float _time = timeWrapper[_id];
+        public float Decrease(ref float _time, float _decrease, DecreaseWrapper _wrapper) {
 
             if (_wrapper.Time == 0f) {
-                _wrapper.Duration = Mathf.Max(DecreaseDuration * GetTimeRatio(_id), .01f);
+                _wrapper.Duration = Mathf.Max(DecreaseDuration * GetTimeRatio(_time), .01f);
                 _wrapper.From = _time;
             }
 
             _wrapper.Time = Mathf.Clamp(_wrapper.Time + _decrease, 0f, _wrapper.Duration);
 
             _time = _wrapper.GetTime(DecreaseCurve);
-            timeWrapper[_id] = _time;
-
-            return base.DoEvaluate(_id, _time / Duration);
+            return DoEvaluate(_time / Duration);
         }
         #endregion
     }

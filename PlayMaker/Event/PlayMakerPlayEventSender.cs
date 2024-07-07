@@ -14,7 +14,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Play Event Sender")]
-    public class PlayMakerPlayEventSender : EnhancedBehaviour {
+    public sealed class PlayMakerPlayEventSender : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Play;
 
         #region Global Members
@@ -29,7 +29,7 @@ namespace EnhancedFramework.PlayMaker {
         // -----------------------
 
         protected override void OnPlay() {
-            base.OnInit();
+            base.OnPlay();
 
             fsm.SendEvent(PlayEventName);
         }

@@ -19,7 +19,7 @@ namespace EnhancedFramework.Editor {
     [CustomEditor(typeof(EnhancedBehaviour), true), CanEditMultipleObjects]
     public class EnhancedBehaviourEditor : UnityObjectEditor {
         #region Editor GUI
-        private static PlayModeEnhancedObjectData data = new PlayModeEnhancedObjectData();
+        private static readonly PlayModeEnhancedObjectData data = new PlayModeEnhancedObjectData();
 
         protected override bool CanSaveData {
             get {
@@ -55,7 +55,6 @@ namespace EnhancedFramework.Editor {
         // -------------------------------------------
 
         protected override PlayModeObjectData SaveData(Object _object) {
-
             data.Save(_object);
             return data;
         }

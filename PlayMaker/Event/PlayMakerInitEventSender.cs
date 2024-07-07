@@ -14,7 +14,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "PlayMaker/Init Event Sender")]
-    public class PlayMakerInitEventSender : EnhancedBehaviour {
+    public sealed class PlayMakerInitEventSender : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members

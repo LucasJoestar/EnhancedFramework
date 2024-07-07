@@ -16,7 +16,7 @@ namespace EnhancedFramework.Inputs {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Input/Toggle Game State On Input")]
-    public class ToggleGameStateOnInput : EnhancedBehaviour {
+    public sealed class ToggleGameStateOnInput : EnhancedBehaviour {
         #region Global Members
         [Section("Game State Input Toggle")]
 

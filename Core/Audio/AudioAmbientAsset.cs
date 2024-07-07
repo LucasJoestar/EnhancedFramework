@@ -14,7 +14,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="ScriptableObject"/> data holder for an audio-related ambient asset.
     /// </summary>
     [CreateAssetMenu(fileName = "AMB_Ambient", menuName = FrameworkUtility.MenuPath + "Audio/Ambient", order = FrameworkUtility.MenuOrder)]
-    public class AudioAmbientAsset : EnhancedScriptableObject, IWeightControl {
+    public sealed class AudioAmbientAsset : EnhancedScriptableObject, IWeightControl {
         #region Global Members
         [Section("Ambient Asset")]
 

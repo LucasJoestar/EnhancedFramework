@@ -46,18 +46,16 @@ namespace EnhancedFramework.Core {
         /// Wrapper for a <see cref="LevelTrigger"/> entrance / exit portal.
         /// </summary>
         [Serializable]
-        public class Portal {
+        public sealed class Portal {
             #region Global Members
             [Tooltip("Identifier of this portal")]
-            [SerializeField, Enhanced, FlagField(false), Duo("inverse", 95f)] private PortalIdentifier identifier = PortalIdentifier.None;
+            [SerializeField, Enhanced, FlagField(false), Duo(nameof(inverse), 95f)] private PortalIdentifier identifier = PortalIdentifier.None;
 
             [Tooltip("If true, inverses this portal forward direction")]
-            [SerializeField, HideInInspector, Enhanced, Duo("color", 75f)] private bool inverse = false;
+            [SerializeField, HideInInspector, Enhanced, Duo(nameof(color), 75f)] private bool inverse = false;
 
-            #if UNITY_EDITOR
             [Tooltip("Previsualisation color of this portal")]
             [SerializeField, HideInInspector] internal Color color = Color.red;
-            #endif
 
             [Tooltip("Angle range of this portal")]
             [SerializeField, Enhanced, MinMax(-180f, 180f)] private Vector2Int angle = new Vector2Int(-15, 15);
@@ -110,7 +108,7 @@ namespace EnhancedFramework.Core {
         /// Wrapper for a <see cref="LevelTrigger"/> <see cref="ITrigger"/> callback.
         /// </summary>
         [Serializable]
-        public class Callback {
+        public sealed class Callback {
             #region Global Members
             [Tooltip("Callback object connected with this trigger")]
             [SerializeField] private SerializedInterface<ITrigger> trigger = null;
@@ -155,8 +153,8 @@ namespace EnhancedFramework.Core {
             /// <inheritdoc cref="Callback"/>
             public Callback(ITrigger _trigger, PortalIdentifier _enter, PortalIdentifier _exit) {
                 trigger = new SerializedInterface<ITrigger>(_trigger);
-                enter = _enter;
-                exit = _exit;
+                enter   = _enter;
+                exit    = _exit;
             }
             #endregion
 
@@ -188,7 +186,7 @@ namespace EnhancedFramework.Core {
             // -----------------------
 
             private bool TestIdentifier(PortalIdentifier _trigger, PortalIdentifier _portal) {
-                return (_trigger == PortalIdentifier.None) || ((_portal != PortalIdentifier.None) && _trigger.HasFlag(_portal));
+                return (_trigger == PortalIdentifier.None) || ((_portal != PortalIdentifier.None) && _trigger.HasFlagUnsafe(_portal));
             }
             #endregion
         }
@@ -371,9 +369,15 @@ namespace EnhancedFramework.Core {
         /// <param name="_callback"><see cref="ITrigger"/> instance to unregister.</param>
         public void UnregisterCallback(ITrigger _callback) {
 
-            int _index = callbacks.List.FindIndex(c => c.Trigger == _callback);
-            if (_index != -1) {
-                callbacks.List.RemoveAt(_index);
+            List<Callback> _callbacks = callbacks.List;
+            int _count = _callbacks.Count;
+
+            for (int i = 0; i < _count; i++) {
+                if (_callbacks[i].Trigger == _callback) {
+
+                    _callbacks.RemoveAt(i);
+                    return;
+                }
             }
         }
 
@@ -387,8 +391,11 @@ namespace EnhancedFramework.Core {
         [ContextMenu("Get Callbacks", false, 100)]
         protected void GetObjectCallbacks() {
 
-            foreach (ITrigger _trigger in GetComponentsInParent<ITrigger>()) {
-                if (!ReferenceEquals(_trigger, this)) {
+            ITrigger[] _triggers = GetComponentsInParent<ITrigger>();
+            for (int i = 0; i < _triggers.Length; i++) {
+
+                ITrigger _trigger = _triggers[i];
+                if (!EqualityUtility.Equals(_trigger, this)) {
                     RegisterCallback(_trigger);
                 }
             }
@@ -400,8 +407,11 @@ namespace EnhancedFramework.Core {
         [ContextMenu("Clear Callbacks", false, 100)]
         protected void ClearObjectCallbacks() {
 
-            foreach (ITrigger _trigger in GetComponentsInParent<ITrigger>()) {
-                if (!ReferenceEquals(_trigger, this)) {
+            ITrigger[] _triggers = GetComponentsInParent<ITrigger>();
+            for (int i = 0; i < _triggers.Length; i++) {
+
+                ITrigger _trigger = _triggers[i];
+                if (!EqualityUtility.Equals(_trigger, this)) {
                     UnregisterCallback(_trigger);
                 }
             }
@@ -420,8 +430,11 @@ namespace EnhancedFramework.Core {
             // Callbacks.
             PortalIdentifier _portal = GetInteractionPortal(_behaviour);
 
-            foreach (Callback _callback in callbacks) {
-                _callback.OnEnterTrigger(_actor, _portal);
+            List<Callback> _callbacks = callbacks.List;
+            int _callbackCount = _callbacks.Count;
+
+            for (int i = 0; i < _callbackCount; i++) {
+                _callbacks[i].OnEnterTrigger(_actor, _portal);
             }
 
             #if UNITY_EDITOR
@@ -436,8 +449,11 @@ namespace EnhancedFramework.Core {
             // Callbacks.
             PortalIdentifier _portal = GetInteractionPortal(_behaviour);
 
-            foreach (Callback _callback in callbacks) {
-                _callback.OnExitTrigger(_actor, _portal);
+            List<Callback> _callbacks = callbacks.List;
+            int _callbackCount = _callbacks.Count;
+
+            for (int i = 0; i < _callbackCount; i++) {
+                _callbacks[i].OnExitTrigger(_actor, _portal);
             }
 
             #if UNITY_EDITOR
@@ -476,13 +492,16 @@ namespace EnhancedFramework.Core {
             PortalIdentifier _direction = PortalIdentifier.None;
 
             // Interacting portal.
-            if (portals.Count != 0) {
+            int _portalCount = portals.Count;
+            if (_portalCount != 0) {
 
                 float _angle = GetActorAngle(_behaviour);
-                for (int i = 0; i < portals.Count; i++) {
+                for (int i = 0; i < _portalCount; i++) {
 
-                    if (portals[i].IsInRange(_angle)) {
-                        _direction = portals[i].Identifier;
+                    Portal _portal = portals[i];
+                    if (_portal.IsInRange(_angle)) {
+
+                        _direction = _portal.Identifier;
                         break;
                     }
                 }

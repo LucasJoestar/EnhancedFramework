@@ -17,7 +17,7 @@ namespace EnhancedFramework.Rendering {
     [ScriptGizmos(false, true)]
     [RequireComponent(typeof(Volume))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Rendering/Global Volume Reference"), DisallowMultipleComponent]
-    public class GlobalVolumeReference : EnhancedBehaviour {
+    public sealed class GlobalVolumeReference : EnhancedBehaviour {
         #region Global Members
         /// <summary>
         /// The active <see cref="Volume"/> with the highest priority of the game.
@@ -33,6 +33,15 @@ namespace EnhancedFramework.Rendering {
         [Section("Global Volume Reference")]
 
         [SerializeField, Enhanced, ReadOnly] private int id = 0;
+
+        // -----------------------
+
+        /// <summary>
+        /// Total count of <see cref="Volume"/> in the buffer.
+        /// </summary>
+        public static int VolumeCount {
+            get { return volumeBuffer.Count; }
+        }
         #endregion
 
         #region Enhanced Behaviour
@@ -53,6 +62,18 @@ namespace EnhancedFramework.Rendering {
             if (id != 0) {
                 volumeBuffer.Pop(id);
             }
+        }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// Get the <see cref="Volume"/> from the buffer at a specific index.
+        /// <br/> Use <see cref="VolumeCount"/> to get the total amount of volume in the buffer.
+        /// </summary>
+        /// <param name="_index">Index to get the volume at.</param>
+        /// <returns><see cref="Volume"/> at the given index from the buffer.</returns>
+        public static Volume GetVolume(int _index) {
+            return volumeBuffer[_index].Second.First;
         }
         #endregion
     }

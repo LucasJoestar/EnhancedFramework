@@ -26,7 +26,7 @@ namespace EnhancedFramework.Rendering {
     /// <para/> Fading is performed using tweening, if enabled.
     /// </summary>
     [Serializable]
-    public class FadingVolume : IFadingObject {
+    public sealed class FadingVolume : IFadingObject {
         #region Global Members
         /// <summary>
         /// This object <see cref="UnityEngine.Rendering.Volume"/>.
@@ -58,15 +58,15 @@ namespace EnhancedFramework.Rendering {
 
         // -----------------------
 
-        public virtual bool IsVisible {
+        public bool IsVisible {
             get { return Volume.weight == FadeWeight.y; }
         }
 
-        public virtual float ShowDuration {
+        public float ShowDuration {
             get { return fadeInDuration; }
         }
 
-        public virtual float HideDuration {
+        public float HideDuration {
             get { return fadeOutDuration; }
         }
         #endregion
@@ -231,12 +231,14 @@ namespace EnhancedFramework.Rendering {
             } else {
                 _weight = DOVirtual.EasedValue(FadeWeight.y, FadeWeight.x, _value, fadeOutEase);
             }
+            #else
+            _weight = Mathf.Lerp(FadeWeight.x, FadeWeight.y, _value);
             #endif
 
             SetWeight(_weight);
         }
 
-        protected void CancelCurrentFade() {
+        private void CancelCurrentFade() {
             delay.Cancel();
 
             #if EDITOR_COROUTINE
@@ -317,10 +319,6 @@ namespace EnhancedFramework.Rendering {
                 _onComplete?.Invoke();
             }
         }
-
-        // -------------------------------------------
-        // Utility
-        // -------------------------------------------
         #endregion
     }
 
@@ -331,7 +329,7 @@ namespace EnhancedFramework.Rendering {
     [ScriptGizmos(false, true)]
     [RequireComponent(typeof(Volume))]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Rendering/Fading Volume"), DisallowMultipleComponent]
-    public class FadingVolumeBehaviour : FadingObjectBehaviour {
+    public sealed class FadingVolumeBehaviour : FadingObjectBehaviour {
         #region Global Members
         [Section("Fading Volume")]
 
@@ -366,7 +364,7 @@ namespace EnhancedFramework.Rendering {
                 volume.Volume = GetComponent<Volume>();
             }
         }
-#endif
+        #endif
         #endregion
 
         #region Play Mode Data

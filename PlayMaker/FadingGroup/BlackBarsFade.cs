@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Fades the screen Black Bars.")]
     [ActionCategory("FadingGroup")]
-    public class BlackBarsFade : FadingObjectFade {
+    public sealed class BlackBarsFade : FadingObjectFade {
         #region Global Members
         public override IFadingObject FadingObject {
             get { return BlackBarsFadingGroup.Instance; }

@@ -14,7 +14,7 @@ namespace EnhancedFramework.Editor {
     /// Custom <see cref="EnhancedCollection{T}"/> drawer.
     /// </summary>
     [CustomPropertyDrawer(typeof(EnhancedCollection<>), true)]
-    public class EnhancedCollectionPropertyDrawer : EnhancedPropertyEditor {
+    public sealed class EnhancedCollectionPropertyDrawer : EnhancedPropertyEditor {
         #region Drawer Content
         protected override float OnEnhancedGUI(Rect _position, SerializedProperty _property, GUIContent _label) {
             _property = _property.FindPropertyRelative("collection");

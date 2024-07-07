@@ -24,7 +24,7 @@ namespace EnhancedFramework.Inputs {
     /// <see cref="ScriptableObject"/> asset used to reference an input action.
     /// </summary>
     [CreateAssetMenu(fileName = FilePrefix + "SingleInputAction", menuName = MenuPath + "Single Action", order = MenuOrder)]
-    public class SingleInputActionEnhancedAsset : InputActionEnhancedAsset {
+    public sealed class SingleInputActionEnhancedAsset : InputActionEnhancedAsset {
         public const string FilePrefix  = "IPS_";
 
         #region Global Members
@@ -33,10 +33,10 @@ namespace EnhancedFramework.Inputs {
 
         [Space(10f)]
 
-        [SerializeField, Enhanced, ReadOnly, ShowIf("isOrphan", ConditionType.False)] private InputMapEnhancedAsset map  = null;
+        [SerializeField, Enhanced, ReadOnly, ShowIf(nameof(isOrphan), ConditionType.False)] private InputMapEnhancedAsset map = null;
 
         #if NEW_INPUT_SYSTEM
-        [SerializeField, Enhanced, ReadOnly("isOrphan")] internal InputAction input = null;
+        [SerializeField, Enhanced, ReadOnly(nameof(isOrphan))] internal InputAction input = null;
         #else
         [SerializeField] private string input = "Input";
         #endif

@@ -13,8 +13,8 @@ namespace EnhancedFramework.UI {
     /// Invoke a <see cref="UnityEvent"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Event UI Effect"), DisallowMultipleComponent]
-    public class UnityEventUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "Event UI Effect"), DisallowMultipleComponent]
+    public sealed class UnityEventUIEffect : EnhancedSelectableEffect {
         #region Global Members
         [Section("Unity Event Effect")]
 

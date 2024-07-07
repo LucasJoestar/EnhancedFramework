@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Fades a Fading Object Behaviour.")]
     [ActionCategory("FadingGroup")]
-    public class FadingObjectBehaviourFade : FadingObjectFade {
+    public sealed class FadingObjectBehaviourFade : FadingObjectFade {
         #region Global Members
         // -------------------------------------------
         // Variable

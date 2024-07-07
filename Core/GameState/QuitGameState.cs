@@ -5,8 +5,8 @@
 // ================================================================================== //
 
 using EnhancedEditor;
-using UnityEngine;
 using System;
+using UnityEngine;
 
 namespace EnhancedFramework.Core.GameStates {
     /// <summary>
@@ -29,7 +29,9 @@ namespace EnhancedFramework.Core.GameStates {
             get { return true; }
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="QuitGameState"/>
         public QuitGameState() : base(false) { }

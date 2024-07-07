@@ -1,8 +1,8 @@
-// ===== Enhanced Editor - https://github.com/LucasJoestar/EnhancedEditor ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ============================================================================ //
+// ================================================================================== //
 
 using EnhancedEditor;
 using EnhancedFramework.Core;
@@ -15,7 +15,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Miscs/Draggable Panel"), DisallowMultipleComponent]
-    public class DraggablePanel : EnhancedBehaviour, IPointerDownHandler, IDragHandler {
+    public sealed class DraggablePanel : EnhancedBehaviour, IPointerDownHandler, IDragHandler {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
@@ -35,11 +35,11 @@ namespace EnhancedFramework.UI {
             initialPosition = GetPosition();
         }
 
+        #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
         // -------------------------------------------
 
-        #if UNITY_EDITOR
         protected override void OnValidate() {
             base.OnValidate();
 

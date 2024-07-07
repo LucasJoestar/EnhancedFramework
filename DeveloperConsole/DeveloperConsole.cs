@@ -62,7 +62,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// expression or statement when pressing a specific key combination.
     /// </summary>
     [Serializable]
-    public class DeveloperConsoleBinding {
+    public sealed class DeveloperConsoleBinding {
         #region Global Members
         /// <summary>
         /// The input command, expression or statement of this binding.
@@ -106,13 +106,17 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             bool _performed = false;
             _expression = Expression;
 
-            foreach (var item in Keys) {
-                if (DeveloperConsole.GetKeyDown(item)) {
+            List<InputKey> _keySpan = Keys.collection;
+            for (int i = _keySpan.Count; i-- > 0;) {
+
+                InputKey _key = _keySpan[i];
+
+                if (DeveloperConsole.GetKeyDown(_key)) {
                     _performed = true;
                     continue;
                 }
 
-                if (!DeveloperConsole.GetKey(item)) {
+                if (!DeveloperConsole.GetKey(_key)) {
                     return false;
                 }
             }
@@ -126,11 +130,15 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         /// <param name="_keys">Keys to match with this binding.</param>
         /// <returns>True if these keys match this binding, false otherwise.</returns>
         public bool Match(IList<InputKey> _keys) {
-            if (_keys.Count != Keys.Count) {
+
+            int _keyCount = _keys.Count;
+            if (_keyCount != Keys.Count) {
                 return false;
             }
 
-            foreach (InputKey _key in _keys) {
+            for (int i = 0; i < _keyCount; i++) {
+
+                InputKey _key = _keys[i];
                 if (!Keys.Contains(_key)) {
                     return false;
                 }
@@ -148,7 +156,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     [ScriptingDefineSymbol("DEVELOPER_CONSOLE", "Developer Console")]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Developer Console/Developer Console"), DisallowMultipleComponent]
     #pragma warning disable
-    public class DeveloperConsole : EnhancedSingleton<DeveloperConsole>, IStableUpdate, IGameStateLifetimeCallback {
+    public sealed class DeveloperConsole : EnhancedSingleton<DeveloperConsole>, IStableUpdate, IGameStateLifetimeCallback {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
@@ -285,7 +293,12 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         void IStableUpdate.Update() {
             // Binding commands.
             if (EnableBindings) {
-                foreach (var _binding in Bindings) {
+
+                List<DeveloperConsoleBinding> _bindingSpan = Bindings.collection;
+
+                for (int i = _bindingSpan.Count; i-- > 0;) {
+
+                    DeveloperConsoleBinding _binding = _bindingSpan[i];
                     try {
                         if (_binding.Performed(out string _expression)) {
                             RunCommand(_expression);
@@ -550,9 +563,12 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             int _parameterCount = _parameters.Length;
             _command = null;
 
-            foreach (Command _temp in commands) {
+            for (int i = 0; i < commands.Count; i++) {
+
+                Command _temp = commands[i];
+
                 if ((_temp.Name == _name) || ArrayUtility.Contains(_temp.Aliases, _name)) {
-                   
+
                     int _tempCount = _temp.Parameters.Length;
 
                     // If the command has the same number of parameter, select it.
@@ -1096,7 +1112,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                     () => {
                         List<Command> _builtInCommands = new List<Command>();
 
-                        foreach (Command _command in commands) {
+                        for (int i = 0; i < commands.Count; i++) {
+
+                            Command _command = commands[i];
+
                             if (_command.IsBuiltInCommand) {
                                 _builtInCommands.Add(_command);
                             }
@@ -1116,7 +1135,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                     () => {
                         List<Command> _customCommands = new List<Command>();
 
-                        foreach (Command _command in commands) {
+                        for (int i = 0; i < commands.Count; i++) {
+
+                            Command _command = commands[i];
+
                             if (!_command.IsBuiltInCommand) {
                                 _customCommands.Add(_command);
                             }
@@ -1758,7 +1780,9 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                    () => {
                        List<Command> _commands = new List<Command>();
 
-                       foreach (Command _command in commands) {
+                       for (int i = 0; i < commands.Count; i++) {
+
+                           Command _command = commands[i];
                            if (_command.Name.StartsWith("cs_")) {
                                _commands.Add(_command);
                            }
@@ -1802,7 +1826,9 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                    () => {
                        List<Command> _commands = new List<Command>();
 
-                       foreach (Command _command in commands) {
+                       for (int i = 0; i < commands.Count; i++) {
+
+                           Command _command = commands[i];
                            if (_command.Name.StartsWith("watch")) {
                                _commands.Add(_command);
                            }
@@ -1836,7 +1862,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
 
                         List<string> _values = new List<string>();
 
-                        foreach (var _pair in watchers) {
+                        for (int i = 0; i < watchers.Count; i++) {
+
+                            Pair<string, Watcher> _pair = watchers[i];
+
                             var _watcher = _pair.Second;
                             _values.Add($"[{_watcher.Order}] {$"{_pair.First}:".Bold()} {_watcher.ToString().Italic()} ({_watcher.Type})" +
                                         $"{(!_watcher.Enabled ? " [Disabled]" : string.Empty)}" +
@@ -2201,8 +2230,11 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                     () => {
                         List<Pair<Flag, FlagHolder>> _enabledFlags = new List<Pair<Flag, FlagHolder>>();
 
-                        foreach (var _holder in FlagDatabase.Database.Holders) {
-                            foreach (var _flag in _holder) {
+                        foreach (FlagHolder _holder in FlagDatabase.Database.Holders) {
+
+                            for (int i = 0; i < _holder.Count; i++) {
+
+                                Flag _flag = _holder[i];
                                 if (_flag.Value) {
                                     _enabledFlags.Add(new Pair<Flag, FlagHolder>(_flag, _holder));
                                 }
@@ -2225,7 +2257,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                         }
 
                         List<Flag> _enabledFlags = new List<Flag>();
-                        foreach (var _flag in _holder) {
+
+                        for (int i = 0; i < _holder.Count; i++) {
+
+                            Flag _flag = _holder[i];
                             if (_flag.Value) {
                                 _enabledFlags.Add(_flag);
                             }
@@ -2247,7 +2282,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                         List<Pair<Flag, FlagHolder>> _disabledFlags = new List<Pair<Flag, FlagHolder>>();
 
                         foreach (var _holder in FlagDatabase.Database.Holders) {
-                            foreach (var _flag in _holder) {
+
+                            for (int i = 0; i < _holder.Count; i++) {
+
+                                Flag _flag = _holder[i];
                                 if (!_flag.Value) {
                                     _disabledFlags.Add(new Pair<Flag, FlagHolder>(_flag, _holder));
                                 }
@@ -2270,7 +2308,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                         }
 
                         List<Flag> _disabledFlags = new List<Flag>();
-                        foreach (var _flag in _holder) {
+
+                        for (int i = 0; i < _holder.Count; i++) {
+
+                            Flag _flag = _holder[i];
                             if (!_flag.Value) {
                                 _disabledFlags.Add(_flag);
                             }
@@ -2450,7 +2491,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
 
             _text = _inputs.First().ToLower();
 
-            foreach (Command _command in commands) {
+            for (int i = 0; i < commands.Count; i++) {
+
+                Command _command = commands[i];
+
                 // Ignore command with less parameters than specified in the input.
                 if (_command.Parameters.Length < (_inputs.Length - 1)) {
                     continue;
@@ -2553,9 +2597,12 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                 monoEvaluator = new Evaluator(_context);
 
                 // Register the included using statements.
-                foreach (string _includedUsing in IncludedUsing) {
+                for (int i = 0; i < IncludedUsing.Count; i++) {
+
+                    string _includedUsing = IncludedUsing[i];
                     monoEvaluator.Run($"using {_includedUsing};");
                 }
+
             } catch (Exception) {
                 LogWarning($"Some features may not be available: {MonoNotSupportedText}");
             }
@@ -2844,7 +2891,8 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         /// Called when a Unity console log message is received.
         /// </summary>
         private static void OnLogMessageReceived(string _log, string _stackTrace, LogType _type) {
-            if (!DisplayedLogs.HasFlag(_type.ToFlag())) {
+
+            if (!DisplayedLogs.HasFlagUnsafe(_type.ToFlag())) {
                 return;
             }
 
@@ -2910,7 +2958,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                 logTextSize = value;
 
                 if (logObjects.Count != 0) {
-                    foreach (var _log in logObjects) {
+
+                    for (int i = 0; i < logObjects.Count; i++) {
+
+                        Text _log = logObjects[i];
                         _log.fontSize = (int)value;
                     }
                 }
@@ -3016,7 +3067,10 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
         /// Clears all existing log object instances.
         /// </summary>
         private static void ClearLogFields() {
-            foreach (Text _log in logObjects) {
+
+            for (int i = 0; i < logObjects.Count; i++) {
+
+                Text _log = logObjects[i];
                 Destroy(_log.gameObject);
             }
 
@@ -3456,7 +3510,9 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             StringBuilder _builder = new StringBuilder(string.Empty);
 
             // Get each 
-            foreach (Pair<string, Watcher> _pair in watchers) {
+            for (int i = 0; i < watchers.Count; i++) {
+
+                Pair<string, Watcher> _pair = watchers[i];
                 Watcher _watcher = _pair.Second;
 
                 if (_watcher.Enabled) {
@@ -3534,7 +3590,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             #endregion
         }
 
-        private class EvaluatorWatcher : Watcher {
+        private sealed class EvaluatorWatcher : Watcher {
             #region Global Members
             public readonly string Expression = string.Empty;
 
@@ -3556,7 +3612,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             #endregion
         }
 
-        private class LambdaWatcher : Watcher {
+        private sealed class LambdaWatcher : Watcher {
             #region Global Members
             private readonly Func<object> getter;
 
@@ -3578,7 +3634,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             #endregion
         }
 
-        private class FieldWatcher : Watcher {
+        private sealed class FieldWatcher : Watcher {
             #region Global Members
             private readonly FieldInfo field = null;
 
@@ -3600,7 +3656,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
             #endregion
         }
 
-        private class PropertyWatcher : Watcher {
+        private sealed class PropertyWatcher : Watcher {
             #region Global Members
             private readonly PropertyInfo property = null;
 

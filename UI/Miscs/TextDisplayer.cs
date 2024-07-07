@@ -22,7 +22,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Text/Text Displayer"), DisallowMultipleComponent]
-    public class TextDisplayer : EnhancedBehaviour {
+    public sealed class TextDisplayer : EnhancedBehaviour {
         #region Global Members
         [Section("Text Displayer")]
 
@@ -51,6 +51,10 @@ namespace EnhancedFramework.UI {
 
         #region Enhanced Behaviour
         #if UNITY_EDITOR
+        // -------------------------------------------
+        // Editor
+        // -------------------------------------------
+
         protected override void OnValidate() {
             base.OnValidate();
 
@@ -62,8 +66,14 @@ namespace EnhancedFramework.UI {
         #endregion
 
         #region Behaviour
+        private TweenCallback onKillSequenceCallback = null;
+        private TweenCallback onKillTweenCallback    = null;
+
+        private Action onCompleteSequenceCallback    = null;
+        private Action onCompleteTweenCallback       = null;
+
         private Sequence sequence = null;
-        private Tween tween = null;
+        private Tween tween       = null;
 
         // -----------------------
 
@@ -77,13 +87,7 @@ namespace EnhancedFramework.UI {
         /// <param name="_append">If true, appends this text content at the end of the current text value.</param>
         public void Display(string _text, float _duration, Action _onComplete = null, bool _isInstant = false, bool _append = false) {
             CompleteDisplay(false);
-            Display(_text, _onComplete, _isInstant, _append, GetDuration);
-            
-            // ----- Local Method ----- \\
-
-            float GetDuration(int _characterCount) {
-                return _duration;
-            }
+            Display(_text, _duration, false, _onComplete, _isInstant, _append);
         }
 
         /// <summary>
@@ -96,13 +100,7 @@ namespace EnhancedFramework.UI {
         /// <param name="_append">If true, appends this text content at the end of the current text value.</param>
         public void DisplayPerCharacter(string _text, float _characterDuration, Action _onComplete = null, bool _isInstant = false, bool _append = false) {
             CompleteDisplay(false);
-            Display(_text, _onComplete, _isInstant, _append, GetDuration);
-
-            // ----- Local Method ----- \\
-
-            float GetDuration(int _characterCount) {
-                return _characterCount * _characterDuration;
-            }
+            Display(_text, _characterDuration, true, _onComplete, _isInstant, _append);
         }
 
         /// <summary>
@@ -125,8 +123,10 @@ namespace EnhancedFramework.UI {
                 sequence = DOTween.Sequence();
             }
 
-            foreach (var _text in _texts) {
-                Display(_text.First, null, _isInstant, _append, GetDuration);
+            for (int i = 0; i < _texts.Count; i++) {
+
+                Pair<string, float> _text = _texts[i];
+                Display(_text.First, _characterDuration, true, null, _isInstant, _append);
 
                 if (!_isInstant) {
                     sequence.Append(tween);
@@ -137,27 +137,26 @@ namespace EnhancedFramework.UI {
             }
 
             // Sequence.
+            onCompleteSequenceCallback = _onComplete;
+
             if (!_isInstant) {
-                sequence.SetUpdate(useRealTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnKilled);
+                onKillSequenceCallback ??= OnKilled;
+                sequence.SetUpdate(useRealTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKillSequenceCallback);
             } else {
                 OnKilled();
             }
 
-            // ----- Local Methods ----- \\
-
-            float GetDuration(int _characterCount) {
-                return _characterCount * _characterDuration;
-            }
+            // ----- Local Method ----- \\
 
             void OnKilled() {
                 sequence = null;
-                _onComplete?.Invoke();
+                onCompleteSequenceCallback?.Invoke();
             }
         }
 
         // -----------------------
 
-        private void Display(string _text, Action _onComplete, bool _isInstant, bool _append, Func<int, float> _getDuration) {
+        private void Display(string _text, float duration, bool isDurationPerCharacter, Action _onComplete, bool _isInstant, bool _append) {
             int _visibleCount = 0;
 
             _text = _text.Replace(@"\n", "\n").Replace(@"\t", "\t");
@@ -174,7 +173,7 @@ namespace EnhancedFramework.UI {
 
             text.text = _text;
             text.maxVisibleCharacters = _visibleCharacter;
-            text.ForceMeshUpdate();
+            text.ForceMeshUpdate(true, true);
 
             int _count = text.textInfo.characterCount;
 
@@ -187,14 +186,21 @@ namespace EnhancedFramework.UI {
             }
 
             // Tween.
-            tween = text.DOMaxVisibleCharacters(_count, _getDuration(_count - _visibleCount)).SetEase(Ease.Linear)
-                        .SetUpdate(useRealTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnKilled);
+            if (isDurationPerCharacter) {
+                duration *= _count - _visibleCount;
+            }
+
+            onCompleteTweenCallback = _onComplete;
+
+            onKillTweenCallback ??= OnKilled;
+            tween = text.DOMaxVisibleCharacters(_count, duration).SetEase(Ease.Linear)
+                        .SetUpdate(useRealTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKillTweenCallback);
 
             // ----- Local Method ----- \\
 
             void OnKilled() {
                 tween = null;
-                _onComplete?.Invoke();
+                onCompleteTweenCallback?.Invoke();
             }
         }
 

@@ -16,14 +16,16 @@ namespace EnhancedFramework.Editor {
     /// Audio-related <see cref="EnhancedSettings"/> data wrapper.//
     /// </summary>
     [Serializable]
-    public class AudioEnhancedSettings : EnhancedSettings {
+    public sealed class AudioEnhancedSettings : EnhancedSettings {
         #region Global Members
         /// <summary>
         /// <see cref="AudioSettings"/>-related <see cref="AutoManagedResource{T}"/>.
         /// </summary>
         public static AutoManagedResource<AudioSettings> Resource = new AutoManagedResource<AudioSettings>($"{AudioSettings.MenuPrefix}{typeof(AudioSettings).Name}", false);
 
-        // -----------------------
+        // -------------------------------------------
+        // Constructor(s)
+        // -------------------------------------------
 
         /// <inheritdoc cref="AudioEnhancedSettings"/>
         public AudioEnhancedSettings(int _guid) : base(_guid) { }
@@ -32,7 +34,7 @@ namespace EnhancedFramework.Editor {
         #region Project Settings
         public const string UndoRecordTitle = "Enhanced Audio Settings change";
 
-        public const string SettingsPath = EnhancedEditorSettings.ProjectSettingsPath + "/Audio";
+        public const string SettingsPath  = EnhancedEditorSettings.ProjectSettingsPath + "/Audio";
         public const string SettingsLabel = "Audio";
 
         public static readonly string[] PreferencesKeywords = new string[] {
@@ -47,11 +49,11 @@ namespace EnhancedFramework.Editor {
         // -----------------------
 
         [SettingsProvider]
-        private static SettingsProvider CreateProkectSettingsProvider() {
+        private static SettingsProvider CreateProjectSettingsProvider() {
             SettingsProvider _provider = new SettingsProvider(SettingsPath, SettingsScope.Project) {
-                label = SettingsLabel,
-                keywords = PreferencesKeywords,
-                guiHandler = DrawSettings,
+                label       = SettingsLabel,
+                keywords    = PreferencesKeywords,
+                guiHandler  = DrawSettings,
             };
 
             return _provider;
@@ -61,7 +63,7 @@ namespace EnhancedFramework.Editor {
             if (audioProperty == null) {
 
                 ScriptableObject _settings = Resource.GetResource();
-                SerializedObject _object = new SerializedObject(_settings);
+                SerializedObject _object   = new SerializedObject(_settings);
 
                 audioProperty = _object.GetIterator();
                 audioProperty.NextVisible(true);

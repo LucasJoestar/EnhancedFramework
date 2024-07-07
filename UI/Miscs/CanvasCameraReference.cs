@@ -14,7 +14,7 @@ namespace EnhancedFramework.UI {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Miscs/Canvas Camera Reference"), DisallowMultipleComponent]
-    public class CanvasCameraReference : EnhancedBehaviour {
+    public sealed class CanvasCameraReference : EnhancedBehaviour {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init;
 
         #region Global Members
@@ -29,15 +29,15 @@ namespace EnhancedFramework.UI {
             base.OnInit();
 
             // Initialize this canvas render mode.
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.renderMode  = RenderMode.ScreenSpaceCamera;
             canvas.worldCamera = camera;
         }
 
+        #if UNITY_EDITOR
         // -------------------------------------------
         // Editor
         // -------------------------------------------
 
-        #if UNITY_EDITOR
         protected override void OnValidate() {
             base.OnValidate();
 

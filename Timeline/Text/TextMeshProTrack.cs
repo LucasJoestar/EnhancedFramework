@@ -18,6 +18,6 @@ namespace EnhancedFramework.Timeline {
     [TrackClipType(typeof(ITextMeshProPlayableAsset))]
     [TrackBindingType(typeof(TextMeshProUGUI), TrackBindingFlags.None)]
     [DisplayName("Enhanced Framework/Text Mesh Pro Track")]
-    public class TextMeshProTrack : EnhancedTrack { }
+    public sealed class TextMeshProTrack : EnhancedTrack { }
 }
 #endif

@@ -6,8 +6,8 @@
 
 using EnhancedEditor;
 using System;
-using UnityEngine;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -19,7 +19,7 @@ namespace EnhancedFramework.Core.Option {
     /// <see cref="BaseGameOption"/>-related <see cref="ScriptableObject"/> wrapper.
     /// </summary>
     [CreateAssetMenu(fileName = "OPT_GameOption", menuName = FrameworkUtility.MenuPath + "Game Option", order = FrameworkUtility.MenuOrder)]
-    public class ScriptableGameOption : EnhancedScriptableObject {
+    public sealed class ScriptableGameOption : EnhancedScriptableObject {
         #region Global Members
         [Section("Game Option")]
 
@@ -83,10 +83,10 @@ namespace EnhancedFramework.Core.Option {
         /// Initializes this option.
         /// </summary>
         /// <param name="_settings"><see cref="OptionSettings"/> instance.</param>
-        internal protected virtual void Initialize(OptionSettings _settings) {
+        internal void Initialize(OptionSettings _settings) {
 
             // Initializes this option value.
-            runtimeOption = _settings.GetOption(defaultOption.GUID, defaultOption.Name, CreateOption);
+            runtimeOption = _settings.GetOption(defaultOption.GUID, defaultOption.Name, this);
             runtimeOption.Initialize(defaultOption);
         }
 
@@ -94,12 +94,10 @@ namespace EnhancedFramework.Core.Option {
         /// Creates this option default value.
         /// </summary>
         /// <returns>This option default value.</returns>
-        protected virtual BaseGameOption CreateOption() {
+        internal BaseGameOption CreateOption() {
 
-            BaseGameOption _option = Activator.CreateInstance(optionType) as BaseGameOption;
-            _option = EnhancedUtility.CopyObjectContent(defaultOption, _option) as BaseGameOption;
-
-            return _option;
+            BaseGameOption _option = Activator.CreateInstance(optionType)    as BaseGameOption;
+            return EnhancedUtility.CopyObjectContent(defaultOption, _option) as BaseGameOption;
         }
         #endregion
 

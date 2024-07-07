@@ -18,7 +18,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// </summary>
     [Conditional("DEVELOPER_CONSOLE")]
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-    public class DeveloperConsoleCommandAttribute : Attribute {
+    public sealed class DeveloperConsoleCommandAttribute : Attribute {
         #region Global Members
         /// <summary>
         /// <inheritdoc cref="DeveloperConsoleCommand.Name" path="/summary"/>

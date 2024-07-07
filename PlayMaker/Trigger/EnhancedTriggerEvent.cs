@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using EnhancedFramework.Core;
 using HutongGames.PlayMaker;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Sends an event when an object enters / exits a Trigger.")]
     [ActionCategory(ActionCategory.Physics)]
-    public class EnhancedTriggerEvent : FsmStateAction, ITrigger {
+    public sealed class EnhancedTriggerEvent : FsmStateAction, ITrigger {
         #region Global Members
         // -------------------------------------------
         // Trigger - Events - Object
@@ -42,10 +43,10 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            Trigger = null;
+            Trigger      = null;
             OnEnterEvent = null;
-            OnExitEvent = null;
-            StoreObject = null;
+            OnExitEvent  = null;
+            StoreObject  = null;
         }
 
         public override void OnEnter() {

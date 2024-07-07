@@ -6,6 +6,7 @@
 
 using EnhancedEditor;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 using Object = UnityEngine.Object;
@@ -17,7 +18,7 @@ namespace EnhancedFramework.Core {
     /// <typeparam name="T">This group <see cref="T"/> asset tyoe.</typeparam>
     [Serializable]
     #pragma warning disable
-    public class AssetMaterialGroup<T> where T : Object {
+    public sealed class AssetMaterialGroup<T> where T : Object {
         #region Global Members
         [Tooltip("Name of this group (editor only)")]
         [SerializeField, Delayed] private string name = "New Group";
@@ -86,10 +87,13 @@ namespace EnhancedFramework.Core {
         /// <returns>True if the material could be successfully unregistered, false otherwise.</returns>
         public bool UnregisterMaterial(Material _material) {
 
-            for (int i = 0; i < Materials.Count; i++) {
+            List<Material> _materialsSpan = Materials.List;
+            int _count = _materialsSpan.Count;
 
-                if (Materials[i] == _material) {
-                    Materials.List.RemoveAt(i);
+            for (int i = 0; i < _count; i++) {
+
+                if (_materialsSpan[i] == _material) {
+                    _materialsSpan.RemoveAt(i);
                     return true;
                 }
             }
@@ -122,13 +126,13 @@ namespace EnhancedFramework.Core {
         [Space(10f)]
 
         [Tooltip("All materials associated with multiple assets")]
-        [ShowIf("HasDuplicateMaterial", order = -1), HelpBox("Duplicate Material(s) in this database", MessageType.Warning)]
+        [ShowIf(nameof(HasDuplicateMaterial), order = -1), HelpBox("Duplicate Material(s) in this database", MessageType.Warning)]
         [SerializeField, Enhanced, ReadOnly] private Set<Material> duplicateMaterials = new Set<Material>();
 
         [Space(10f)]
 
         [Tooltip("All materials not assigned to any asset")]
-        [ShowIf("HasUnassignedMaterial", order = -1), HelpBox("Unassigned Material(s) in this database", MessageType.Error)]
+        [ShowIf(nameof(HasUnassignedMaterial), order = -1), HelpBox("Unassigned Material(s) in this database", MessageType.Error)]
         [SerializeField, Enhanced, ReadOnly] private Set<Material> unassignedMaterials = new Set<Material>();
 
         // -----------------------
@@ -144,18 +148,14 @@ namespace EnhancedFramework.Core {
         /// Indicates if this database has any unassigned material.
         /// </summary>
         public bool HasUnassignedMaterial {
-            get {
-                return unassignedMaterials.Count != 0;
-            }
+            get { return unassignedMaterials.Count != 0; }
         }
 
         /// <summary>
         /// Indicates if any material is registered multiple times in the database.
         /// </summary>
         public bool HasDuplicateMaterial {
-            get {
-                return duplicateMaterials.Count != 0;
-            }
+            get { return duplicateMaterials.Count != 0; }
         }
         #endregion
 
@@ -168,27 +168,30 @@ namespace EnhancedFramework.Core {
         protected override void OnValidate() {
             base.OnValidate();
 
-            if (unassignedMaterials.Count == 0) {
+            List<Material> _unassignedMaterials = unassignedMaterials.collection;
+            int _unassignedCount = _unassignedMaterials.Count;
+
+            if (_unassignedCount == 0) {
                 return;
             }
 
             // Update unassigned materials.
             foreach (AssetMaterialGroup<T> _asset in groups) {
 
-                for (int i = unassignedMaterials.Count; i-- > 0;) {
+                for (int i = _unassignedCount; i-- > 0;) {
 
                     // If material is now assigned, unregister it.
-                    if (_asset.GetAsset(unassignedMaterials[i], out _)) {
-                        unassignedMaterials.RemoveAt(i);
+                    if (_asset.GetAsset(_unassignedMaterials[i], out _)) {
+                        _unassignedMaterials.RemoveAt(i);
 
-                        if (unassignedMaterials.Count == 0) {
+                        if (--_unassignedCount == 0) {
                             return;
                         }
                     }
                 }
             }
 
-            this.LogWarningMessage($"{unassignedMaterials.Count} unassigned Material(s) in this database");
+            this.LogWarningMessage($"{_unassignedCount} unassigned Material(s) in this database");
         }
         #endif
         #endregion
@@ -201,9 +204,8 @@ namespace EnhancedFramework.Core {
         /// <returns>Asset associated with this material (default if none).</returns>
         public T GetAsset(Material _material) {
 
-            foreach (AssetMaterialGroup<T> _group in groups) {
-
-                if (_group.GetAsset(_material, out T _asset)) {
+            for (int i = 0; i < groups.Length; i++) {
+                if (groups[i].GetAsset(_material, out T _asset)) {
                     return _asset;
                 }
             }
@@ -238,7 +240,8 @@ namespace EnhancedFramework.Core {
         /// <param name="_asset">Asset to associate with the material.</param>
         public void AssignAsset(Material _material, T _asset) {
 
-            foreach (AssetMaterialGroup<T> _group in groups) {
+            for (int i = 0; i < groups.Length; i++) {
+                AssetMaterialGroup<T> _group = groups[i];
 
                 if (_group.GetAsset(_material, out T _assignedAsset)) {
 
@@ -258,7 +261,7 @@ namespace EnhancedFramework.Core {
         /// <summary>
         /// Creates a new group in this database.
         /// </summary>
-        [Button("HasAnyGroup", ConditionType.False, SuperColor.Green, IsDrawnOnTop = false)]
+        [Button(nameof(HasAnyGroup), ConditionType.False, SuperColor.Green, IsDrawnOnTop = false)]
         public void CreateGroup() {
             ArrayUtility.Add(ref groups, new AssetMaterialGroup<T>());
         }
@@ -273,10 +276,16 @@ namespace EnhancedFramework.Core {
 
             for (int i = groups.Length; i-- > 1;) {
 
-                foreach (Material _material in groups[i].Materials) {
+                List<Material> _materials = groups[i].Materials.List;
+                int _count = _materials.Count;
 
-                    for (int j = 0; j < i; j++) {
-                        if (groups[j].GetAsset(_material, out _)) {
+                for (int j = 0; j < _count; j++) {
+
+                    Material _material = _materials[j];
+
+                    for (int k = 0; k < i; k++) {
+
+                        if (groups[k].GetAsset(_material, out _)) {
                             duplicateMaterials.Add(_material);
                         }
                     }

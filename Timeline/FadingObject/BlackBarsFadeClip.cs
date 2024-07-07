@@ -15,7 +15,7 @@ namespace EnhancedFramework.Timeline {
     /// Manages the visibility of the <see cref="BlackBarsFadingGroup"/> for the duration of the clip.
     /// </summary>
     [DisplayName("Screen Effect/Black Bars")]
-    public class BlackBarsFadeClip : FadingObjectFadePlayableAsset<BlackBarsFadeBehaviour> {
+    public sealed class BlackBarsFadeClip : FadingObjectFadePlayableAsset<BlackBarsFadeBehaviour> {
         #region Utility
         public override string ClipDefaultName {
             get { return "Black Bars"; }
@@ -27,7 +27,7 @@ namespace EnhancedFramework.Timeline {
     /// <see cref="BlackBarsFadeClip"/>-related <see cref="PlayableBehaviour"/>.
     /// </summary>
     [Serializable]
-    public class BlackBarsFadeBehaviour : FadingObjectFadePlayableBehaviour {
+    public sealed class BlackBarsFadeBehaviour : FadingObjectFadePlayableBehaviour {
         #region Global Members
         public override IFadingObject FadingObject {
             get { return BlackBarsFadingGroup.Instance; }

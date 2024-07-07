@@ -16,16 +16,18 @@ namespace EnhancedFramework.Core {
     /// </summary>
     [ScriptGizmos(false, true)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "Utility/Chronos Controller"), DisallowMultipleComponent]
-    public class ChronosController : EnhancedBehaviour {
+    public sealed class ChronosController : EnhancedBehaviour {
         #region Chronos Alteration
         /// <summary>
         /// Chronos alteration wrapper class.
         /// </summary>
-        private struct ChronosAlteration {
+        private readonly struct ChronosAlteration {
             public readonly Tween Tween;
             public readonly int ID;
 
-            // -----------------------
+            // -------------------------------------------
+            // Constructor(s)
+            // -------------------------------------------
 
             public ChronosAlteration(int _id, EaseCurveTween<float> _easeCurve, DOGetter<float> _getter, DOSetter<float> _setter, TweenCallback _onComplete) {
                 Tween = _easeCurve.To(_getter, _setter).SetUpdate(true).OnKill(_onComplete)
@@ -33,17 +35,19 @@ namespace EnhancedFramework.Core {
                 ID = _id;
             }
 
-            // -----------------------
+            // -------------------------------------------
+            // Utility
+            // -------------------------------------------
 
-            public void Pause() {
+            public readonly void Pause() {
                 Tween.Pause();
             }
 
-            public void Play() {
+            public readonly void Play() {
                 Tween.Play();
             }
 
-            public void Complete() {
+            public readonly void Complete() {
                 Tween.DoKill(true);
             }
         }
@@ -69,7 +73,7 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
-        private BufferV<ChronosAlteration> chronosBuffer = new BufferV<ChronosAlteration>();
+        private readonly BufferV<ChronosAlteration> chronosBuffer = new BufferV<ChronosAlteration>();
         #endregion
 
         #region Enhanced Behaviour
@@ -91,6 +95,9 @@ namespace EnhancedFramework.Core {
         #region Chronos
         private static readonly AnimationCurve freezeCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
 
+        private DOGetter<float> chronosGetter = null;
+        private DOSetter<float> chronosSetter = null;
+
         // -----------------------
 
         /// <summary>
@@ -101,7 +108,13 @@ namespace EnhancedFramework.Core {
         /// <param name="_alteration">The ateration to apply on this <see cref="ChronosController"/> associated objects.</param>
         /// <param name="_priority">The priority of this alteration.</param>
         public void PushChronos(int _id, EaseCurveTween<float> _alteration, int _priority) {
-            ChronosAlteration _chronos = new ChronosAlteration(_id, _alteration, GetChronos, SetChronos, () => OnChronosComplete(_id));
+
+            if (chronosGetter == null) {
+                chronosGetter = GetChronos;
+                chronosSetter = SetChronos;
+            }
+
+            ChronosAlteration _chronos = new ChronosAlteration(_id, _alteration, chronosGetter, chronosSetter, () => OnChronosComplete(_id));
             chronosBuffer.Set(_id, new Pair<ChronosAlteration, int>(_chronos, _priority));
 
             RefreshChronos();
@@ -132,8 +145,10 @@ namespace EnhancedFramework.Core {
         /// Clears and resets this handler chronos back to default.
         /// </summary>
         public void ClearChronos() {
-            for (int i = chronosBuffer.Count; i-- > 0;) {
-                chronosBuffer[i].Second.First.Complete();
+            var _chronosSpan = chronosBuffer.collection;
+
+            for (int i = _chronosSpan.Count; i-- > 0;) {
+                _chronosSpan[i].Second.First.Complete();
             }
 
             SetChronos(ChronosManager.ChronosDefaultValue);
@@ -148,12 +163,12 @@ namespace EnhancedFramework.Core {
         private void SetChronos(float _chronos) {
             handlerChronos = _chronos;
 
-            foreach (EnhancedBehaviour _behaviour in behaviours) {
-                _behaviour.Chronos = _chronos;
+            for (int i = 0; i < behaviours.Length; i++) {
+                behaviours[i].Chronos = _chronos;
             }
 
-            foreach (Animator _animator in animators) {
-                _animator.speed = _chronos;
+            for (int i = 0; i < animators.Length; i++) {
+                animators[i].speed = _chronos;
             }
         }
 

@@ -20,7 +20,7 @@ namespace EnhancedFramework.Core {
     /// <see cref="ScriptableObject"/> encapsulated audio settings applied to <see cref="AudioAsset"/>.
     /// </summary>
     [CreateAssetMenu(fileName = "AST_AudioSettings", menuName = FrameworkUtility.MenuPath + "Audio/Audio Asset Settings", order = FrameworkUtility.MenuOrder)]
-    public class AudioAssetSettings : EnhancedScriptableObject {
+    public sealed class AudioAssetSettings : EnhancedScriptableObject {
         #region Global Members
         [Section("Audio Settings")]
 
@@ -46,13 +46,46 @@ namespace EnhancedFramework.Core {
         [Space(10f, order = 0), Title("3D Curves", order = 1), Space(5f, order = 3)]
 
         [Enhanced, HelpBox("Value as Y value, min and max distance as X value", MessageType.Info)]
-
-        [SerializeField, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.DarkOrange)]  private AnimationCurve customRolloffCurve   = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
-        [SerializeField, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Yellow)]      private AnimationCurve reverbZoneMixCurve   = AnimationCurve.Constant(0f, 1f, 1f);
-        [SerializeField, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Green)]       private AnimationCurve spatialBlendCurve    = AnimationCurve.Constant(0f, 1f, 0f);
-        [SerializeField, EnhancedCurve(0f, 0f, 1f, 1f, SuperColor.Blue)]        private AnimationCurve spreadCurve          = AnimationCurve.Constant(0f, 1f, 0f);
+        [SerializeField] private MultiCurve curves = new MultiCurve(new MultiCurve.Curve[] {
+            new MultiCurve.Curve(AnimationCurve.EaseInOut(0f, 1f, 1f, 0f),  "Custom Rolloff",   SuperColor.DarkOrange.Get()),
+            new MultiCurve.Curve(AnimationCurve.Constant(0f, 1f, 1f),       "Reverb Zone Mix",  SuperColor.Yellow.Get()),
+            new MultiCurve.Curve(AnimationCurve.Constant(0f, 1f, 0f),       "Spatial Blend",    SuperColor.Green.Get()),
+            new MultiCurve.Curve(AnimationCurve.Constant(0f, 1f, 0f),       "Spread",           SuperColor.Blue.Get()),
+        }, new Vector2(0f, 1f), false, true, 1f, 1f);
 
         // -----------------------
+
+        /// <summary>
+        /// Custom rolloff <see cref="AnimationCurve"/>.
+        /// </summary>
+        public AnimationCurve CustomRollofCurve {
+            get { return curves[0]; }
+            set { curves[0] = value; }
+        }
+
+        /// <summary>
+        /// Custom reverb zone mix <see cref="AnimationCurve"/>.
+        /// </summary>
+        public AnimationCurve ReverbZoneMixCurve {
+            get { return curves[1]; }
+            set { curves[1] = value; }
+        }
+
+        /// <summary>
+        /// Custom spatial blend <see cref="AnimationCurve"/>.
+        /// </summary>
+        public AnimationCurve SpatialBlendCurve {
+            get { return curves[2]; }
+            set { curves[2] = value; }
+        }
+
+        /// <summary>
+        /// Custom spread <see cref="AnimationCurve"/>.
+        /// </summary>
+        public AnimationCurve SpreadCurve {
+            get { return curves[3]; }
+            set { curves[3] = value; }
+        }
 
         /// <summary>
         /// Multiplier applied to the audio volume.
@@ -71,20 +104,20 @@ namespace EnhancedFramework.Core {
         public void ApplyValues(AudioSource _audio) {
             #if UNITY_EDITOR
             if (!Application.isPlaying) {
-                //Undo.RecordObject(_audio, "Apply audio settings values");
+                Undo.RecordObject(_audio, "Apply audio settings values");
             }
             #endif
 
-            _audio.SetCustomCurve(AudioSourceCurveType.CustomRolloff, customRolloffCurve);
-            _audio.SetCustomCurve(AudioSourceCurveType.ReverbZoneMix, reverbZoneMixCurve);
-            _audio.SetCustomCurve(AudioSourceCurveType.SpatialBlend, spatialBlendCurve);
-            _audio.SetCustomCurve(AudioSourceCurveType.Spread, spreadCurve);
+            _audio.SetCustomCurve(AudioSourceCurveType.CustomRolloff, CustomRollofCurve);
+            _audio.SetCustomCurve(AudioSourceCurveType.ReverbZoneMix, ReverbZoneMixCurve);
+            _audio.SetCustomCurve(AudioSourceCurveType.SpatialBlend,  SpatialBlendCurve);
+            _audio.SetCustomCurve(AudioSourceCurveType.Spread,        SpreadCurve);
 
             _audio.dopplerLevel = dopplerLevel;
-            _audio.rolloffMode = rolloffMode;
-            _audio.minDistance = attenuationDistance.x;
-            _audio.maxDistance = attenuationDistance.y;
-            _audio.spread = spreadAngle;
+            _audio.rolloffMode  = rolloffMode;
+            _audio.minDistance  = attenuationDistance.x;
+            _audio.maxDistance  = attenuationDistance.y;
+            _audio.spread       = spreadAngle;
         }
 
         /// <summary>
@@ -97,14 +130,14 @@ namespace EnhancedFramework.Core {
             Undo.RecordObject(this, "Copy audio settings values");
             #endif
 
-            customRolloffCurve = _audio.GetCustomCurve(AudioSourceCurveType.CustomRolloff);
-            reverbZoneMixCurve = _audio.GetCustomCurve(AudioSourceCurveType.ReverbZoneMix);
-            spatialBlendCurve = _audio.GetCustomCurve(AudioSourceCurveType.SpatialBlend);
-            spreadCurve = _audio.GetCustomCurve(AudioSourceCurveType.Spread);
+            CustomRollofCurve   = _audio.GetCustomCurve(AudioSourceCurveType.CustomRolloff);
+            ReverbZoneMixCurve  = _audio.GetCustomCurve(AudioSourceCurveType.ReverbZoneMix);
+            SpatialBlendCurve   = _audio.GetCustomCurve(AudioSourceCurveType.SpatialBlend);
+            SpreadCurve         = _audio.GetCustomCurve(AudioSourceCurveType.Spread);
 
             dopplerLevel = _audio.dopplerLevel;
-            rolloffMode = _audio.rolloffMode;
-            spreadAngle = _audio.spread;
+            rolloffMode  = _audio.rolloffMode;
+            spreadAngle  = _audio.spread;
             attenuationDistance.x = _audio.minDistance;
             attenuationDistance.y = _audio.maxDistance;
         }

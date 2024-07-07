@@ -12,10 +12,10 @@ namespace EnhancedFramework.UI {
     /// Sets the position and size of a <see cref="RectTransform"/>.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/RectTransform UI Effect")]
-    public class RectTransformUIEffect : EnhancedSelectableEffect {
+    [AddComponentMenu(MenuPath + "RectTransform UI Effect")]
+    public sealed class RectTransformUIEffect : EnhancedSelectableEffect {
         #region Global Members
-        [Section("Audio Effect")]
+        [Section("Rect Transform UI Effect")]
 
         [Tooltip("RectTransform instance to set the position and size")]
         [SerializeField, Enhanced, Required] private RectTransform source = null;

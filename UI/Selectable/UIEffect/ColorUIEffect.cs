@@ -23,9 +23,9 @@ namespace EnhancedFramework.UI {
     /// Fades a specific <see cref="Graphic"/> color.
     /// </summary>
     [ScriptGizmos(false, true)]
-    [AddComponentMenu(FrameworkUtility.MenuPath + "UI/Effect/Color UI Effect"), DisallowMultipleComponent]
+    [AddComponentMenu(MenuPath + "Color UI Effect"), DisallowMultipleComponent]
     #pragma warning disable
-    public class ColorUIEffect : EnhancedSelectableEffect {
+    public sealed class ColorUIEffect : EnhancedSelectableEffect {
         #region Color
         [Serializable]
         public struct ColorFade {
@@ -51,6 +51,7 @@ namespace EnhancedFramework.UI {
 
         #region Behaviour
         #if TWEENER
+        private TweenCallback onKilledCallback = null;
         private Tween tween = null;
         #endif
 
@@ -62,8 +63,16 @@ namespace EnhancedFramework.UI {
             tween.DoKill();
 
             var _color = color[_state];
+
+            if (_instant || (_color.Duration == 0f)) {
+
+                SetColor(_color.Color);
+                return;
+            }
+
+            onKilledCallback ??= OnKilled;
             tween = graphic.DOColor(_color.Color, _color.Duration).SetEase(_color.Ease)
-                           .SetUpdate(useRealTime).SetRecyclable(true).SetAutoKill(true).OnKill(OnKilled);
+                           .SetUpdate(useRealTime).SetRecyclable(true).SetAutoKill(true).OnKill(onKilledCallback);
 
             // ----- Local Methods ----- \\
 
@@ -72,8 +81,14 @@ namespace EnhancedFramework.UI {
             }
             #else
             // Instant color.
-            graphic.color = color[_state].Color;
+            SetColor(color[_state].Color);
             #endif
+
+            // ----- Local Method ----- \\
+
+            void SetColor(Color _color) {
+                graphic.color = _color;
+            }
         }
         #endregion
     }

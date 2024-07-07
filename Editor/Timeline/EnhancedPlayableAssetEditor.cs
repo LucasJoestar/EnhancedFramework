@@ -1,8 +1,8 @@
-// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework-Conversations ===== //
-// 
+// ===== Enhanced Framework - https://github.com/LucasJoestar/EnhancedFramework ===== //
+//
 // Notes:
 //
-// ================================================================================================ //
+// ================================================================================== //
 
 #if UNITY_2021_3_OR_NEWER
 #define PARENT_TRACK_METHOD
@@ -13,8 +13,8 @@ using EnhancedEditor;
 using EnhancedFramework.Timeline;
 using System.Collections.Generic;
 using UnityEditor.Timeline;
-using UnityEngine.Playables;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace EnhancedFramework.Editor {

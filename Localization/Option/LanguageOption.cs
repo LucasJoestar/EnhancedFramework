@@ -18,7 +18,7 @@ namespace EnhancedFramework.Localization {
     /// <see cref="BaseGameOption"/> used to change the current language of the game.
     /// </summary>
     [Serializable, DisplayName("General/Language")]
-    public class LanguageOption : BaseGameOption {
+    public sealed class LanguageOption : BaseGameOption {
         #region Global Members
         [Space(10f)]
 
@@ -34,7 +34,7 @@ namespace EnhancedFramework.Localization {
         // -----------------------
 
         /// <summary>
-        /// Game rendering resolution
+        /// Game language.
         /// </summary>
         public Locale Language {
             get { return language; }
@@ -88,19 +88,35 @@ namespace EnhancedFramework.Localization {
 
         public override void Initialize(BaseGameOption _option) {
 
-            if (!(_option is LanguageOption _language)) {
+            if (_option is not LanguageOption _language) {
                 return;
             }
 
             allLanguage = _language.allLanguage;
 
-            Locale _locale = _language.language;
+            // Retrieve locale.
+            Locale _locale = language;
 
-            if ((_locale == null) && allLanguage.Find(l => l.Identifier == _language.languageIdentifier, out Locale _temp)) {
+            if ((_locale == null) && FindLocale(out Locale _temp)) {
                 _locale = _temp;
             }
 
             Language = _locale;
+
+            // ----- Local Method ----- \\
+
+            bool FindLocale(out Locale _locale) {
+
+                for (int i = 0; i < allLanguage.Length; i++) {
+                    _locale = allLanguage[i];
+
+                    if (_locale.Identifier == languageIdentifier)
+                        return true;
+                }
+
+                _locale = null;
+                return false;
+            }
         }
         #endregion
 

@@ -4,12 +4,11 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using EnhancedFramework.Core;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-
-using DisplayName = System.ComponentModel.DisplayNameAttribute;
 
 namespace EnhancedFramework.Timeline {
     /// <summary>
@@ -18,14 +17,14 @@ namespace EnhancedFramework.Timeline {
     [TrackColor(.855f, .568f, .0f)] // Harvest Gold
     [TrackClipType(typeof(IFadingObjectPlayableAsset))]
     [TrackBindingType(typeof(FadingObjectBehaviour), TrackBindingFlags.None)]
-    [DisplayName("Enhanced Framework/Fading Track")]
-    public class FadingObjectTrack : EnhancedTrack {
+    [System.ComponentModel.DisplayName("Enhanced Framework/Fading Track")]
+    public sealed class FadingObjectTrack : EnhancedTrack {
         #region Behaviour
         public override void GatherProperties(PlayableDirector _director, IPropertyCollector _driver) {
             base.GatherProperties(_director, _driver);
 
             Object _object = _director.GetGenericBinding(this);
-            if ((_object == null) || !(_object is FadingObjectBehaviour _fadingObject)) {
+            if ((_object == null) || (_object is not FadingObjectBehaviour _fadingObject)) {
                 return;
             }
 

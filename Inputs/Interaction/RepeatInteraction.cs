@@ -23,7 +23,7 @@ namespace EnhancedFramework.Inputs {
     #if UNITY_EDITOR
     [InitializeOnLoad]
     #endif
-    public class RepeatInteraction : IInputInteraction {
+    public sealed class RepeatInteraction : IInputInteraction {
         #region Global Members
         static RepeatInteraction() {
             InputSystem.RegisterInteraction<RepeatInteraction>();
@@ -62,6 +62,8 @@ namespace EnhancedFramework.Inputs {
             get { return (elapsedCount >= ElapsedBeforeRate) ? Rate : Delay; }
         }
 
+        // -----------------------
+
         private InputControl currentControl = null;
         private int elapsedCount = 0;
 
@@ -71,8 +73,31 @@ namespace EnhancedFramework.Inputs {
 
             bool _actuated = _context.ControlIsActuated(PressPointOrDefault);
             InputControl _control = _context.control;
+            InputActionPhase phase = _context.phase;
 
-            switch (_context.phase) {
+            // Detect if input is stuck.
+            //
+            // Stuck can happen when an input is disabled after being started, before being performed or canceled.
+            // In this case, the current control is referencing a stuck control that is corrupted.
+            // There are two cases to handle:
+            //
+            // 1. Stuck control is being processed. Control is performed, but actuated and timer has not expired.
+            // 2. Other control is being processed. Control is different that current control.
+            //
+            // In both cases, reset this interaction state and proceed as if the input was in a waiting state,
+            // to start and perform it from the beginning.
+
+            bool isStuck = (_control != null) && (((currentControl != null)     && (currentControl != _control))
+                                              || ((currentControl == _control)  && (phase == InputActionPhase.Performed) && _actuated && !_context.timerHasExpired));
+
+            if (isStuck)
+            {
+                Reset();
+                phase = InputActionPhase.Waiting;
+            }
+
+            // Process.
+            switch (phase) {
 
                 case InputActionPhase.Waiting:
 

@@ -58,8 +58,8 @@ namespace EnhancedFramework.Core.GameStates {
         public override GameStateOverride Reset() {
             base.Reset();
 
-            HasControl = true;
-            CanPause = false;
+            HasControl    = true;
+            CanPause      = false;
             ShowBlackBars = false;
 
             return this;
@@ -74,7 +74,7 @@ namespace EnhancedFramework.Core.GameStates {
     [ScriptGizmos(false, true)]
     [DefaultExecutionOrder(-960)]
     [AddComponentMenu(FrameworkUtility.MenuPath + "General/Game State Manager"), DisallowMultipleComponent]
-    public class GameStateManager : EnhancedSingleton<GameStateManager>, IStableUpdate {
+    public sealed class GameStateManager : EnhancedSingleton<GameStateManager>, IStableUpdate {
         public override UpdateRegistration UpdateRegistration => base.UpdateRegistration | UpdateRegistration.Init | UpdateRegistration.Stable;
 
         #region Global Members
@@ -111,10 +111,8 @@ namespace EnhancedFramework.Core.GameStates {
             get { return states.Count; }
         }
 
-        private readonly EnhancedCollection<IGameStateOverrideCallback> overrideCallbacks = new EnhancedCollection<IGameStateOverrideCallback>();
-
         private readonly List<GameState> pushPendingStates = new List<GameState>();
-        private readonly List<GameState> popPendingStates = new List<GameState>();
+        private readonly List<GameState> popPendingStates  = new List<GameState>();
         #endregion
 
         #region Enhanced Behaviour
@@ -126,11 +124,40 @@ namespace EnhancedFramework.Core.GameStates {
         }
 
         void IStableUpdate.Update() {
+
             // Push and pop pending states.
             bool _refresh = false;
 
-            ManagePendingStates(pushPendingStates, PushState);
-            ManagePendingStates(popPendingStates, PopState);
+            List<GameState> _span;
+            int _spanCount;
+
+            // Push.
+            _span = pushPendingStates;
+            _spanCount = _span.Count;
+
+            if (_spanCount != 0) {
+
+                for (int i = 0; i < _spanCount; i++) {
+                    PushState(_span[i], false, false);
+                }
+
+                _span.Clear();
+                _refresh = true;
+            }
+
+            // Pop.
+            _span = popPendingStates;
+            _spanCount = _span.Count;
+
+            if (_spanCount != 0) {
+
+                for (int i = 0; i < _spanCount; i++) {
+                    PopState(_span[i], false, false);
+                }
+
+                _span.Clear();
+                _refresh = true;
+            }
 
             if (_refresh) {
                 RefreshCurrentState();
@@ -138,23 +165,14 @@ namespace EnhancedFramework.Core.GameStates {
 
             // Current state update.
             CurrentState.OnUpdate();
-
-            // ----- Local Method ----- \\
-
-            void ManagePendingStates(List<GameState> _states, Action<GameState, bool, bool> _action) {
-                if (_states.Count != 0) {
-                    for (int i = 0; i < _states.Count; i++) {
-                        _action(_states[i], false, false);
-                    }
-
-                    _states.Clear();
-                    _refresh = true;
-                }
-            }
         }
         #endregion
 
         #region Override Callbacks
+        private readonly EnhancedCollection<IGameStateOverrideCallback> overrideCallbacks = new EnhancedCollection<IGameStateOverrideCallback>();
+
+        // -----------------------
+
         /// <summary>
         /// Registers an object to receive callback on state overrides.
         /// </summary>
@@ -199,16 +217,16 @@ namespace EnhancedFramework.Core.GameStates {
         /// Pushes a new state on the game state stack.
         /// </summary>
         /// <param name="_state">New state to add to the stack.</param>
-        public void PushState(GameState _state) {
-            PushState(_state, true);
+        public bool PushState(GameState _state) {
+            return PushState(_state, true);
         }
 
         /// <summary>
         /// Pops an already push-in stack buffer.
         /// </summary>
         /// <param name="_state">Existing stack to remove.</param>
-        public void PopState(GameState _state) {
-            PopState(_state, true);
+        public bool PopState(GameState _state) {
+            return PopState(_state, true);
         }
 
         /// <summary>
@@ -217,7 +235,10 @@ namespace EnhancedFramework.Core.GameStates {
         /// <typeparam name="T">The type of game state to pop from the stack.</typeparam>
         /// <returns>True if a state of this type could be found and was removed, false otherwise.</returns>
         public bool PopState<T>() where T : GameState {
-            for (int i = 0; i < states.Count; i++) {
+
+            int _count = states.Count;
+            for (int i = 0; i < _count; i++) {
+
                 if (states.GetKeyAt(i).Value is T) {
                     PopStateAt(i, true);
                     return true;
@@ -230,12 +251,15 @@ namespace EnhancedFramework.Core.GameStates {
         /// <param name="_stateType"><inheritdoc cref="PopState{T}" path="/typeparam[@name='T']"/></param>
         /// <inheritdoc cref="PopState{T}"/>
         public bool PopState(Type _stateType) {
+
             if (!_stateType.IsSubclassOf(typeof(GameState))) {
                 this.LogErrorMessage($"The type \'{_stateType.Name}\' does not inherit from \'{typeof(GameState).Name}\'");
                 return false;
             }
 
-            for (int i = 0; i < states.Count; i++) {
+            int _count = states.Count;
+            for (int i = 0; i < _count; i++) {
+
                 if (states.GetKeyAt(i).Value.GetType() == _stateType) {
                     PopStateAt(i, true);
                     return true;
@@ -260,17 +284,20 @@ namespace EnhancedFramework.Core.GameStates {
             RefreshCurrentState();
         }
 
-        // -----------------------
+        // -------------------------------------------
+        // Internal
+        // -------------------------------------------
 
-        private void PushState(GameState _state, bool _autoRefresh, bool _removeFromPending = true) {
+        private bool PushState(GameState _state, bool _autoRefresh, bool _removeFromPending = true) {
             if (_removeFromPending) {
                 RemoveFromPendingState(_state);
             }
 
             // Prevent from having multiple states of the same type on the stack if it is not allowed.
             if (!_state.MultipleInstance && IsOnStack(_state.GetType(), out _)) {
+
                 this.LogWarningMessage($"A GameState of type \"{_state.GetType()}\" is already pushed on the stack");
-                return;
+                return false;
             }
 
             states.Push(_state, _state.Priority);
@@ -282,13 +309,19 @@ namespace EnhancedFramework.Core.GameStates {
             if (_autoRefresh) {
                 RefreshCurrentState();
             }
+
+            return true;
         }
 
-        private void PopState(GameState _state, bool _autoRefresh, bool _removeFromPending = true) {
+        private bool PopState(GameState _state, bool _autoRefresh, bool _removeFromPending = true) {
             int _index = states.IndexOfKey(_state);
-            if (_index != -1) {
-                PopStateAt(_index, _autoRefresh, _removeFromPending);
+            if (_index == -1) {
+                return false;
             }
+
+            PopStateAt(_index, _autoRefresh, _removeFromPending);
+            return true;
+
         }
 
         private void PopStateAt(int _index, bool _autoRefresh, bool _removeFromPending = true) {
@@ -366,8 +399,12 @@ namespace EnhancedFramework.Core.GameStates {
             ChronosManager.Instance.PushOverride(chronosID, _chronos, _priority);
             _override.Apply();
 
-            foreach (IGameStateOverrideCallback _callback in overrideCallbacks) {
-                _callback.OnGameStateOverride(_override);
+            // Callbacks.
+            List<IGameStateOverrideCallback> _callbacksSpan = overrideCallbacks.collection;
+            int _count = _callbacksSpan.Count;
+
+            for (int i = 0; i < _count; i++) {
+                _callbacksSpan[i].OnGameStateOverride(_override);
             }
         }
         #endregion
@@ -399,16 +436,21 @@ namespace EnhancedFramework.Core.GameStates {
         /// <param name="_inherit">If true, will also check for any type inheriting from the given one.</param>
         /// <returns>True if any <see cref="GameState"/> of the given type is active, false otherwise.</returns>
         public bool IsActive(Type _type, out GameState _state, bool _inherit = true) {
-            foreach (var _pair in states) {
-                _state = _pair.First.Value;
+
+            int _count = states.Count;
+            for (int i = 0; i < _count; i++) {
+
+                _state = states[i].First.Value;
                 if (IsType(_state)) {
                     return true;
                 }
             }
 
-            foreach (var _gameState in pushPendingStates) {
-                if (IsType(_gameState)) {
-                    _state = _gameState;
+            _count = pushPendingStates.Count;
+            for (int i = 0; i < _count; i++) {
+                _state = pushPendingStates[i];
+
+                if (IsType(_state)) {
                     return true;
                 }
             }
@@ -436,8 +478,11 @@ namespace EnhancedFramework.Core.GameStates {
         /// <param name="_state">The first found <see cref="GameState"/> on the stack of the given type (null if none).</param>
         /// <returns>True if any <see cref="GameState"/> of the given type is currently on the stack, false otherwise.</returns>
         public bool IsOnStack(Type _type, out GameState _state) {
-            foreach (var _pair in states) {
-                _state = _pair.First.Value;
+
+            int _count = states.Count;
+            for (int i = 0; i < _count; i++) {
+
+                _state = states[i].First.Value;
 
                 if (_state.GetType() == _type) {
                     return true;

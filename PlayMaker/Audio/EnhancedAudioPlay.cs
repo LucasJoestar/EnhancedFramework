@@ -16,7 +16,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Plays an Audio Asset.")]
     [ActionCategory(ActionCategory.Audio)]
-    public class EnhancedAudioPlay : FsmStateAction {
+    public sealed class EnhancedAudioPlay : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Audio - Settings - Options - Transform - Stop
@@ -28,7 +28,7 @@ namespace EnhancedFramework.PlayMaker {
 
         [Tooltip("Override Settings used to play this audio.")]
         [ObjectType(typeof(AudioAssetSettings))]
-        [HideIf("HideSettings")]
+        [HideIf(nameof(HideSettings))]
         public FsmObject Settings = null;
 
         [Tooltip("Whether to override the default Audio Settings or not.")]
@@ -40,7 +40,7 @@ namespace EnhancedFramework.PlayMaker {
         public FsmEnum Options = null;
 
         [Tooltip("Transform where to play this audio.")]
-        [HideIf("HideTransform")]
+        [HideIf(nameof(HideTransform))]
         public FsmGameObject Transform;
 
         [Tooltip("If true, stops this audio when exiting this state.")]
@@ -83,11 +83,11 @@ namespace EnhancedFramework.PlayMaker {
 
         private void Play() {
 
-            if (!(Audio.Value is AudioAsset _audio)) {
+            if (Audio.Value is not AudioAsset _audio) {
                 return;
             }
 
-            GameObject _object = Transform.Value;
+            GameObject _object   = Transform.Value;
             Transform _transform = (_object != null) ? _object.transform : null;
 
             AudioAssetSettings _settings = OverrideSettings.Value ? (Settings.Value as AudioAssetSettings) : _audio.Settings;

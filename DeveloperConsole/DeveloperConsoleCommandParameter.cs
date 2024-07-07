@@ -11,7 +11,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
     /// <summary>
     /// <see cref="DeveloperConsoleCommand"/>-related parameter wrapper, with some additional descriptions.
     /// </summary>
-    public class DeveloperConsoleCommandParameter {
+    public sealed class DeveloperConsoleCommandParameter {
         #region Global Members
         /// <summary>
         /// Name used to call this command.

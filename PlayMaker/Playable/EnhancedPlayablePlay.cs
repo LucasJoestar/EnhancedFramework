@@ -17,7 +17,7 @@ namespace EnhancedFramework.PlayMaker {
     /// </summary>
     [Tooltip("Plays an Enhanced Playable Player")]
     [ActionCategory("Playable")]
-    public class EnhancedPlayablePlay : FsmStateAction {
+    public sealed class EnhancedPlayablePlay : FsmStateAction {
         #region Global Members
         // -------------------------------------------
         // Variable - Paused - Stopped
@@ -38,8 +38,8 @@ namespace EnhancedFramework.PlayMaker {
         public override void Reset() {
             base.Reset();
 
-            Playable = null;
-            PausedEvent = null;
+            Playable     = null;
+            PausedEvent  = null;
             StoppedEvent = null;
         }
 
