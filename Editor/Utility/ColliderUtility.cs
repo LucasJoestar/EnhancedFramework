@@ -9,6 +9,7 @@
 #endif
 
 using EnhancedEditor;
+using EnhancedEditor.Editor;
 using EnhancedFramework.Core;
 using System;
 using UnityEditor;
@@ -197,6 +198,69 @@ namespace EnhancedFramework.Editor {
 
                 _count++;
                 EditorUtility.SetDirty(_object);
+            }
+        }
+
+        /// <summary>
+        /// Detects all off-centered colliders in the loaded scene(s).
+        /// </summary>
+        [MenuItem(FrameworkUtility.MenuItemPath + "Collider/Detect All Off-centered Colliders", false, FrameworkUtility.MenuOrder - 100)]
+        public static void DetectAllOffCenteredColliders() {
+            GetComponents<CapsuleCollider>(OnCapsuleDetected);
+            GetComponents<SphereCollider>(OnSphereDetected);
+            GetComponents<BoxCollider>(OnBoxDetected);
+
+            // ----- Local Methods ----- \\
+
+            void OnCapsuleDetected(CapsuleCollider _capsule) {
+                if (_capsule.center != Vector3.zero) {
+                    _capsule.LogMessage("Off-centered Capsule => " + _capsule.name);
+                }
+            }
+
+            void OnSphereDetected(SphereCollider _sphere) {
+                if (_sphere.center != Vector3.zero) {
+                    _sphere.LogMessage("Off-centered Sphere => " + _sphere.name);
+                }
+            }
+
+            void OnBoxDetected(BoxCollider _box) {
+                if (_box.center != Vector3.zero) {
+                    _box.LogMessage("Off-centered Box => " + _box.name);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adjust the center of all colliders in the loaded scene(s).
+        /// </summary>
+        [MenuItem(FrameworkUtility.MenuItemPath + "Collider/Adjust All Colliders Center", false, FrameworkUtility.MenuOrder - 100)]
+        public static void AdjustAllCollidersCenter() {
+            GetComponents<CapsuleCollider>(AdjustCapsule);
+            GetComponents<SphereCollider>(AdjustSphere);
+            GetComponents<BoxCollider>(AdjustBox);
+
+            // ----- Local Methods ----- \\
+
+            void AdjustCapsule(CapsuleCollider _capsule) {
+                if (_capsule.center != Vector3.zero) {
+                    SceneDesignerUtility.AdjustCapsuleCenter(_capsule);
+                    _capsule.LogMessage("Adjust Capsule => " + _capsule.name);
+                }
+            }
+
+            void AdjustSphere(SphereCollider _sphere) {
+                if (_sphere.center != Vector3.zero) {
+                    SceneDesignerUtility.AdjustSphereCenter(_sphere);
+                    _sphere.LogMessage("Adjust Sphere => " + _sphere.name);
+                }
+            }
+
+            void AdjustBox(BoxCollider _box) {
+                if (_box.center != Vector3.zero) {
+                    SceneDesignerUtility.AdjustBoxCenter(_box);
+                    _box.LogMessage("Adjust Box => " + _box.name);
+                }
             }
         }
 

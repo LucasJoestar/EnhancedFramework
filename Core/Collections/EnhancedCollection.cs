@@ -170,6 +170,15 @@ namespace EnhancedFramework.Core {
         }
 
         /// <summary>
+        /// Removes multiple elements at a specific index from this collection.
+        /// </summary>
+        /// <param name="_startIndex">The start index of the elements to remove.</param>
+        /// <param name="_count">Total count of elements to remove.</param>
+        public virtual void RemoveRange(int _startIndex, int _count) {
+            collection.RemoveRange(_startIndex, _count);
+        }
+
+        /// <summary>
         /// Removes the first element from this collection.
         /// </summary>
         /// <returns>True if this collection is not empty and the first element could be removed, false otherwise.</returns>
@@ -367,13 +376,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_element">The element to check.</param>
         /// <returns>True if the element is contained in the collection, false otherwise.</returns>
         public virtual bool Contains(T _element) {
-
-            // Instance comparison.
-            if (UseReferenceEquality) {
-                return IndexOfReference(_element) != -1;
-            }
-
-            return collection.Contains(_element);
+            return IndexOf(_element) != -1;
         }
 
         /// <summary>
@@ -444,11 +447,11 @@ namespace EnhancedFramework.Core {
         // -------------------------------------------
 
         private int IndexOfReference(T _element) {
+            ref List<T> _span = ref collection;
+            int _count = _span.Count;
 
-            int _count = collection.Count;
             for (int i = 0; i < _count; i++) {
-
-                if (Comparer.ReferenceEquals(collection[i], _element)) {
+                if (Comparer.ReferenceEquals(_span[i], _element)) {
                     return i;
                 }
             }

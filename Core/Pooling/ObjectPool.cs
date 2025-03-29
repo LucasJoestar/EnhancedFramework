@@ -185,10 +185,10 @@ namespace EnhancedFramework.Core {
                 return false;
             }
 
-            _instance.OnSentToPool();
-
             AssertInstanceInPool(_instance);
             pool.Add(_instance);
+
+            _instance.OnSentToPool();
 
             return true;
         }

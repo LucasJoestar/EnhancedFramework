@@ -110,6 +110,23 @@ namespace EnhancedFramework.Core {
 
             return _player.SendEvent(_eventId);
         }
+
+        // -------------------------------------------
+        // Other
+        // -------------------------------------------
+
+        /// <summary>
+        /// Sets the local follow offset of this handle associated <see cref="VisualEffectPlayer"/>.
+        /// </summary>
+        /// <inheritdoc cref="VisualEffectPlayer.SetFollowOffset(Vector3)"/>
+        public bool SetFollowOffset(Vector3 _localOffset) {
+            if (!GetHandle(out VisualEffectPlayer _player)) {
+                return false;
+            }
+
+            _player.SetFollowOffset(_localOffset);
+            return true;
+        }
         #endregion
     }
 
@@ -161,6 +178,7 @@ namespace EnhancedFramework.Core {
         [Space(10f)]
 
         [SerializeField, Enhanced, ReadOnly] private bool followTransform = false;
+        [SerializeField, Enhanced, ReadOnly] private Vector3 followOffset = Vector3.zero;
         [SerializeField, Enhanced, ReadOnly] private Transform referenceTransform = null;
 
         // -----------------------
@@ -210,6 +228,7 @@ namespace EnhancedFramework.Core {
         [Space(10f), HorizontalLine(SuperColor.Grey, 1f), Space(10f)]
 
         [SerializeField, Enhanced, DrawMember(nameof(IsEffectPlaying)), ReadOnly] private bool isPlaying = false;
+        [SerializeField, Enhanced, DrawMember(nameof(AliveParticleCount)), ReadOnly] private int aliveParticleCount = 0;
         #endif
 
         /// <summary>
@@ -224,6 +243,20 @@ namespace EnhancedFramework.Core {
                 }
 
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Get if there is currently any alive particle in this effect.
+        /// </summary>
+        public int AliveParticleCount {
+            get {
+                int _count = 0;
+                foreach (var _particle in visualEffects) {
+                    _count += _particle.aliveParticleCount;
+                }
+
+                return _count;
             }
         }
         #endregion
@@ -263,7 +296,7 @@ namespace EnhancedFramework.Core {
                     for (int i = 0; i < visualEffects.Length; i++) {
 
                         VisualEffect _effect = visualEffects[i];
-                        bool _isPlaying = _effect.HasAnySystemAwake() || (_effect.aliveParticleCount != 0);
+                        bool _isPlaying = _effect.HasAnySystemAwake() || (_effect.aliveParticleCount > 0);
 
                         if (_isPlaying) {
 
@@ -602,9 +635,18 @@ namespace EnhancedFramework.Core {
         /// <param name="_transform"><see cref="Transform"/> reference to follow.</param>
         public void FollowTransform(Transform _transform) {
             followTransform = true;
+            followOffset = Vector3.zero;
             referenceTransform = _transform;
 
             UpdateFollow();
+        }
+
+        /// <summary>
+        /// Set this player follow target local offset.
+        /// </summary>
+        /// <param name="_localOffset">Follow target local offset.</param>
+        public void SetFollowOffset(Vector3 _localOffset) {
+            followOffset = _localOffset;
         }
 
         /// <summary>
@@ -612,6 +654,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         public void StopFollowTransform() {
             followTransform = false;
+            followOffset = Vector3.zero;
             referenceTransform = null;
         }
 
@@ -623,10 +666,16 @@ namespace EnhancedFramework.Core {
 
                 try {
                     Quaternion rotation = referenceTransform.rotation;
-                    transform.SetPositionAndRotation(referenceTransform.position + effectAsset.LocalOffset.Rotate(rotation), rotation);
-                } catch (MissingReferenceException e) {
-                    this.LogException(e);
-                    StopFollowTransform();
+                    transform.SetPositionAndRotation(referenceTransform.position + (effectAsset.LocalOffset + followOffset).Rotate(rotation), rotation);
+
+                } catch (Exception e) {
+
+                    if ((e is MissingReferenceException) || (e is NullReferenceException)) {
+                        this.LogException(e);
+                        StopFollowTransform();
+                    } else {
+                        throw;
+                    }
                 }
             }
         }

@@ -110,7 +110,16 @@ namespace EnhancedFramework.Core.Settings {
 
             // Settings and databases assignement.
             for (int i = 0; i < settings.Length; i++) {
-                settings[i].Init();
+                ScriptableSettings _setting = settings[i];
+
+                #if DEVELOPMENT
+                if (_setting == null) {
+                    this.LogErrorMessage($"Null setting detected at index {i}");
+                    continue;
+                }
+                #endif
+
+                _setting.Init();
             }
         }
         #endregion

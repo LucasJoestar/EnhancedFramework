@@ -30,10 +30,16 @@ namespace EnhancedFramework.Core.Option {
 
         [Tooltip("Default option values")]
         [SerializeReference, Enhanced, Block] internal BaseGameOption defaultOption = new DefaultGameOption();
+
+        // -----------------------
+
+        public int AvailableOptionCount {
+            get { return defaultOption.AvailableOptionCount; }
+        }
         #endregion
 
         #region Scriptable Object
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         // -------------------------------------------
         // Editor
         // -------------------------------------------

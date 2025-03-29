@@ -53,9 +53,11 @@ namespace EnhancedFramework.Core {
         /// <param name="_time">Reference time value to increase.</param>
         /// <param name="_increase">Value time increase (in seconds).</param>
         /// <returns>This value at the current evaluation time.</returns>
-        public float EvaluateContinue(ref float _time, float _increase) {
-            _time = Mathf.Clamp(_time + _increase, 0f, Duration);
-            return DoEvaluate(_time / Duration);
+        public float EvaluateContinue(ref float _time, float _increase, float _coef = 1f) {
+            float _duration = Duration * _coef;
+
+            _time = Mathf.Clamp(_time + _increase, 0f, _duration);
+            return DoEvaluate(_time / _duration, _coef);
         }
 
         /// <summary>
@@ -63,8 +65,9 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_time">Time to evaluate this value at.</param>
         /// <returns>This value at the given time.</returns>
-        public float Evaluate(float _time) {
-            return DoEvaluate(_time / Duration);
+        public float Evaluate(float _time, float _coef = 1f) {
+            float _duration = Duration * _coef;
+            return DoEvaluate(_time / _duration, _coef);
         }
 
         /// <summary>
@@ -72,8 +75,8 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <param name="_percent">Lifetime percentage to evaluate the curve at.</param>
         /// <returns>The curve value at the given percentage.</returns>
-        public float EvaluatePercent(float _percent) {
-            return DoEvaluate(_percent);
+        public float EvaluatePercent(float _percent, float _coef = 1f) {
+            return DoEvaluate(_percent, _coef);
         }
 
         // -------------------------------------------
@@ -84,7 +87,7 @@ namespace EnhancedFramework.Core {
         /// Use this to implement this value evaluation behaviour.
         /// </summary>
         /// <param name="_percent">Lifetime percentage to evaluate the curve at.</param>
-        protected abstract float DoEvaluate(float _percent);
+        protected abstract float DoEvaluate(float _percent, float _coef);
         #endregion
 
         #region Utility
@@ -92,8 +95,9 @@ namespace EnhancedFramework.Core {
         /// Get the current evaluation time ratio (between 0 and 1) of this value.
         /// </summary>
         /// <param name="_time">Time to get the associated ratio.</param>
-        public float GetTimeRatio(float _time) {
-            return _time / Duration;
+        public float GetTimeRatio(float _time, float _coef = 1f) {
+            float _duration = Duration / _coef;
+            return _time / _duration;
         }
 
         /// <summary>
@@ -101,7 +105,7 @@ namespace EnhancedFramework.Core {
         /// </summary>
         /// <returns>This value first default value.</returns>
         public float Reset() {
-            return DoEvaluate(0f);
+            return DoEvaluate(0f, 1f);
         }
         #endregion
     }
@@ -133,8 +137,8 @@ namespace EnhancedFramework.Core {
         // Core
         // -------------------------------------------
 
-        protected override float DoEvaluate(float _percent) {
-            return DOVirtual.EasedValue(Range.x, Range.y, _percent, Ease);
+        protected override float DoEvaluate(float _percent, float _coef) {
+            return DOVirtual.EasedValue(Range.x, Range.y * _coef, _percent, Ease);
         }
         #endregion
     }
@@ -166,8 +170,8 @@ namespace EnhancedFramework.Core {
         // Core
         // -------------------------------------------
 
-        protected override float DoEvaluate(float _percent) {
-            return Mathf.Lerp(Range.x, Range.y, Curve.Evaluate(_percent));
+        protected override float DoEvaluate(float _percent, float _coef) {
+            return Mathf.Lerp(Range.x, Range.y * _coef, Curve.Evaluate(_percent));
         }
         #endregion
     }
@@ -228,7 +232,7 @@ namespace EnhancedFramework.Core {
         /// <param name="_decrease">Value time decrease (in seconds).
         /// <br/> Must be positive.</param>
         /// <returns>The curve value with applied time decrease.</returns>
-        public float Decrease(ref float _time, float _decrease, DecreaseWrapper _wrapper) {
+        public float Decrease(ref float _time, float _decrease, DecreaseWrapper _wrapper, float _coef = 1f) {
 
             if (_wrapper.Time == 0f) {
                 _wrapper.Duration = Mathf.Max(DecreaseDuration * GetTimeRatio(_time), .01f);
@@ -237,8 +241,10 @@ namespace EnhancedFramework.Core {
 
             _wrapper.Time = Mathf.Clamp(_wrapper.Time + _decrease, 0f, _wrapper.Duration);
 
+            float _duration = Duration * _coef;
             _time = _wrapper.GetTime(DecreaseCurve);
-            return DoEvaluate(_time / Duration);
+
+            return base.DoEvaluate(_time / _duration, _coef);
         }
         #endregion
     }

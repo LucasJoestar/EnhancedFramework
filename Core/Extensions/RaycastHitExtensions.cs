@@ -76,10 +76,13 @@ namespace EnhancedFramework.Core {
             Collider _collider = _hit.collider;
 
             if (_collider is MeshCollider _meshCollider) {
-
-                Mesh _mesh = _meshCollider.sharedMesh;
-                _materialIndex = _mesh.GetSubMeshIndex(_hit.triangleIndex);
-
+                if (_meshCollider.convex) {
+                    Debug.LogWarning("MeshCollider must be non-convex to get the hit associated triangle index");
+                    _materialIndex = 0;
+                } else {
+                    Mesh _mesh = _meshCollider.sharedMesh;
+                    _materialIndex = _mesh.GetSubMeshIndex(_hit.triangleIndex);
+                }
             } else {
                 _materialIndex = 0;
             }

@@ -1567,7 +1567,7 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
                         if (_object.transform.TryGetComponent(out ExtendedBehaviour _behaviour)) {
                             var _tags = _behaviour.Tags.Tags;
 
-                            Log($"Enhanced Tags [{_tags.Length}]");
+                            Log($"Enhanced Tags [{_tags.Count}]");
                             LogCollection(string.Empty, _tags, List);
                         }
 
@@ -3001,7 +3001,9 @@ namespace EnhancedFramework.DeveloperConsoleSystem {
 
             // If the current log cannot hold all the new characters to add, split the log text.
             if (_count > _remainingCount) {
-                int _index = _logText.LastIndexOf('\n', _remainingCount - 1, _remainingCount);
+                int _index = (_remainingCount > 0)
+                           ? _logText.LastIndexOf('\n', _remainingCount - 1, _remainingCount)
+                           : -1;
 
                 // Fill the last log content.
                 if (_index != -1) {

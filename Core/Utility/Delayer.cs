@@ -360,6 +360,7 @@ namespace EnhancedFramework.Core {
         #region Behaviour
         private static readonly EnhancedCollection<DelayedCall> calls = new EnhancedCollection<DelayedCall>();
         private static int lastFrameUpdate = -1;
+        private static bool requireRefresh = false;
 
         // -----------------------
 
@@ -378,11 +379,20 @@ namespace EnhancedFramework.Core {
             return _call.DelayCall(_delay, _callback, _realTime);
         }
 
+        /// <summary>
+        /// Cancels all registered <see cref="DelayedCall"/>.
+        /// </summary>
+        public static void CancelAllDelayedCalls() {
+            ref var _callSpan = ref calls.collection;
+            for (var i = _callSpan.Count; i-- > 0;) {
+                _callSpan[i].Cancel();
+            }
+        }
+
         // -----------------------
 
         public void Update() {
-
-            List<DelayedCall> _callSpan = calls.collection;
+            ref  List<DelayedCall> _callSpan = ref calls.collection;
             int _count = _callSpan.Count;
 
             if (_count == 0)
@@ -391,18 +401,20 @@ namespace EnhancedFramework.Core {
             float realDeltaTime = ChronosUtility.RealDeltaTime;
             float deltaTime     = ChronosUtility.DeltaTime;
 
+            requireRefresh = false;
+
             // Execute calls in registered order.
-            for (int i = 0; i < _count; i++) {
+            for (int i = _count; i-- > 0;) {
 
                 // Index management.
                 try {
-                    if (_callSpan[i].Update(deltaTime, realDeltaTime)) {
+                    if (_callSpan[i].Update(deltaTime, realDeltaTime) || requireRefresh) {
 
-                        _count--;
-                        i--;
+                        i = Mathf.Min(i, _callSpan.Count);
+                        requireRefresh = false;
                     }
                 } catch (ArgumentOutOfRangeException) {
-                    _count = _callSpan.Count;
+                    i = Mathf.Min(i, _callSpan.Count);
                 }
             }
 
@@ -431,7 +443,10 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="ObjectPool{T}.ReleasePoolInstance(T)"/>
         internal static bool ReleaseCall(DelayedCall _call) {
 
-            calls.Remove(_call);
+            if (calls.Remove(_call)) {
+                requireRefresh = true;
+            }
+
             return pool.ReleasePoolInstance(_call);
         }
 

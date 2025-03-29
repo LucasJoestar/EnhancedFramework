@@ -122,11 +122,10 @@ namespace EnhancedFramework.UI {
             // ----- Local Method ----- \\
 
             void OnKilled() {
-
-                group.alpha = 0f;
-
                 tween    = null;
                 isActive = false;
+
+                group.alpha = 0f;
             }
         }
         #endregion

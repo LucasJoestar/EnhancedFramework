@@ -78,7 +78,7 @@ namespace EnhancedFramework.Localization {
         #endregion
 
         #region Behaviour
-        public override void Apply() {
+        public override void Apply(bool _isInit = false) {
             LocalizationManager.Instance.SelectLocale(language);
         }
 

@@ -41,6 +41,14 @@ namespace EnhancedFramework.Core.Option {
         }
 
         /// <summary>
+        /// Raw value of this option selection.
+        /// </summary>
+        public virtual float SelectedValue {
+            get { throw new GameOptionException("Get Selection"); }
+            set { throw new GameOptionException("Set Selection"); }
+        }
+
+        /// <summary>
         /// Index of this option selected value.
         /// </summary>
         public virtual int SelectedValueIndex {
@@ -82,7 +90,7 @@ namespace EnhancedFramework.Core.Option {
         /// <summary>
         /// Applies this option value(s).
         /// </summary>
-        public abstract void Apply();
+        public abstract void Apply(bool _isInit = false);
 
         /// <summary>
         /// Refreshes this option value(s) from the game current state.
@@ -107,7 +115,7 @@ namespace EnhancedFramework.Core.Option {
     [Serializable, DisplayName("<Default>")]
     public sealed class DefaultGameOption : BaseGameOption {
         #region Behaviour
-        public override void Apply() { }
+        public override void Apply(bool _isInit = false) { }
 
         public override void Refresh() { }
 
@@ -136,7 +144,7 @@ namespace EnhancedFramework.Core.Option {
         [Tooltip("Value of this volume")]
         [SerializeField, Enhanced, Range(MinVolume, 1f)] private float volume = 1f;
 
-        [Tooltip("Total amount of available resolution steps")]
+        [Tooltip("Total amount of available volume steps")]
         [SerializeField, Enhanced, Range(1f, 100f)] private int stepCount = 10;
 
         [Space(10f)]
@@ -193,7 +201,7 @@ namespace EnhancedFramework.Core.Option {
         #endregion
 
         #region Behaviour
-        public override void Apply() {
+        public override void Apply(bool _isInit = false) {
 
             float _volume = isMute ? MinVolume : volume;
             float _value  = _volume - MinVolume;
@@ -306,7 +314,12 @@ namespace EnhancedFramework.Core.Option {
         #endregion
 
         #region Behaviour
-        public override void Apply() {
+        public override void Apply(bool _isInit = false) {
+            if (_isInit) {
+                Refresh();
+                return;
+            }
+
             Screen.fullScreenMode = Mode;
         }
 
@@ -323,7 +336,7 @@ namespace EnhancedFramework.Core.Option {
     // -------------------------------------------
 
     /// <summary>
-    /// Game options wrapper.
+    /// Game option wrapper.
     /// </summary>
     [Serializable]
     public sealed class GameOptionsWrapper {
@@ -383,16 +396,7 @@ namespace EnhancedFramework.Core.Option {
         #region Initialization
         protected internal override void Init() {
             base.Init();
-
-            // Loading and initialization.
-            Load();
-
-            for (int i = 0; i < scriptableOptions.Length; i++) {
-                scriptableOptions[i].Initialize(this);
-            }
-
-            Apply();
-            Save();
+            InitOption();
         }
         #endregion
 
@@ -446,10 +450,26 @@ namespace EnhancedFramework.Core.Option {
         /// <summary>
         /// Applies all game option values.
         /// </summary>
+        [Button(ActivationMode.Play, SuperColor.Crimson, IsDrawnOnTop = false)]
+        public void InitOption() {
+            // Loading and initialization.
+            Load();
+
+            foreach (ScriptableGameOption _option in scriptableOptions) {
+                _option.Initialize(this);
+            }
+
+            Apply(true);
+            Save();
+        }
+
+        /// <summary>
+        /// Applies all game option values.
+        /// </summary>
         [Button(SuperColor.Green, IsDrawnOnTop = false)]
-        public void Apply() {
+        public void Apply(bool _isInit = false) {
             for (int i = 0; i < option.Options.Length; i++) {
-                option.Options[i].Apply();
+                option.Options[i].Apply(_isInit);
             }
         }
 
@@ -494,7 +514,7 @@ namespace EnhancedFramework.Core.Option {
         public void Save() {
 
             string _filePath = FilePath;
-            string _json = JsonUtility.ToJson(option);
+            string _json = JsonUtility.ToJson(option, true);
 
             File.WriteAllText(_filePath, _json);
         }

@@ -50,8 +50,20 @@ namespace EnhancedFramework.Core {
         /// <br/> Modify its value if an entry with the same key is found.
         /// </summary>
         /// <inheritdoc cref="Set(T, U)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Add(T _key, U _value) {
             return Set(_key, _value);
+        }
+
+        /// <summary>
+        /// Adds a new pair entry in this collection.
+        /// <br/> This method is faster but will add a duplicate if the key is already in the collection.
+        /// </summary>
+        /// <inheritdoc cref="Set(T, U)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int AddUnsafe(T _key, U _value) {
+            collection.Add(new Pair<T, U>(_key, _value));
+            return Count - 1;
         }
 
         /// <summary>
@@ -70,10 +82,12 @@ namespace EnhancedFramework.Core {
 
         // -----------------------
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Add(Pair<T, U> _pair) {
             Set(_pair.First, _pair.Second);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Remove(Pair<T, U> _pair) {
             return Remove(_pair.First);
         }

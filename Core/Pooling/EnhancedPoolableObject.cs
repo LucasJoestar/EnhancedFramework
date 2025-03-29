@@ -107,6 +107,13 @@ namespace EnhancedFramework.Core {
                 return;
             }
 
+            DestroyPoolInstance();
+        }
+
+        /// <summary>
+        /// Destroys this pool instance.
+        /// </summary>
+        protected virtual void DestroyPoolInstance() {
             Destroy(gameObject);
         }
         #endregion

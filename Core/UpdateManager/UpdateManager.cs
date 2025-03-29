@@ -126,7 +126,7 @@ namespace EnhancedFramework.Core {
             if (_registration.HasFlagUnsafe(UpdateRegistration.Init)) {
 
                 if ((_object is IInitUpdate _init) && !_init.IsInitialized) {
-                    initUpdates.Set(_init, _registration);
+                    initUpdates.AddUnsafe(_init, _registration);
                     return;
                 }
             }
@@ -134,7 +134,7 @@ namespace EnhancedFramework.Core {
             if (_registration.HasFlagUnsafe(UpdateRegistration.Play)) {
 
                 if ((_object is IPlayUpdate _play) && !_play.IsPlaying) {
-                    playUpdates.Set(_play, _registration);
+                    playUpdates.AddUnsafe(_play, _registration);
                     return;
                 }
             }
@@ -321,9 +321,9 @@ namespace EnhancedFramework.Core {
 
             UpdatePermanents();
 
-            List<IEarlyUpdate> earlySpan = earlyUpdates.collection;
-            for (i = earlySpan.Count; i-- > 0;) {
-                var _update = earlySpan[i];
+            List<IEarlyUpdate> _earlySpan = earlyUpdates.collection;
+            for (i = _earlySpan.Count; i-- > 0;) {
+                var _update = _earlySpan[i];
 
                 try {
                     _update.Update();
@@ -332,9 +332,9 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            List<IInputUpdate> inputSpan = inputUpdates.collection;
-            for (i = inputSpan.Count; i-- > 0;) {
-                var _update = inputSpan[i];
+            List<IInputUpdate> _inputSpan = inputUpdates.collection;
+            for (i = _inputSpan.Count; i-- > 0;) {
+                var _update = _inputSpan[i];
 
                 try {
                     _update.Update();
@@ -343,9 +343,16 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            List<IDynamicUpdate> dynamicSpan = dynamicUpdates.collection;
-            for (i = dynamicSpan.Count; i-- > 0;) {
-                var _update = dynamicSpan[i];
+            // Clamp to avoid being above collection count - may happen if multiple unsubscription during one update.
+            List<IDynamicUpdate> _dynamicSpan = dynamicUpdates.collection;
+            for (i = _dynamicSpan.Count; (i = Mathf.Min(i - 1, _dynamicSpan.Count - 1)) >= 0;) {
+
+                IDynamicUpdate _update;
+                try {
+                    _update = _dynamicSpan[i];
+                } catch (IndexOutOfRangeException) {
+                    continue;
+                }
 
                 try {
                     _update.Update();
@@ -354,9 +361,9 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            List<IUpdate> updateSpan = updates.collection;
-            for (i = updateSpan.Count; i-- > 0;) {
-                var _update = updateSpan[i];
+            List<IUpdate> _updateSpan = updates.collection;
+            for (i = _updateSpan.Count; i-- > 0;) {
+                var _update = _updateSpan[i];
 
                 try {
                     _update.Update();
@@ -365,9 +372,9 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            List<IMovableUpdate> movableSpan = movableUpdates.collection;
-            for (i = movableSpan.Count; i-- > 0;) {
-                var _update = movableSpan[i];
+            List<IMovableUpdate> _movableSpan = movableUpdates.collection;
+            for (i = _movableSpan.Count; i-- > 0;) {
+                var _update = _movableSpan[i];
 
                 try {
                     _update.Update();
@@ -376,9 +383,9 @@ namespace EnhancedFramework.Core {
                 }
             }
 
-            List<ILateUpdate> lateSpan = lateUpdates.collection;
-            for (i = lateSpan.Count; i-- > 0;) {
-                var _update = lateSpan[i];
+            List<ILateUpdate> _lateSpan = lateUpdates.collection;
+            for (i = _lateSpan.Count; i-- > 0;) {
+                var _update = _lateSpan[i];
 
                 try {
                     _update.Update();
@@ -392,10 +399,10 @@ namespace EnhancedFramework.Core {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void UpdatePermanents() {
 
-                List<IStableUpdate> stableSpan = stableUpdates.collection;
-                for (int i = stableSpan.Count; i-- > 0;) {
+                List<IStableUpdate> _stableSpan = stableUpdates.collection;
+                for (int i = _stableSpan.Count; i-- > 0;) {
 
-                    var _update = stableSpan[i];
+                    var _update = _stableSpan[i];
 
                     try {
                         _update.Update();

@@ -4,6 +4,7 @@
 //
 // ================================================================================== //
 
+using EnhancedEditor;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,7 +29,9 @@ namespace EnhancedFramework.Core {
         #endregion
 
         #region Pool
-        private readonly ObjectPool<EnhancedPoolableObject> pool = new ObjectPool<EnhancedPoolableObject>();
+        protected readonly List<EnhancedPoolableObject> activeObjects = new List<EnhancedPoolableObject>();
+        protected readonly ObjectPool<EnhancedPoolableObject> pool    = new ObjectPool<EnhancedPoolableObject>();
+        
         [NonSerialized] private bool isInitialized = false;
 
         // -----------------------
@@ -39,24 +42,55 @@ namespace EnhancedFramework.Core {
         /// <inheritdoc cref="ObjectPool{T}.GetPoolInstance"/>
         public virtual EnhancedPoolableObject GetPoolInstance() {
             Initialize();
-            return pool.GetPoolInstance();
+
+            EnhancedPoolableObject _instance = GetInstance_Internal();
+            activeObjects.Add(_instance);
+
+            return _instance;
         }
 
         /// <summary>
         /// Releases a specific instance and sent it back to this scriptable managing pool <see cref="ObjectPool{T}"/>.
         /// </summary>
         /// <inheritdoc cref="ObjectPool{T}.ReleasePoolInstance(T)"/>
-        public virtual bool ReleasePoolInstance(EnhancedPoolableObject instance) {
+        public virtual bool ReleasePoolInstance(EnhancedPoolableObject _instance) {
             Initialize();
-            return pool.ReleasePoolInstance(instance);
+
+            activeObjects.Remove(_instance);
+            return ReleaseInstance_Internal(_instance);
+        }
+
+        /// <inheritdoc cref="ClearPool(int)"/>
+        public virtual void ClearPool(bool _clear, bool _releaseActiveInstances, bool _safeNullCheck = true, int _capacity = 1) {
+            if (_releaseActiveInstances) {
+                for (int i = activeObjects.Count; i-- > 0;) {
+                    EnhancedPoolableObject _instance = activeObjects[i];
+
+                    if (_safeNullCheck && (_instance == null)) {
+                        activeObjects.RemoveAt(i);
+                        continue;
+                    }
+
+                    try {
+                        _instance.Release();
+                    } catch (MissingReferenceException e) {
+                        this.LogErrorMessage("Catch Exception => " + e.Message);
+                        activeObjects.RemoveAt(i);
+                    }
+                }
+            }
+
+            if (_clear) {
+                ClearPool(_capacity);
+            }
         }
 
         /// <summary>
         /// Clears this scriptable managing pool content and destroys all its instances.
         /// </summary>
         /// <inheritdoc cref="ObjectPool{T}.ClearPool(int)"/>
-        public virtual void ClearPool(int capacity = 1) {
-            pool.ClearPool(capacity);
+        public virtual void ClearPool(int _capacity = 1) {
+            pool.ClearPool(_capacity);
         }
 
         // -------------------------------------------
@@ -91,6 +125,22 @@ namespace EnhancedFramework.Core {
             RegisterActivePool(this);
         }
 
+        /// <summary>
+        /// Get an instance from this pool.
+        /// </summary>
+        protected virtual EnhancedPoolableObject GetInstance_Internal() {
+            return pool.GetPoolInstance();
+        }
+
+        /// <summary>
+        /// Releases an instance from this pool.
+        /// </summary>
+        protected virtual bool ReleaseInstance_Internal(EnhancedPoolableObject _instance) {
+            return pool.ReleasePoolInstance(_instance);
+        }
+
+        // -----------------------
+
         /// <inheritdoc cref="IObjectPoolManager{EnhancedPoolableObject}.CreateInstance"/>
         protected virtual EnhancedPoolableObject CreateInstance() {
             EnhancedPoolableObject instance = Instantiate(Template, Vector3.zero, Quaternion.identity, GameManager.Instance.Transform);
@@ -99,7 +149,11 @@ namespace EnhancedFramework.Core {
 
         /// <inheritdoc cref="IObjectPoolManager{EnhancedPoolableObject}.DestroyInstance(EnhancedPoolableObject)"/>
         protected virtual void DestroyInstance(EnhancedPoolableObject instance) {
-            Destroy(instance.gameObject);
+            try {
+                Destroy(instance.gameObject);
+            } catch (MissingReferenceException e) {
+                this.LogErrorMessage(e.Message);
+            }
         }
         #endregion
 

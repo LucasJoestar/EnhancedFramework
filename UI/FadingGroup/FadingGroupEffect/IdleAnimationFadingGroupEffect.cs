@@ -143,12 +143,11 @@ namespace EnhancedFramework.UI {
             // ----- Local Method ----- \\
 
             void OnKilled() {
+                sequence = null;
+                isActive = false;
 
                 rectTransform.anchoredPosition = originalPosition;
                 rectTransform.sizeDelta = originalSize;
-
-                sequence = null;
-                isActive = false;
             }
         }
         #endregion

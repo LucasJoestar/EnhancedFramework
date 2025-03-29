@@ -17,6 +17,7 @@ using UnityEngine.EventSystems;
 
 #if LOCALIZATION
 using UnityEngine.Localization;
+using UnityEngine.UI;
 #endif
 
 namespace EnhancedFramework.UI {
@@ -156,6 +157,11 @@ namespace EnhancedFramework.UI {
         #region Selectable
         public override void OnMove(AxisEventData _eventData) {
 
+            if (!IsActive() || !IsInteractable()) {
+                base.OnMove(_eventData);
+                return;
+            }
+
             switch (direction) {
 
                 // Horizontal.
@@ -208,6 +214,38 @@ namespace EnhancedFramework.UI {
             }
 
             base.OnMove(_eventData);
+        }
+
+        // -------------------------------------------
+        // Selection
+        // -------------------------------------------
+
+        public override Selectable FindSelectableOnLeft() {
+            if ((navigation.mode == Navigation.Mode.Automatic) && (direction == SelectionMovement.Horizontal))
+                return null;
+
+            return base.FindSelectableOnLeft();
+        }
+
+        public override Selectable FindSelectableOnRight() {
+            if ((navigation.mode == Navigation.Mode.Automatic) && (direction == SelectionMovement.Horizontal))
+                return null;
+
+            return base.FindSelectableOnRight();
+        }
+
+        public override Selectable FindSelectableOnUp() {
+            if ((navigation.mode == Navigation.Mode.Automatic) && (direction == SelectionMovement.Vertical))
+                return null;
+
+            return base.FindSelectableOnUp();
+        }
+
+        public override Selectable FindSelectableOnDown() {
+            if ((navigation.mode == Navigation.Mode.Automatic) && (direction == SelectionMovement.Vertical))
+                return null;
+
+            return base.FindSelectableOnDown();
         }
         #endregion
 
